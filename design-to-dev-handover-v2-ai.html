@@ -1351,6 +1351,7 @@ function scheduleSave() {
 async function loadFromGist(gistIdOverride) {
   const id = gistIdOverride || gist.gistId || new URLSearchParams(location.search).get('gist');
   if (!id) return false;
+  let dataUpdated = false;
   try {
     const headers = { 'Accept': 'application/vnd.github.v3+json' };
     if (gist.token) headers['Authorization'] = `token ${gist.token}`;
@@ -1401,12 +1402,14 @@ async function loadFromGist(gistIdOverride) {
       const proj = getActiveProject();
       if (proj) { proj.gistId = id; saveProjects(); }
     }
-    render();
+    dataUpdated = true;
     setSyncState(gist.token ? 'saved' : 'offline');
     return true;
   } catch(e) {
     console.error('Gist load error:', e);
     return false;
+  } finally {
+    if (dataUpdated) try { render(); } catch(re) { console.error('Render error after Gist sync:', re); }
   }
 }
 
@@ -1855,7 +1858,7 @@ function render() {
   /* ── Cards ── */
   filtered.forEach(s => {
     const open    = !s.collapsed;
-    const SC      = STATUS_CONFIG[s.status];
+    const SC      = STATUS_CONFIG[s.status] || STATUS_CONFIG.existing;
     const realIdx = secs.findIndex(x => x.id === s.id);
     html += `
     <div class="card" data-id="${s.id}"${VIEWER_MODE ? '' : ` draggable="true" ondragstart="onDragStart(event,'${s.id}')" ondragover="onDragOver(event,'${s.id}')" ondragleave="onDragLeave(event,'${s.id}')" ondrop="onDrop(event,'${s.id}')" ondragend="onDragEnd()"`}>
@@ -1969,7 +1972,7 @@ function setFilter(f) { activeFilter = f; render(); }
 
 function addSection() {
   const secs  = curSections();
-  const newId = Math.max(0, ...secs.map(s => s.id), 0) + 1;
+  const newId = generateId();
   secs.push({ id:newId, name:"New Section", status:"existing", useThemeSpacing: true, notes:"", figmaLink:"", collapsed:false });
   savePagesData(); render(); scheduleSave();
   requestAnimationFrame(() => document.querySelector(`.card[data-id="${newId}"]`)?.scrollIntoView({ behavior:'smooth', block:'nearest' }));
