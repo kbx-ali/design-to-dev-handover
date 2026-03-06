@@ -3,7 +3,7 @@
 
 figma.showUI(__html__, {
   width:  380,
-  height: 580,
+  height: 620,
   title:  'Design → Dev Handover'
 });
 
@@ -12,29 +12,30 @@ function buildPageData() {
   const fileKey  = figma.fileKey || '';
   const pageName = page.name;
 
-  // Top-level frames on this page
-  const topFrames = page.children.filter(n => n.type === 'FRAME' && n.visible !== false);
+  // Build every top-level frame with its own resolved sections list.
+  // If a frame has child frames/groups those children become sections;
+  // otherwise the frame itself is the single section.
+  const topFrames = page.children
+    .filter(n => n.type === 'FRAME' && n.visible !== false)
+    .map(n => {
+      const childFrames = (n.children || [])
+        .filter(c => (c.type === 'FRAME' || c.type === 'COMPONENT' || c.type === 'GROUP') && c.visible !== false);
 
-  // If there is exactly 1 top-level frame (common pattern: one "Homepage" wrapper
-  // containing all section frames as children), drill into its children instead.
-  // Fall back to the wrapper itself only if it has no child frames.
-  let sourceNodes = topFrames;
-  if (topFrames.length === 1) {
-    const childFrames = (topFrames[0].children || [])
-      .filter(n => (n.type === 'FRAME' || n.type === 'COMPONENT' || n.type === 'GROUP') && n.visible !== false);
-    if (childFrames.length > 0) sourceNodes = childFrames;
-  }
+      const toSection = node => ({
+        id:        node.id,
+        name:      node.name,
+        figmaLink: fileKey
+          ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${node.id.replace(':', '-')}`
+          : ''
+      });
 
-  const frames = sourceNodes.map(n => {
-    const nodeId = n.id.replace(':', '-');
-    return {
-      id:        n.id,
-      name:      n.name,
-      figmaLink: fileKey
-        ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${nodeId}`
-        : ''
-    };
-  });
+      return {
+        id:         n.id,
+        name:       n.name,
+        childCount: childFrames.length,
+        sections:   childFrames.length > 0 ? childFrames.map(toSection) : [toSection(n)]
+      };
+    });
 
   return {
     pageName,
@@ -42,7 +43,7 @@ function buildPageData() {
     figmaFileUrl: fileKey
       ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}`
       : '',
-    frames
+    topFrames
   };
 }
 

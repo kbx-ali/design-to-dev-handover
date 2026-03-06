@@ -246,6 +246,12 @@ html, body {
         </select>
       </div>
 
+      <div class="field" id="source-frame-field" style="display:none">
+        <label>Sections from</label>
+        <select id="source-frame"></select>
+        <small>Multiple container frames detected — select which one holds your desktop sections.</small>
+      </div>
+
       <div class="divider">
         <span class="divider-label" id="frames-count">Frames</span>
         <button class="refresh-btn" id="refresh-btn">
@@ -313,15 +319,17 @@ const DEFAULT_URL = 'https://kbx-ali.github.io/design-to-dev-handover/design-to-
 
 // ── State ─────────────────────────────────────────────────────
 let state = {
-  pageName:     '',
-  fileKey:      '',
-  figmaFileUrl: '',
-  frames:       [],   // [{ id, name, figmaLink }]
-  sections:     {},   // { frameId: { name, status, notes, included } }
-  appUrl:       DEFAULT_URL,
-  projectName:  '',
-  projectTheme: '',
-  pageType:     'homepage',
+  pageName:      '',
+  fileKey:       '',
+  figmaFileUrl:  '',
+  topFrames:     [],   // raw top-level frame data from code.js [{ id, name, childCount, sections }]
+  sourceFrameId: '',   // which topFrame is currently the sections source
+  frames:        [],   // active sections [{ id, name, figmaLink }]
+  sections:      {},   // { frameId: { name, status, notes, included } }
+  appUrl:        DEFAULT_URL,
+  projectName:   '',
+  projectTheme:  '',
+  pageType:      'homepage',
 };
 
 // ── Utilities ─────────────────────────────────────────────────
@@ -350,6 +358,73 @@ function showScreen(id) {
 
 function post(msg) {
   parent.postMessage({ pluginMessage: msg }, '*');
+}
+
+// ── Source-frame auto-selection ───────────────────────────────
+// Returns the id of the best top-level frame to use as sections source.
+function autoSelectSource(topFrames, pageType) {
+  if (!topFrames || topFrames.length === 0) return '';
+
+  // Frames that CONTAIN child frames are the real "page" containers.
+  const containers = topFrames.filter(f => f.childCount > 0);
+
+  // No containers at all → just use the first topFrame (rare edge case)
+  if (containers.length === 0) return topFrames[0].id;
+
+  // Only one container → obvious choice
+  if (containers.length === 1) return containers[0].id;
+
+  // Multiple containers → keyword-score by page type, penalise mobile variants
+  const keywords = {
+    homepage:   ['home', 'homepage', 'index', 'landing'],
+    collection: ['collect', 'plp', 'category', 'listing', 'catalog'],
+    product:    ['product', 'pdp', 'detail'],
+  }[pageType] || [];
+
+  const isMobile = name => /mobile|mob\b/i.test(name);
+
+  const scored = containers
+    .map(f => {
+      const lower = f.name.toLowerCase();
+      const kw    = keywords.some(k => lower.includes(k)) ? 10 : 0;
+      const mob   = isMobile(f.name) ? -5 : 0;
+      return { id: f.id, score: kw + mob };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Best positive-score frame wins; otherwise first non-mobile container
+  if (scored[0].score > 0) return scored[0].id;
+  const nonMobile = containers.find(f => !isMobile(f.name));
+  return (nonMobile || containers[0]).id;
+}
+
+// Rebuild (or hide) the "Sections from" dropdown.
+function updateSourceSelector() {
+  const containers = state.topFrames.filter(f => f.childCount > 0);
+  const field      = document.getElementById('source-frame-field');
+  const sel        = document.getElementById('source-frame');
+  if (!field || !sel) return;
+
+  if (containers.length <= 1) {
+    field.style.display = 'none';
+    return;
+  }
+
+  field.style.display = 'flex';
+  sel.innerHTML = containers.map(f =>
+    `<option value="${esc(f.id)}"${f.id === state.sourceFrameId ? ' selected' : ''}>${esc(f.name)} (${f.sections.length} section${f.sections.length !== 1 ? 's' : ''})</option>`
+  ).join('');
+}
+
+// Switch active source frame → updates state.frames and re-renders.
+function applySourceFrame(frameId) {
+  state.sourceFrameId = frameId;
+  const tf = state.topFrames.find(f => f.id === frameId);
+  if (!tf) { state.frames = []; renderFrames(); return; }
+
+  state.frames = tf.sections;          // [{ id, name, figmaLink }]
+  state.frames.forEach(f => ensureSection(f.id));
+  renderFrames();
 }
 
 // ── Section state helpers ─────────────────────────────────────
@@ -520,7 +595,18 @@ document.getElementById('refresh-btn').addEventListener('click', () => {
 // ── Live field sync ───────────────────────────────────────────
 document.getElementById('project-name').addEventListener('input',  e => { state.projectName  = e.target.value; });
 document.getElementById('project-theme').addEventListener('input', e => { state.projectTheme = e.target.value; });
-document.getElementById('page-type').addEventListener('change',    e => { state.pageType     = e.target.value; });
+document.getElementById('page-type').addEventListener('change', e => {
+  state.pageType = e.target.value;
+  if (state.topFrames.length > 0) {
+    const bestId = autoSelectSource(state.topFrames, state.pageType);
+    applySourceFrame(bestId);   // sets state.sourceFrameId + state.frames + renders
+    updateSourceSelector();     // update dropdown to reflect new selection
+  }
+});
+
+document.getElementById('source-frame').addEventListener('change', e => {
+  applySourceFrame(e.target.value);
+});
 
 // ── Messages from Figma sandbox ───────────────────────────────
 window.onmessage = event => {
@@ -532,10 +618,7 @@ window.onmessage = event => {
     state.pageName     = d.pageName;
     state.fileKey      = d.fileKey;
     state.figmaFileUrl = d.figmaFileUrl;
-    state.frames       = d.frames;
-
-    // Preserve existing section data, only add new frames
-    d.frames.forEach(f => ensureSection(f.id));
+    state.topFrames    = d.topFrames || [];
 
     document.getElementById('hdr-page-name').textContent = d.pageName || 'Figma Page';
 
@@ -546,7 +629,10 @@ window.onmessage = event => {
     else                                                          state.pageType = 'homepage';
     document.getElementById('page-type').value = state.pageType;
 
-    renderFrames();
+    // Pick the best source frame, build the selector, then apply
+    const bestId = autoSelectSource(state.topFrames, state.pageType);
+    applySourceFrame(bestId);  // sets sourceFrameId + frames + renders
+    updateSourceSelector();    // show/populate dropdown if needed
   }
 
   if (msg.type === 'storage-value') {
