@@ -552,7 +552,7 @@ function renderFrames() {
 }
 
 // ── Voice note transcription ──────────────────────────────────
-function toggleVoiceNote(frameId) {
+async function toggleVoiceNote(frameId) {
   // Stop if already recording for this frame
   if (voiceRecognizingId === frameId) {
     voiceSpeechRec?.stop();
@@ -563,8 +563,24 @@ function toggleVoiceNote(frameId) {
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    showToast('⚠ Voice notes need Chrome or Edge');
+    showToast('⚠ Speech recognition not available', 3500);
     return;
+  }
+
+  // Pre-flight: explicitly request mic permission so Figma shows the OS prompt.
+  // Without this, Speech API silently fails with 'not-allowed' in sandboxed webviews.
+  if (navigator.mediaDevices?.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop()); // release immediately; SR reacquires
+    } catch (permErr) {
+      console.warn('Mic permission error:', permErr.name, permErr.message);
+      const msg = permErr.name === 'NotAllowedError'
+        ? '⚠ Microphone blocked — allow in System Preferences › Security'
+        : `⚠ Mic unavailable: ${permErr.message}`;
+      showToast(msg, 4500);
+      return;
+    }
   }
 
   voiceRecognizingId = frameId;
@@ -582,8 +598,7 @@ function toggleVoiceNote(frameId) {
   let   latestText = baseNotes;
 
   recognition.onresult = event => {
-    let newFinals    = '';
-    let interimChunk = '';
+    let newFinals = '', interimChunk = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
       if (event.results[i].isFinal) newFinals    += event.results[i][0].transcript;
       else                           interimChunk += event.results[i][0].transcript;
@@ -607,9 +622,17 @@ function toggleVoiceNote(frameId) {
   };
 
   recognition.onerror = event => {
-    console.warn('Voice error:', event.error);
+    console.warn('Speech recognition error:', event.error);
     voiceRecognizingId = null;
     voiceSpeechRec     = null;
+    const errorMsgs = {
+      'not-allowed': '⚠ Mic blocked — allow microphone access for Figma',
+      'network':     '⚠ Speech API needs an internet connection to Google',
+      'no-speech':   '⚠ No speech detected — try again',
+      'aborted':     '', // user stopped, no message needed
+    };
+    const msg = event.error in errorMsgs ? errorMsgs[event.error] : `⚠ Voice error: ${event.error}`;
+    if (msg) showToast(msg, 4000);
     renderFrames();
   };
 
