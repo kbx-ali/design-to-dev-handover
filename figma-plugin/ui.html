@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design → Dev Handover</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #161616;
+  --bg-card:  #202020;
+  --bg-input: #272727;
+  --border:   #333333;
+  --text:     #e0e0e0;
+  --text-sec: #a0a0a0;
+  --text-sub: #555555;
+  --accent:   #E9C831;
+  --accent-dk:#c9aa22;
+  --existing: #2EAB42;
+  --modified: #3B82F6;
+  --bespoke:  #F97316;
+  --radius:   8px;
+}
+
+html, body {
+  height: 100%; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px; line-height: 1.4; overflow: hidden;
+}
+
+/* ── Layout ── */
+#root { display: flex; flex-direction: column; height: 100vh; }
+.screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ── Header ── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.hdr-logo { display: flex; align-items: center; gap: 9px; }
+.hdr-logo-text { line-height: 1.2; }
+.hdr-logo-text .title { font-size: 12px; font-weight: 700; color: var(--text); }
+.hdr-logo-text .subtitle { font-size: 10px; color: var(--text-sub); }
+.hdr-actions { display: flex; gap: 5px; }
+.icon-btn {
+  width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px;
+  background: transparent; color: var(--text-sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+.icon-btn:hover { color: var(--text); border-color: var(--text-sec); }
+
+/* ── Scrollable content ── */
+.content {
+  flex: 1; overflow-y: auto; padding: 14px;
+  display: flex; flex-direction: column; gap: 11px;
+}
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-track { background: transparent; }
+.content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Footer ── */
+.footer {
+  padding: 12px 14px; border-top: 1px solid var(--border);
+  flex-shrink: 0; display: flex; gap: 8px;
+}
+
+/* ── Form fields ── */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-sub);
+}
+.field input, .field select, .field textarea {
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); font-size: 12px;
+  padding: 7px 10px; width: 100%; outline: none;
+  transition: border-color 0.15s; font-family: inherit;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--text-sub); }
+.field select {
+  cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23555' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding-right: 28px;
+}
+.field select option { background: #1a1a1a; }
+.field small { font-size: 10px; color: var(--text-sub); line-height: 1.5; margin-top: 1px; }
+
+/* ── Divider ── */
+.divider {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); gap: 8px;
+}
+.divider-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-sub); }
+.refresh-btn {
+  font-size: 11px; color: var(--text-sub); background: transparent; border: none;
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 5px; transition: color 0.15s, background 0.15s;
+}
+.refresh-btn:hover { color: var(--text); background: var(--bg-input); }
+
+/* ── Frame cards ── */
+.frames-list { display: flex; flex-direction: column; gap: 7px; }
+.frame-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; transition: border-color 0.15s;
+}
+.frame-card.excluded { opacity: 0.35; }
+.frame-card-top {
+  display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px 0;
+}
+.frame-check {
+  margin-top: 2px; accent-color: var(--accent); cursor: pointer;
+  flex-shrink: 0; width: 13px; height: 13px;
+}
+.frame-name {
+  flex: 1; font-size: 12px; font-weight: 600; color: var(--text);
+  word-break: break-word; line-height: 1.3; padding-top: 1px;
+}
+.status-group { display: flex; gap: 3px; flex-shrink: 0; padding-top: 1px; }
+.status-btn {
+  font-size: 10px; font-weight: 600; border: 1px solid var(--border);
+  background: transparent; color: var(--text-sub); cursor: pointer;
+  padding: 3px 7px; border-radius: 99px; transition: all 0.15s; white-space: nowrap;
+  line-height: 1;
+}
+.status-btn:hover { color: var(--text); border-color: var(--text-sec); }
+.status-btn.sel-existing { background: rgba(46,171,66,0.12); border-color: var(--existing); color: var(--existing); }
+.status-btn.sel-modified { background: rgba(59,130,246,0.12); border-color: var(--modified); color: var(--modified); }
+.status-btn.sel-bespoke  { background: rgba(249,115,22,0.12); border-color: var(--bespoke);  color: var(--bespoke);  }
+
+.frame-notes { padding: 7px 10px 9px 32px; }
+.frame-notes textarea {
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-size: 11px; padding: 6px 8px; width: 100%; outline: none;
+  resize: none; font-family: inherit; line-height: 1.4; transition: border-color 0.15s;
+  min-height: 36px; display: block;
+}
+.frame-notes textarea:focus { border-color: var(--accent); min-height: 60px; }
+.frame-notes textarea::placeholder { color: var(--text-sub); }
+
+/* ── Empty state ── */
+.empty { text-align: center; padding: 28px 16px; color: var(--text-sub); font-size: 12px; }
+.empty strong { display: block; color: var(--text-sec); margin-bottom: 5px; font-size: 13px; }
+
+/* ── Buttons ── */
+.btn-primary {
+  flex: 1; padding: 10px 14px; background: var(--accent); color: #111;
+  border: none; border-radius: var(--radius); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-primary:hover { background: var(--accent-dk); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
+.btn-secondary {
+  padding: 10px 14px; background: var(--bg-input); color: var(--text-sec);
+  border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn-secondary:hover { color: var(--text); border-color: var(--text-sec); }
+
+/* ── Settings ── */
+.back-btn {
+  display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+  color: var(--text-sub); background: transparent; border: none; cursor: pointer;
+  padding: 2px; transition: color 0.15s;
+}
+.back-btn:hover { color: var(--text); }
+.settings-title { font-size: 12px; font-weight: 700; color: var(--text-sec); }
+.info-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px 12px;
+  font-size: 11px; color: var(--text-sub); line-height: 1.6;
+}
+.info-box strong { color: var(--text-sec); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%);
+  background: #2a2a2a; border: 1px solid #444; color: var(--text);
+  font-size: 11px; font-weight: 600; padding: 7px 14px; border-radius: 99px;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- ═══ MAIN SCREEN ═══════════════════════════════════════ -->
+  <div id="screen-main" class="screen active">
+
+    <div class="hdr">
+      <div class="hdr-logo">
+        <svg width="24" height="24" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="3" width="3" height="3" fill="#E9C831"/>
+          <rect x="16" y="2" width="3" height="3" fill="#E9C831"/>
+          <rect x="3" y="6" width="3" height="3" fill="#E9C831"/>
+          <rect x="15" y="5" width="3" height="3" fill="#E9C831"/>
+          <rect x="0" y="9" width="3" height="3" fill="#E9C831"/>
+          <rect x="14" y="8" width="3" height="3" fill="#E9C831"/>
+          <rect x="19" y="10" width="3" height="3" fill="#E9C831"/>
+          <rect x="13" y="11" width="3" height="3" fill="#E9C831"/>
+          <rect x="22" y="13" width="3" height="3" fill="#E9C831"/>
+          <rect x="19" y="13" width="3" height="3" fill="#E9C831"/>
+          <rect x="22" y="16" width="3" height="3" fill="#E9C831"/>
+          <rect x="25" y="16" width="3" height="3" fill="#E9C831"/>
+          <rect x="22" y="19" width="3" height="3" fill="#E9C831"/>
+          <rect x="19" y="22" width="3" height="3" fill="#E9C831"/>
+        </svg>
+        <div class="hdr-logo-text">
+          <div class="title">Design → Dev</div>
+          <div class="subtitle" id="hdr-page-name">Loading…</div>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <button class="icon-btn" id="settings-btn" title="Settings">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="field">
+        <label>Project Name</label>
+        <input type="text" id="project-name" placeholder="e.g. Client Name Redesign">
+      </div>
+      <div class="field">
+        <label>Base Theme</label>
+        <input type="text" id="project-theme" placeholder="e.g. Dawn, Impulse, Hyper…">
+      </div>
+      <div class="field">
+        <label>This Figma page is the…</label>
+        <select id="page-type">
+          <option value="homepage">Homepage</option>
+          <option value="collection">Collection Page</option>
+          <option value="product">Product Page</option>
+        </select>
+      </div>
+
+      <div class="divider">
+        <span class="divider-label" id="frames-count">Frames</span>
+        <button class="refresh-btn" id="refresh-btn">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="11" height="11">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <div class="frames-list" id="frames-list"></div>
+    </div>
+
+    <div class="footer">
+      <button class="btn-primary" id="open-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+        </svg>
+        Open in Handover
+      </button>
+    </div>
+
+  </div><!-- /screen-main -->
+
+
+  <!-- ═══ SETTINGS SCREEN ════════════════════════════════════ -->
+  <div id="screen-settings" class="screen">
+
+    <div class="hdr">
+      <button class="back-btn" id="back-btn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="12" height="12">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </button>
+      <span class="settings-title">Settings</span>
+      <div style="width:44px;"></div>
+    </div>
+
+    <div class="content">
+      <div class="field">
+        <label>Handover App URL</label>
+        <input type="url" id="app-url" placeholder="http://localhost:8765/design-to-dev-handover-v3-figma.html">
+        <small>Where your Design → Dev Handover web app is hosted. Update this when you move to GitHub Pages.</small>
+      </div>
+      <div class="info-box">
+        <strong>Local testing</strong><br>
+        Keep the default localhost URL while developing. Once you publish to GitHub Pages, paste the new URL here — all three designers update their copy once and it works for everyone.
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="btn-secondary" id="back-btn-2">Cancel</button>
+      <button class="btn-primary" id="save-settings-btn">Save Settings</button>
+    </div>
+
+  </div><!-- /screen-settings -->
+
+</div><!-- /root -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_URL = 'http://localhost:8765/design-to-dev-handover-v3-figma.html';
+
+// ── State ─────────────────────────────────────────────────────
+let state = {
+  pageName:     '',
+  fileKey:      '',
+  figmaFileUrl: '',
+  frames:       [],   // [{ id, name, figmaLink }]
+  sections:     {},   // { frameId: { name, status, notes, included } }
+  appUrl:       DEFAULT_URL,
+  projectName:  '',
+  projectTheme: '',
+  pageType:     'homepage',
+};
+
+// ── Utilities ─────────────────────────────────────────────────
+function generateId() {
+  return 'kbx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, ms = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function post(msg) {
+  parent.postMessage({ pluginMessage: msg }, '*');
+}
+
+// ── Section state helpers ─────────────────────────────────────
+function ensureSection(frameId) {
+  if (!state.sections[frameId]) {
+    const frame = state.frames.find(f => f.id === frameId);
+    state.sections[frameId] = {
+      name:     frame?.name || '',
+      status:   'existing',
+      notes:    '',
+      included: true
+    };
+  }
+}
+
+function getIncludedCount() {
+  return state.frames.filter(f => state.sections[f.id]?.included !== false).length;
+}
+
+// ── Render frames list ────────────────────────────────────────
+function renderFrames() {
+  const list  = document.getElementById('frames-list');
+  const count = document.getElementById('frames-count');
+
+  if (state.frames.length === 0) {
+    count.textContent = 'No frames found';
+    list.innerHTML = `<div class="empty"><strong>No frames on this page</strong>Add frames to your Figma page, then click Refresh.</div>`;
+    return;
+  }
+
+  const inc = getIncludedCount();
+  count.textContent = `${state.frames.length} frame${state.frames.length !== 1 ? 's' : ''} · ${inc} selected`;
+
+  list.innerHTML = state.frames.map(f => {
+    ensureSection(f.id);
+    const sec      = state.sections[f.id];
+    const excluded = sec.included === false;
+    return `
+    <div class="frame-card${excluded ? ' excluded' : ''}" data-id="${f.id}">
+      <div class="frame-card-top">
+        <input type="checkbox" class="frame-check" data-id="${f.id}" ${excluded ? '' : 'checked'}>
+        <span class="frame-name">${esc(f.name)}</span>
+        <div class="status-group">
+          <button class="status-btn${sec.status==='existing'?' sel-existing':''}" data-id="${f.id}" data-status="existing">Existing</button>
+          <button class="status-btn${sec.status==='modified'?' sel-modified':''}" data-id="${f.id}" data-status="modified">Modified</button>
+          <button class="status-btn${sec.status==='bespoke'?' sel-bespoke':''}"  data-id="${f.id}" data-status="bespoke">Bespoke</button>
+        </div>
+      </div>
+      <div class="frame-notes">
+        <textarea data-id="${f.id}" placeholder="Notes for the developer…" rows="2">${esc(sec.notes)}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Bind: checkbox ──
+  list.querySelectorAll('.frame-check').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const id = e.target.dataset.id;
+      ensureSection(id);
+      state.sections[id].included = e.target.checked;
+      e.target.closest('.frame-card').classList.toggle('excluded', !e.target.checked);
+      const inc2 = getIncludedCount();
+      document.getElementById('frames-count').textContent =
+        `${state.frames.length} frame${state.frames.length !== 1 ? 's' : ''} · ${inc2} selected`;
+    });
+  });
+
+  // ── Bind: status buttons ──
+  list.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const id     = e.target.dataset.id;
+      const status = e.target.dataset.status;
+      ensureSection(id);
+      state.sections[id].status = status;
+      e.target.closest('.status-group').querySelectorAll('.status-btn').forEach(b => {
+        b.className = 'status-btn' + (b.dataset.status === status ? ' sel-' + status : '');
+      });
+    });
+  });
+
+  // ── Bind: notes textarea ──
+  list.querySelectorAll('.frame-notes textarea').forEach(ta => {
+    ta.addEventListener('input', e => {
+      ensureSection(e.target.dataset.id);
+      state.sections[e.target.dataset.id].notes = e.target.value;
+    });
+  });
+}
+
+// ── Build export payload ──────────────────────────────────────
+function buildExportData() {
+  const pageType = state.pageType;
+  const included = state.frames.filter(f => state.sections[f.id]?.included !== false);
+
+  const sections = included.map(f => {
+    const sec = state.sections[f.id] || {};
+    return {
+      id:              generateId(),
+      name:            f.name,
+      status:          sec.status   || 'existing',
+      notes:           sec.notes    || '',
+      figmaLink:       f.figmaLink  || '',
+      useThemeSpacing: true,
+      collapsed:       true
+    };
+  });
+
+  const pages = {
+    homepage:   { loomUrl: '', figmaUrl: '', sections: [] },
+    collection: { loomUrl: '', figmaUrl: '', sections: [] },
+    product:    { loomUrl: '', figmaUrl: '', sections: [] }
+  };
+
+  if (pages[pageType]) {
+    pages[pageType].figmaUrl  = state.figmaFileUrl;
+    pages[pageType].sections  = sections;
+  }
+
+  return {
+    title:        state.projectName  || 'Figma Import',
+    theme:        state.projectTheme || '',
+    figmaFileUrl: state.figmaFileUrl || '',
+    activePage:   pageType,
+    pages
+  };
+}
+
+// ── Open in Handover ──────────────────────────────────────────
+document.getElementById('open-btn').addEventListener('click', () => {
+  const inc = getIncludedCount();
+  if (inc === 0) { showToast('⚠ Select at least one frame'); return; }
+
+  post({ type: 'set-storage', key: 'projectName',  value: state.projectName  });
+  post({ type: 'set-storage', key: 'projectTheme', value: state.projectTheme });
+
+  const data    = buildExportData();
+  const json    = JSON.stringify(data);
+  const encoded = btoa(unescape(encodeURIComponent(json)));
+  const url     = `${state.appUrl}?import=${encoded}`;
+
+  post({ type: 'open-url', url });
+  showToast(`✓ Opening ${inc} section${inc !== 1 ? 's' : ''} in Handover`);
+});
+
+// ── Settings ─────────────────────────────────────────────────
+document.getElementById('settings-btn').addEventListener('click', () => {
+  document.getElementById('app-url').value = state.appUrl;
+  showScreen('screen-settings');
+});
+
+function goBack() { showScreen('screen-main'); }
+document.getElementById('back-btn').addEventListener('click', goBack);
+document.getElementById('back-btn-2').addEventListener('click', goBack);
+
+document.getElementById('save-settings-btn').addEventListener('click', () => {
+  const url = document.getElementById('app-url').value.trim() || DEFAULT_URL;
+  state.appUrl = url;
+  post({ type: 'set-storage', key: 'appUrl', value: url });
+  showToast('✓ Settings saved');
+  goBack();
+});
+
+// ── Refresh ───────────────────────────────────────────────────
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  post({ type: 'refresh' });
+});
+
+// ── Live field sync ───────────────────────────────────────────
+document.getElementById('project-name').addEventListener('input',  e => { state.projectName  = e.target.value; });
+document.getElementById('project-theme').addEventListener('input', e => { state.projectTheme = e.target.value; });
+document.getElementById('page-type').addEventListener('change',    e => { state.pageType     = e.target.value; });
+
+// ── Messages from Figma sandbox ───────────────────────────────
+window.onmessage = event => {
+  const msg = event.data?.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === 'page-data') {
+    const d = msg.data;
+    state.pageName     = d.pageName;
+    state.fileKey      = d.fileKey;
+    state.figmaFileUrl = d.figmaFileUrl;
+    state.frames       = d.frames;
+
+    // Preserve existing section data, only add new frames
+    d.frames.forEach(f => ensureSection(f.id));
+
+    document.getElementById('hdr-page-name').textContent = d.pageName || 'Figma Page';
+
+    // Auto-detect page type from Figma page name
+    const lower = (d.pageName || '').toLowerCase();
+    if      (lower.includes('collect') || lower.includes('plp')) state.pageType = 'collection';
+    else if (lower.includes('product') || lower.includes('pdp')) state.pageType = 'product';
+    else                                                          state.pageType = 'homepage';
+    document.getElementById('page-type').value = state.pageType;
+
+    renderFrames();
+  }
+
+  if (msg.type === 'storage-value') {
+    const { key, value } = msg;
+    if (!value) return;
+    if (key === 'appUrl')       { state.appUrl       = value; }
+    if (key === 'projectName')  { state.projectName  = value; document.getElementById('project-name').value  = value; }
+    if (key === 'projectTheme') { state.projectTheme = value; document.getElementById('project-theme').value = value; }
+  }
+};
+
+// ── Initialise: load stored values ────────────────────────────
+['appUrl', 'projectName', 'projectTheme'].forEach(key => post({ type: 'get-storage', key }));
+</script>
+</body>
+</html>

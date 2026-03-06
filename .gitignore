@@ -1,0 +1,18 @@
+# Large binary files
+*.mp4
+*.avi
+*.mov
+*.fig
+*.pdf
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
