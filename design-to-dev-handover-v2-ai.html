@@ -1867,12 +1867,12 @@ function render() {
             <circle cx="4" cy="11.5" r="1.4"/><circle cx="10" cy="11.5" r="1.4"/>
           </svg>
         </div>
-        <svg class="chevron ${open?'open':''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" onclick="toggle('${s.id}')">
+        <svg class="chevron ${open?'open':''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" onclick="toggleSection('${s.id}')">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
         </svg>
-        <span class="card-num"   onclick="toggle('${s.id}')">${String(realIdx+1).padStart(2,'0')}</span>
-        <span class="card-name"  onclick="toggle('${s.id}')">${esc(s.name)}</span>
-        <div class="card-badges" onclick="toggle('${s.id}')">
+        <span class="card-num"   onclick="toggleSection('${s.id}')">${String(realIdx+1).padStart(2,'0')}</span>
+        <span class="card-name"  onclick="toggleSection('${s.id}')">${esc(s.name)}</span>
+        <div class="card-badges" onclick="toggleSection('${s.id}')">
           <span class="badge ${SC.cls}">${SC.label}</span>
         </div>
       </div>
@@ -1954,7 +1954,7 @@ function render() {
 }
 
 // ─── Mutations ─────────────────────────────────────────────────
-function toggle(id) {
+function toggleSection(id) {
   const s = curSections().find(s => s.id === id);
   if (s) s.collapsed = !s.collapsed;
   render();
