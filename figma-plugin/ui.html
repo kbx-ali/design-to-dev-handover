@@ -136,33 +136,23 @@ html, body {
 .status-btn.sel-bespoke  { background: rgba(249,115,22,0.12); border-color: var(--bespoke);  color: var(--bespoke);  }
 
 .frame-notes { padding: 7px 10px 9px 32px; }
-.notes-wrap { display: flex; gap: 6px; align-items: flex-start; }
 .frame-notes textarea {
   background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
-  color: var(--text); font-size: 11px; padding: 6px 8px; flex: 1; min-width: 0; outline: none;
+  color: var(--text); font-size: 11px; padding: 6px 8px; width: 100%; outline: none;
   resize: none; font-family: inherit; line-height: 1.4; transition: border-color 0.15s;
   min-height: 36px; display: block;
 }
 .frame-notes textarea:focus { border-color: var(--accent); min-height: 60px; }
 .frame-notes textarea::placeholder { color: var(--text-sub); }
 
-/* ── Voice note button ── */
-.voice-btn {
-  flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px;
-  border: 1px solid var(--border); background: var(--bg-input);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: all 0.15s; color: var(--text-sub); padding: 0;
+/* ── Voice note hint ── */
+.voice-hint {
+  display: flex; align-items: center; gap: 5px; margin-top: 5px;
+  font-size: 10px; color: var(--text-sub); line-height: 1.4;
 }
-.voice-btn:hover { border-color: #F87171; background: rgba(248,113,113,0.08); color: #F87171; }
-.voice-btn.recording {
-  border-color: #F87171; background: rgba(248,113,113,0.15); color: #F87171;
-  animation: voice-pulse 1.2s ease-in-out infinite;
-}
-.voice-btn svg { width: 13px; height: 13px; pointer-events: none; }
-@keyframes voice-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.5); }
-  50%       { box-shadow: 0 0 0 5px rgba(248,113,113,0); }
-}
+.voice-hint svg { flex-shrink: 0; opacity: 0.5; }
+.voice-hint a { color: var(--text-sub); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.voice-hint a:hover { color: var(--text-sec); }
 
 /* ── Empty state ── */
 .empty { text-align: center; padding: 28px 16px; color: var(--text-sub); font-size: 12px; }
@@ -351,10 +341,6 @@ let state = {
   pageType:      'homepage',
 };
 
-// ── Voice note state ──────────────────────────────────────────
-let voiceRecognizingId = null;
-let voiceSpeechRec     = null;
-
 // ── Utilities ─────────────────────────────────────────────────
 function generateId() {
   return 'kbx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -497,15 +483,10 @@ function renderFrames() {
         </div>
       </div>
       <div class="frame-notes">
-        <div class="notes-wrap">
-          <textarea data-id="${f.id}" placeholder="Notes for the developer…" rows="2">${esc(sec.notes)}</textarea>
-          <button class="voice-btn${voiceRecognizingId===f.id?' recording':''}" data-id="${f.id}"
-            title="${voiceRecognizingId===f.id?'Stop recording':'Record voice note'}">
-            ${voiceRecognizingId===f.id
-              ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
-              : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
-            }
-          </button>
+        <textarea data-id="${f.id}" placeholder="Notes for the developer…" rows="2">${esc(sec.notes)}</textarea>
+        <div class="voice-hint">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          Voice notes available in the <a class="open-app-link">web app</a>
         </div>
       </div>
     </div>`;
@@ -545,98 +526,10 @@ function renderFrames() {
     });
   });
 
-  // ── Bind: voice buttons ──
-  list.querySelectorAll('.voice-btn').forEach(btn => {
-    btn.addEventListener('click', () => toggleVoiceNote(btn.dataset.id));
+  // ── Bind: voice hint link → open web app ──
+  list.querySelectorAll('.open-app-link').forEach(a => {
+    a.addEventListener('click', () => post({ type: 'open-url', url: state.appUrl }));
   });
-}
-
-// ── Voice note transcription ──────────────────────────────────
-async function toggleVoiceNote(frameId) {
-  // Stop if already recording for this frame
-  if (voiceRecognizingId === frameId) {
-    voiceSpeechRec?.stop();
-    return;
-  }
-  // Stop any other active recording first
-  if (voiceSpeechRec) { voiceSpeechRec.stop(); }
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    showToast('⚠ Speech recognition not available', 3500);
-    return;
-  }
-
-  // Pre-flight: explicitly request mic permission so Figma shows the OS prompt.
-  // Without this, Speech API silently fails with 'not-allowed' in sandboxed webviews.
-  if (navigator.mediaDevices?.getUserMedia) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop()); // release immediately; SR reacquires
-    } catch (permErr) {
-      console.warn('Mic permission error:', permErr.name, permErr.message);
-      const msg = permErr.name === 'NotAllowedError'
-        ? '⚠ Microphone blocked — allow in System Preferences › Security'
-        : `⚠ Mic unavailable: ${permErr.message}`;
-      showToast(msg, 4500);
-      return;
-    }
-  }
-
-  voiceRecognizingId = frameId;
-  renderFrames(); // show red stop button
-
-  const recognition       = new SR();
-  recognition.continuous     = true;
-  recognition.interimResults = true;
-  recognition.lang           = 'en-GB';
-  voiceSpeechRec = recognition;
-
-  // Capture existing notes before recording starts
-  const baseNotes  = (state.sections[frameId]?.notes || '').trimEnd();
-  let   lastFinal  = '';
-  let   latestText = baseNotes;
-
-  recognition.onresult = event => {
-    let newFinals = '', interimChunk = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      if (event.results[i].isFinal) newFinals    += event.results[i][0].transcript;
-      else                           interimChunk += event.results[i][0].transcript;
-    }
-    lastFinal += newFinals;
-    const prefix = baseNotes ? baseNotes + ' ' : '';
-    latestText = (prefix + lastFinal + (interimChunk ? ' ' + interimChunk : '')).trim();
-    // Live-update the textarea without re-rendering (avoids flicker)
-    const ta = document.querySelector(`.frame-card[data-id="${frameId}"] .frame-notes textarea`);
-    if (ta) ta.value = latestText;
-  };
-
-  recognition.onend = () => {
-    voiceRecognizingId = null;
-    voiceSpeechRec     = null;
-    // latestText catches any interim words Chrome didn't finalise on stop()
-    const prefix = baseNotes ? baseNotes + ' ' : '';
-    const final  = latestText || (prefix + lastFinal).trim();
-    if (state.sections[frameId]) state.sections[frameId].notes = final;
-    renderFrames(); // restore mic icon
-  };
-
-  recognition.onerror = event => {
-    console.warn('Speech recognition error:', event.error);
-    voiceRecognizingId = null;
-    voiceSpeechRec     = null;
-    const errorMsgs = {
-      'not-allowed': '⚠ Mic blocked — allow microphone access for Figma',
-      'network':     '⚠ Speech API needs an internet connection to Google',
-      'no-speech':   '⚠ No speech detected — try again',
-      'aborted':     '', // user stopped, no message needed
-    };
-    const msg = event.error in errorMsgs ? errorMsgs[event.error] : `⚠ Voice error: ${event.error}`;
-    if (msg) showToast(msg, 4000);
-    renderFrames();
-  };
-
-  recognition.start();
 }
 
 // ── Build export payload ──────────────────────────────────────
