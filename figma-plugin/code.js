@@ -8,22 +8,33 @@ figma.showUI(__html__, {
 });
 
 function buildPageData() {
-  const page    = figma.currentPage;
-  const fileKey = figma.fileKey || '';
+  const page     = figma.currentPage;
+  const fileKey  = figma.fileKey || '';
   const pageName = page.name;
 
-  const frames = page.children
-    .filter(n => n.type === 'FRAME' && n.visible !== false)
-    .map(n => {
-      const nodeId = n.id.replace(':', '-');
-      return {
-        id:        n.id,
-        name:      n.name,
-        figmaLink: fileKey
-          ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${nodeId}`
-          : ''
-      };
-    });
+  // Top-level frames on this page
+  const topFrames = page.children.filter(n => n.type === 'FRAME' && n.visible !== false);
+
+  // If there is exactly 1 top-level frame (common pattern: one "Homepage" wrapper
+  // containing all section frames as children), drill into its children instead.
+  // Fall back to the wrapper itself only if it has no child frames.
+  let sourceNodes = topFrames;
+  if (topFrames.length === 1) {
+    const childFrames = (topFrames[0].children || [])
+      .filter(n => (n.type === 'FRAME' || n.type === 'COMPONENT' || n.type === 'GROUP') && n.visible !== false);
+    if (childFrames.length > 0) sourceNodes = childFrames;
+  }
+
+  const frames = sourceNodes.map(n => {
+    const nodeId = n.id.replace(':', '-');
+    return {
+      id:        n.id,
+      name:      n.name,
+      figmaLink: fileKey
+        ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${nodeId}`
+        : ''
+    };
+  });
 
   return {
     pageName,
