@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,12 +18,15 @@
   --kbx-teal:     #0D6987;
   --kbx-teal-glow:rgba(13,105,135,0.22);
 
-  /* ── Dark surfaces (plugin is always dark — lives inside Figma) ── */
+  /* ── Dark surfaces (default) ── */
   --bg:       #141416;
   --bg-hdr:   #28282B;
   --bg-card:  #28282B;
   --bg-input: #333337;
   --border:   #3E3E42;
+
+  /* ── Grid background line ── */
+  --grid-line: rgba(255,255,255,0.025);
 
   /* ── Text ── */
   --text:     #FFFFFF;
@@ -52,8 +55,8 @@ html, body {
   height: 100%;
   background: var(--bg);
   background-image:
-    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 20px 20px;
   color: var(--text);
   font-family: var(--font-body);
@@ -75,7 +78,7 @@ html, body {
 .hdr-logo { display: flex; align-items: center; gap: 10px; }
 .hdr-logo-text { line-height: 1.2; }
 .hdr-logo-text .title {
-  font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: var(--text);
+  font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: #FFFFFF;
 }
 .hdr-logo-text .subtitle {
   font-size: 10px; color: rgba(255,255,255,0.3);
@@ -102,7 +105,7 @@ html, body {
 /* ── Footer ── */
 .footer {
   padding: 12px 14px; border-top: 1px solid var(--border);
-  background: var(--bg-hdr); flex-shrink: 0; display: flex; gap: 8px;
+  background: var(--bg-card); flex-shrink: 0; display: flex; gap: 8px;
 }
 
 /* ── Form fields ── */
@@ -268,6 +271,45 @@ html, body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 .toast.show { opacity: 1; }
+
+/* ── Light mode ────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:        #F4F4EF;
+  --bg-card:   #FFFFFF;
+  --bg-input:  #EBEBE6;
+  --border:    #DDDDD8;
+  --text:      #28282B;
+  --text-sec:  #3C3C40;
+  --text-mute: #6E6E74;
+  --text-sub:  #9E9EA4;
+  --grid-line: rgba(0,0,0,0.045);
+  --shadow-card:  0 1px 4px rgba(0,0,0,0.08);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.14);
+}
+/* Header always stays dark (Kubix brand) */
+[data-theme="light"] .hdr { border-bottom-color: rgba(0,0,0,0.12); }
+[data-theme="light"] .icon-btn {
+  color: rgba(255,255,255,0.6);
+  border-color: rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.08);
+}
+[data-theme="light"] .icon-btn:hover {
+  color: #FFFFFF;
+  border-color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.16);
+}
+/* Select option bg in light mode */
+[data-theme="light"] .field select option { background: #EBEBE6; color: #28282B; }
+/* Scrollbar in light mode */
+[data-theme="light"] .content::-webkit-scrollbar-thumb { background: #DDDDD8; }
+
+/* ── Theme toggle icons ──────────────────────────────────── */
+/* Dark mode default: show sun (click → go light) */
+.icon-sun  { display: block; }
+.icon-moon { display: none;  }
+/* Light mode: show moon (click → go dark) */
+[data-theme="light"] .icon-sun  { display: none;  }
+[data-theme="light"] .icon-moon { display: block; }
 </style>
 </head>
 <body>
@@ -285,6 +327,17 @@ html, body {
         </div>
       </div>
       <div class="hdr-actions">
+        <button class="icon-btn theme-toggle-btn" title="Toggle light/dark mode">
+          <!-- Sun: shown in dark mode -->
+          <svg class="icon-sun" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <circle cx="12" cy="12" r="5" fill="none"/>
+            <path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <!-- Moon: shown in light mode -->
+          <svg class="icon-moon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+          </svg>
+        </button>
         <button class="icon-btn" id="settings-btn" title="Settings">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/>
@@ -353,7 +406,15 @@ html, body {
         Back
       </button>
       <span class="settings-title">Settings</span>
-      <div style="width:44px;"></div>
+      <button class="icon-btn theme-toggle-btn" title="Toggle light/dark mode">
+        <svg class="icon-sun" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <circle cx="12" cy="12" r="5" fill="none"/>
+          <path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="icon-moon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+        </svg>
+      </button>
     </div>
 
     <div class="content">
@@ -722,6 +783,23 @@ window.onmessage = event => {
 
 // ── Initialise: load stored values ────────────────────────────
 ['appUrl', 'projectName', 'projectTheme'].forEach(key => post({ type: 'get-storage', key }));
+
+// ── Theme toggle ──────────────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem('kbx_plugin_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+}
+
+document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next    = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('kbx_plugin_theme', next);
+  });
+});
+
+initTheme();
 </script>
 </body>
 </html>
