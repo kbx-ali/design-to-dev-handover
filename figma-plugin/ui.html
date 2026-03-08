@@ -676,8 +676,15 @@ function buildExportData() {
   };
 
   if (pages[pageType]) {
-    pages[pageType].figmaUrl  = state.figmaFileUrl;
-    pages[pageType].sections  = sections;
+    // Use a node-specific Figma URL so the web app's "Populate from Figma"
+    // button drills into exactly the right source frame (not the whole file).
+    const nodeId = state.sourceFrameId
+      ? state.sourceFrameId.replace(':', '-')
+      : '';
+    pages[pageType].figmaUrl = (state.fileKey && nodeId)
+      ? `https://www.figma.com/design/${state.fileKey}?node-id=${nodeId}`
+      : state.figmaFileUrl;
+    pages[pageType].sections = sections;
   }
 
   return {

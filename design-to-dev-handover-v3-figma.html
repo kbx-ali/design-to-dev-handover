@@ -495,6 +495,16 @@
   }
   .modal-field input:focus { outline: none; border-color: var(--kbx-teal); box-shadow: 0 0 0 3px rgba(13,105,135,0.12); background: var(--bg-card); }
   .modal-field input::placeholder { color: var(--text-sub); }
+  .modal-field-hint { font-size: 11px; color: var(--text-sub); line-height: 1.55; margin-top: 6px; }
+  .modal-field-hint strong { color: var(--text-mute); }
+  /* All-pages links modal sections */
+  .all-links-section { padding: 18px 0; border-top: 1px solid var(--border); }
+  .all-links-section:first-of-type { border-top: none; padding-top: 0; }
+  .all-links-section-head {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--font-heading); font-size: 13px; font-weight: 700;
+    color: var(--text-pri); margin-bottom: 14px;
+  }
 
   .url-box {
     background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
@@ -1208,40 +1218,56 @@ function populatePage(pageId) {
   savePagesData(); render(); scheduleSave();
 }
 
-// ─── Edit page links modal (Loom + Figma per page) ─────────────
-function editPageLinks(pageId) {
-  const pg  = pages[pageId];
-  const def = PAGE_DEFS[pageId];
-  const ov  = document.createElement('div');
+// ─── Edit all page links modal (Loom + Figma for all 3 pages) ──
+function editAllPageLinks() {
+  const ov = document.createElement('div');
   ov.className = 'overlay';
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  const sections = Object.entries(PAGE_DEFS).map(([k, def]) => {
+    const pg = pages[k] || {};
+    return `
+    <div class="all-links-section">
+      <div class="all-links-section-head">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0">
+          <path stroke-linecap="round" stroke-linejoin="round" d="${esc(def.icon)}"/>
+        </svg>
+        ${esc(def.label)}
+      </div>
+      <div class="modal-field">
+        <label>🎬 Loom walkthrough — ${esc(def.label)}</label>
+        <input type="url" id="pl-${k}-loom" value="${esc(pg.loomUrl || '')}" placeholder="https://www.loom.com/share/…">
+      </div>
+      <div class="modal-field" style="margin-bottom:0">
+        <label>Figma design link — ${esc(def.label)}</label>
+        <input type="url" id="pl-${k}-figma" value="${esc(pg.figmaUrl || '')}" placeholder="https://www.figma.com/design/…?node-id=…">
+        <div class="modal-field-hint">In Figma, right-click the <strong>${esc(def.label)}</strong> frame → <em>Copy link to selection</em>. The URL must include <code>?node-id=</code> so "Populate from Figma" drills into the right frame.</div>
+      </div>
+    </div>`;
+  }).join('');
+
   ov.innerHTML = `
-  <div class="modal">
+  <div class="modal" style="width:560px;">
     <div class="modal-head">
-      <div class="modal-title">${esc(def.label)} — Page Links</div>
+      <div class="modal-title">Page Links</div>
       <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
     </div>
-    <p class="modal-desc">Add the Loom walkthrough video and Figma design link for the <strong>${esc(def.label)}</strong>. These appear in the stats bar so your developer can reference them alongside the checklist.</p>
-    <div class="modal-field">
-      <label>🎬 Loom Video URL — walkthrough for this page</label>
-      <input type="url" id="pl-loom" value="${esc(pg.loomUrl)}" placeholder="https://www.loom.com/share/…">
-    </div>
-    <div class="modal-field">
-      <label><svg width="14" height="14" viewBox="0 0 358 358" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0;border-radius:3px;margin-right:4px;"><path d="M0 81.68C0 36.57 36.57 0 81.68 0H275.76C320.872 0 357.442 36.57 357.442 81.68V275.76C357.442 320.872 320.872 357.442 275.76 357.442H81.68C36.57 357.442 0 320.872 0 275.76V81.68Z" fill="black"/><path d="M94.9458 262.496C94.9458 239.362 113.7 220.608 136.834 220.608H178.72V262.496C178.72 285.63 159.968 304.384 136.834 304.384C113.7 304.384 94.9458 285.63 94.9458 262.496Z" fill="#24CB71"/><path d="M178.72 53.058V136.832H220.608C243.742 136.832 262.496 118.08 262.496 94.946C262.496 71.812 243.742 53.058 220.608 53.058H178.72Z" fill="#FF7237"/><path d="M220.26 220.608C243.394 220.608 262.148 201.854 262.148 178.72C262.148 155.586 243.394 136.832 220.26 136.832C197.126 136.832 178.373 155.586 178.373 178.72C178.373 201.854 197.126 220.608 220.26 220.608Z" fill="#00B6FF"/><path d="M94.9458 94.946C94.9458 118.08 113.7 136.834 136.834 136.834H178.72V53.058H136.834C113.7 53.058 94.9458 71.812 94.9458 94.946Z" fill="#FF3737"/><path d="M94.9458 178.72C94.9458 201.854 113.7 220.608 136.834 220.608H178.72V136.834H136.834C113.7 136.834 94.9458 155.586 94.9458 178.72Z" fill="#874FFF"/></svg> Figma Design URL — for this page</label>
-      <input type="url" id="pl-figma" value="${esc(pg.figmaUrl)}" placeholder="https://www.figma.com/design/…">
-    </div>
+    <p class="modal-desc">Set a Loom walkthrough and Figma design link for each page. The Figma URL must point to the <strong>specific page frame</strong> (with <code>?node-id=</code>) — not the overall file — so "Populate from Figma" imports the sections inside that frame.</p>
+    ${sections}
     <div class="modal-actions">
       <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
-      <button class="modal-btn primary" onclick="savePageLinks('${pageId}')">Save</button>
+      <button class="modal-btn primary" onclick="saveAllPageLinks()">Save all</button>
     </div>
   </div>`;
   document.body.appendChild(ov);
-  setTimeout(() => document.getElementById('pl-loom')?.focus(), 50);
+  setTimeout(() => document.getElementById(`pl-${activePage}-loom`)?.focus(), 50);
 }
 
-function savePageLinks(pageId) {
-  pages[pageId].loomUrl  = document.getElementById('pl-loom')?.value.trim()  || '';
-  pages[pageId].figmaUrl = document.getElementById('pl-figma')?.value.trim() || '';
+function saveAllPageLinks() {
+  Object.keys(PAGE_DEFS).forEach(k => {
+    pages[k].loomUrl  = document.getElementById(`pl-${k}-loom`)?.value.trim()  || '';
+    pages[k].figmaUrl = document.getElementById(`pl-${k}-figma`)?.value.trim() || '';
+  });
   savePagesData(); render(); scheduleSave();
   document.querySelector('.overlay')?.remove();
 }
@@ -1784,7 +1810,7 @@ function render() {
         ${pg.figmaUrl
           ? `<a href="${esc(pg.figmaUrl)}" target="_blank" rel="noopener" class="page-link-btn figma-link"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>View Figma</a>`
           : ''}
-        <button class="page-link-edit" onclick="editPageLinks('${activePage}')">
+        <button class="page-link-edit" onclick="editAllPageLinks()">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
           Edit links
         </button>
