@@ -579,7 +579,24 @@ async function pullFromGist() {
     const file = raw.files?.['checklist-data.json'];
     if (!file) throw new Error('checklist-data.json not found in Gist');
 
-    const parsed       = JSON.parse(file.content);
+    const parsed = JSON.parse(file.content);
+
+    // ── Sync project name + theme from Gist (web app is source of truth) ──
+    // The web app stores default placeholder strings when no name is set;
+    // skip those so we don't overwrite a real value with a placeholder.
+    const remoteTitle = parsed.projectMeta?.title;
+    const remoteTheme = parsed.projectMeta?.theme;
+    if (remoteTitle && remoteTitle !== 'Enter Project Name') {
+      state.projectName = remoteTitle;
+      document.getElementById('project-name').value = remoteTitle;
+      post({ type: 'set-storage', key: 'projectName', value: remoteTitle });
+    }
+    if (remoteTheme && remoteTheme !== 'Enter Base Theme Name') {
+      state.projectTheme = remoteTheme;
+      document.getElementById('project-theme').value = remoteTheme;
+      post({ type: 'set-storage', key: 'projectTheme', value: remoteTheme });
+    }
+
     const gistSections = parsed.pages?.[state.pageType]?.sections || [];
     if (gistSections.length === 0) {
       showToast('⚠ No sections for this page type in the Gist');
@@ -849,7 +866,11 @@ function buildExportData() {
   return {
     title:        state.projectName  || 'Figma Import',
     theme:        state.projectTheme || '',
-    figmaFileUrl: state.figmaFileUrl || '',
+    // Use effectiveFileKey so the web app can match this project by file key
+    // even when figma.fileKey is null (e.g. draft files) and state.figmaFileUrl is empty.
+    figmaFileUrl: effectiveFileKey
+      ? `https://www.figma.com/design/${effectiveFileKey}/${encodeURIComponent(effectivePageName)}`
+      : (state.figmaFileUrl || ''),
     activePage:   pageType,
     pages
   };
@@ -866,7 +887,9 @@ document.getElementById('open-btn').addEventListener('click', () => {
   const data    = buildExportData();
   const json    = JSON.stringify(data);
   const encoded = btoa(unescape(encodeURIComponent(json)));
-  const url     = `${state.appUrl}?import=${encoded}`;
+  // encodeURIComponent ensures base64 '+' characters aren't decoded as spaces
+  // by URLSearchParams.get() on the receiving end, which would corrupt atob().
+  const url     = `${state.appUrl}?import=${encodeURIComponent(encoded)}`;
 
   post({ type: 'open-url', url });
   showToast(`✓ Opening ${inc} section${inc !== 1 ? 's' : ''} in Handover`);
