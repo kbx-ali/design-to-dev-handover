@@ -107,5 +107,9 @@ figma.ui.onmessage = async msg => {
     case 'set-storage':
       await figma.clientStorage.setAsync(msg.key, msg.value);
       break;
+
+    case 'del-storage':
+      await figma.clientStorage.deleteAsync(msg.key);
+      break;
   }
 };

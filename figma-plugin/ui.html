@@ -240,6 +240,32 @@ html, body {
   transition: all 0.15s; white-space: nowrap;
 }
 .btn-secondary:hover { color: var(--text); border-color: var(--text-mute); }
+.btn-danger {
+  padding: 10px 14px; background: transparent; color: #F87171;
+  border: 1px solid rgba(239,68,68,0.35); border-radius: var(--radius); font-size: 13px;
+  font-weight: 600; font-family: var(--font-body); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; flex: 1;
+}
+.btn-danger:hover { background: rgba(239,68,68,0.1); border-color: #F87171; }
+.btn-danger.confirming {
+  background: rgba(127,29,29,0.6); color: #FCA5A5; border-color: #EF4444;
+}
+.danger-zone {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 8px;
+}
+.danger-zone-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  color: #7F1D1D; text-transform: uppercase; margin-bottom: 8px;
+  font-family: var(--font-body);
+}
+[data-theme="light"] .danger-zone-label { color: #DC2626; }
+.danger-zone-desc {
+  font-size: 11px; color: var(--text-sub); line-height: 1.6;
+  margin-bottom: 12px; font-family: var(--font-body);
+}
+.danger-zone-row { display: flex; gap: 8px; }
 
 /* ── Settings ── */
 .back-btn {
@@ -447,6 +473,15 @@ html, body {
         <label>Gist ID (for pulling notes)</label>
         <input type="text" id="gist-id" placeholder="e.g. abc123def456…">
         <small>Paste your Gist ID or full Gist URL here to enable the pull button. Find it in the web app's ⚙ Settings under GitHub Gist URL.</small>
+      </div>
+
+      <div class="danger-zone">
+        <div class="danger-zone-label">Danger Zone</div>
+        <p class="danger-zone-desc">Clears all stored data for this plugin — sections, statuses, notes, project name, Gist ID, and saved settings. Use this to start fresh after testing.</p>
+        <div class="danger-zone-row">
+          <button class="btn-danger" id="reset-btn">Reset All Data</button>
+          <button class="btn-secondary" id="reset-cancel-btn" style="display:none">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -851,9 +886,54 @@ document.getElementById('settings-btn').addEventListener('click', () => {
   showScreen('screen-settings');
 });
 
-function goBack() { showScreen('screen-main'); }
+function goBack() {
+  // Cancel any pending reset confirmation when leaving settings
+  resetConfirmClear();
+  showScreen('screen-main');
+}
 document.getElementById('back-btn').addEventListener('click', goBack);
 document.getElementById('back-btn-2').addEventListener('click', goBack);
+
+// ── Reset all plugin data ─────────────────────────────────────
+const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'gistId', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+let _resetConfirming = false;
+
+function resetConfirmClear() {
+  _resetConfirming = false;
+  const btn = document.getElementById('reset-btn');
+  if (btn) { btn.textContent = 'Reset All Data'; btn.classList.remove('confirming'); }
+  const cancel = document.getElementById('reset-cancel-btn');
+  if (cancel) cancel.style.display = 'none';
+}
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!_resetConfirming) {
+    _resetConfirming = true;
+    const btn = document.getElementById('reset-btn');
+    btn.textContent = 'Tap again to confirm';
+    btn.classList.add('confirming');
+    document.getElementById('reset-cancel-btn').style.display = '';
+    return;
+  }
+  // Confirmed — delete all known keys including the current sections key
+  const keysToDelete = [...ALL_STORAGE_KEYS, sectionsStorageKey()];
+  keysToDelete.forEach(k => post({ type: 'del-storage', key: k }));
+  // Reset in-memory state
+  state.sections      = {};
+  state.projectName   = '';
+  state.projectTheme  = '';
+  state.gistId        = '';
+  state.appUrl        = DEFAULT_URL;
+  state.hasExported   = false;
+  state.cachedFileKey = '';
+  state.manualFigmaUrl = '';
+  resetConfirmClear();
+  renderFrames();
+  showToast('Plugin data cleared — starting fresh.');
+  showScreen('screen-main');
+});
+
+document.getElementById('reset-cancel-btn').addEventListener('click', resetConfirmClear);
 
 document.getElementById('save-settings-btn').addEventListener('click', () => {
   const url          = document.getElementById('app-url').value.trim() || DEFAULT_URL;
