@@ -60,8 +60,16 @@
   </div>
 
   <script>
-    const gist = new URLSearchParams(location.search).get('gist');
-    if (gist) {
+    const params = new URLSearchParams(location.search);
+    const gist   = params.get('gist');
+    const imp    = params.get('import');
+    const proj   = params.get('project');
+
+    if (imp || proj) {
+      // Plugin import or project bookmark — redirect to editor directly
+      // (these are editor-only flows, not viewer flows)
+      location.replace('design-to-dev-handover-v3-figma.html' + location.search);
+    } else if (gist) {
       const frame = document.getElementById('viewer-frame');
       frame.src = 'design-to-dev-handover-v3-figma.html?gist=' + encodeURIComponent(gist);
       frame.style.display = 'block';

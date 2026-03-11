@@ -1986,6 +1986,17 @@ function removeSection(id) {
   savePagesData(); render(); scheduleSave();
 }
 
+// ─── Section prefix helpers (must be before init() which calls them) ──
+const FIGMA_SECTION_PREFIX = '//';
+
+// Single strip helper used everywhere a section name is written.
+function stripSectionPrefix(name) {
+  if (!name) return '';
+  let n = name;
+  while (n.startsWith(FIGMA_SECTION_PREFIX)) n = n.slice(FIGMA_SECTION_PREFIX.length).trimStart();
+  return n.trim();
+}
+
 // ─── Init ──────────────────────────────────────────────────────
 (async function init() {
   const params = new URLSearchParams(location.search);
@@ -2018,14 +2029,18 @@ function removeSection(id) {
   const importParam = params.get('import');
   if (importParam) {
     try {
+      console.log('[PluginImport] Received ?import param, length:', importParam.length);
       const decoded = decodeURIComponent(escape(atob(importParam)));
       const data    = JSON.parse(decoded);
+      console.log('[PluginImport] Parsed import data:', data.title, '| activePage:', data.activePage,
+        '| sections:', data.pages?.[data.activePage]?.sections?.length || 0);
       migrateV1();
       projects = loadProjects();
       handlePluginImport(data);
       return;
     } catch(e) {
-      console.warn('Design→Dev: failed to parse ?import param', e);
+      console.error('Design→Dev: failed to parse ?import param', e);
+      alert('Plugin import failed — the data may have been corrupted in transit.\n\nTry reducing the number of sections or notes, then click "Open in Handover" again.\n\nError: ' + e.message);
     }
   }
 
@@ -2069,16 +2084,6 @@ function parseFigmaUrl(url) {
 // Mirrors the plugin's findPrefixedSections — recursively collects
 // any frames prefixed with '//', stripping the prefix from display names.
 // Always recurses so nested // frames inside a // frame are also found.
-const FIGMA_SECTION_PREFIX = '//';
-
-// Single strip helper used everywhere a section name is written.
-function stripSectionPrefix(name) {
-  if (!name) return '';
-  let n = name;
-  while (n.startsWith(FIGMA_SECTION_PREFIX)) n = n.slice(FIGMA_SECTION_PREFIX.length).trimStart();
-  return n.trim();
-}
-
 function findPrefixedSectionsInApiNode(node, fileKey) {
   const results = [];
   for (const child of (node.children || [])) {
@@ -2325,9 +2330,28 @@ function handlePluginImport(data) {
   };
 
   const incomingFileKey = extractFileKey(data.figmaFileUrl);
-  const existingProj    = incomingFileKey
+
+  // Match priority: gistId first, then fileKey.
+  // gistId is the explicit user-configured link between plugin and web-app project,
+  // so it is more authoritative. fileKey-only matches can hit "ghost" projects that
+  // were auto-created by earlier failed syncs, which would route the update to the
+  // wrong project.
+  const byGistId  = data.gistId
+    ? projects.find(p => p.gistId && p.gistId === data.gistId)
+    : null;
+  const byFileKey = (!byGistId && incomingFileKey)
     ? projects.find(p => extractFileKey(p.generalData?.figmaFileUrl) === incomingFileKey)
     : null;
+  const existingProj = byGistId || byFileKey;
+
+  console.log(
+    '[PluginImport] gistId:', data.gistId,
+    '| fileKey:', incomingFileKey,
+    '| match:', existingProj
+      ? (byGistId ? `byGistId → "${existingProj.title}"` : `byFileKey → "${existingProj.title}"`)
+      : 'none — will create new project',
+    '| projects in storage:', projects.length
+  );
 
   if (existingProj) {
     // ── Update top-level fields ──
@@ -2335,6 +2359,9 @@ function handlePluginImport(data) {
     if (data.theme)        existingProj.theme       = data.theme;
     if (data.activePage)   existingProj.activePage  = data.activePage;
     if (data.figmaFileUrl) existingProj.generalData.figmaFileUrl = data.figmaFileUrl;
+    // Always adopt the incoming gistId if the project doesn't have one yet —
+    // this lets fileKey-matched projects upgrade to gistId matching on subsequent syncs
+    if (data.gistId && !existingProj.gistId) existingProj.gistId = data.gistId;
     existingProj.updatedAt = Date.now();
 
     // ── Merge sections for the imported page only ──
@@ -2359,6 +2386,8 @@ function handlePluginImport(data) {
     // Track which existing sections were matched so we can keep unmatched ones
     const matchedIds = new Set();
 
+    console.log('[PluginImport] incoming sections:', incomingSections.length, '| existing sections:', existingSections.length);
+
     const mergedSections = incomingSections.map(incoming => {
       // Strip // prefix from incoming name (defensive: in case plugin toSection didn't strip it)
       const cleanName = stripSectionPrefix(incoming.name);
@@ -2366,19 +2395,24 @@ function handlePluginImport(data) {
                     || existingByName[cleanName.toLowerCase().trim()];
       if (!existing) {
         // New section not previously in the web app — add it
+        console.log('[PluginImport] NEW section:', cleanName, '(no match by link or name)');
         return { ...incoming, name: cleanName, id: generateId() };
       }
       matchedIds.add(existing.id);
-      return {
+      const merged = {
         ...existing,
         name:      cleanName,
         // Preserve existing figmaLink if incoming has none (e.g. plugin exported with null fileKey)
         figmaLink: incoming.figmaLink || existing.figmaLink,
         // Plugin notes win if non-empty; otherwise keep any notes added in the web app
         notes:  incoming.notes || existing.notes,
-        // Plugin status wins if designer changed it from the default; otherwise keep web-app status
-        status: (incoming.status && incoming.status !== 'existing') ? incoming.status : existing.status,
+        // Plugin status always wins — the designer made a deliberate choice in the plugin.
+        // Using incoming.status directly (not gating on !== 'existing') ensures that a
+        // designer who resets a section back to 'existing' in the plugin sees that reflected here.
+        status: incoming.status || existing.status,
       };
+      console.log('[PluginImport] MERGED section:', cleanName, '| notes:', merged.notes, '| status:', merged.status);
+      return merged;
     });
 
     // Append any sections that exist only in the web app (added manually, not from Figma)
@@ -2391,16 +2425,22 @@ function handlePluginImport(data) {
     saveProjects();
     history.replaceState({}, '', '?project=' + existingProj.id);
     openProject(existingProj.id);
+    // Push merged data to Gist immediately so the 15-second poller doesn't
+    // overwrite the plugin's changes before the user can see them.
+    // saveToGist() is a no-op if there's no token, so this is always safe.
+    saveToGist();
     return;
   }
 
   // ── No matching project found — create a new one ──
+  console.log('[PluginImport] Creating new project for gistId:', data.gistId, 'fileKey:', incomingFileKey);
   const id  = generateId();
   const proj = {
     id,
     title:       data.title  || 'Figma Import',
     theme:       data.theme  || '',
-    gistId:      '',
+    // Persist incoming gistId so subsequent syncs match by gistId immediately
+    gistId:      data.gistId || '',
     pubUrl:      '',
     activePage:  data.activePage || 'homepage',
     createdAt:   Date.now(),
@@ -2426,6 +2466,8 @@ function handlePluginImport(data) {
   saveProjects();
   history.replaceState({}, '', '?project=' + id);
   openProject(id);
+  // If a gist token is configured, save immediately so the project exists in the Gist
+  saveToGist();
 }
 
 // ─── Legend modal ───────────────────────────────────────────────

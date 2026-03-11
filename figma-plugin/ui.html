@@ -233,6 +233,8 @@ html, body {
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 #open-btn { background: var(--kbx-yellow); color: var(--kbx-black); }
 #open-btn:hover:not(:disabled) { background: var(--kbx-yellow-dk); }
+#open-btn.dirty { background: #E591E5; color: #2d002d; }
+#open-btn.dirty:hover:not(:disabled) { background: #d470d4; }
 .btn-secondary {
   padding: 10px 14px; background: var(--bg-input); color: var(--text-sec);
   border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;
@@ -425,7 +427,7 @@ html, body {
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
         </svg>
-        Open in Handover
+        <span id="open-btn-label">Open in Handover</span>
       </button>
     </div>
 
@@ -474,6 +476,11 @@ html, body {
         <input type="text" id="gist-id" placeholder="e.g. abc123def456…">
         <small>Paste your Gist ID or full Gist URL here to enable the pull button. Find it in the web app's ⚙ Settings under GitHub Gist URL.</small>
       </div>
+      <div class="field">
+        <label>GitHub Token (for pulling notes)</label>
+        <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        <small>Paste the same GitHub token you use in the web app. Required for the pull button to authenticate with the GitHub API.</small>
+      </div>
 
       <div class="danger-zone">
         <div class="danger-zone-label">Danger Zone</div>
@@ -515,7 +522,9 @@ let state = {
   projectTheme:  '',
   pageType:      'homepage',
   gistId:        '',
+  githubToken:   '',
   hasExported:   false,
+  isDirty:       false,   // true when notes/status changed since last pull or sync
 };
 
 // ── Utilities ─────────────────────────────────────────────────
@@ -554,6 +563,19 @@ function updatePullBtn() {
   if (btn) btn.style.display = state.hasExported ? '' : 'none';
 }
 
+function updateOpenBtn() {
+  const btn   = document.getElementById('open-btn');
+  const label = document.getElementById('open-btn-label');
+  if (!btn || !label) return;
+  if (state.isDirty) {
+    btn.classList.add('dirty');
+    label.textContent = 'Sync Changes with Handover';
+  } else {
+    btn.classList.remove('dirty');
+    label.textContent = 'Open in Handover';
+  }
+}
+
 async function pullFromGist() {
   const id = extractGistId(state.gistId);
   if (!id) {
@@ -570,9 +592,9 @@ async function pullFromGist() {
   btn.disabled = true;
 
   try {
-    const res = await fetch(`https://api.github.com/gists/${id}`, {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
+    const headers = { 'Accept': 'application/vnd.github.v3+json' };
+    if (state.githubToken) headers['Authorization'] = `token ${state.githubToken}`;
+    const res = await fetch(`https://api.github.com/gists/${id}`, { headers });
     if (!res.ok) throw new Error(`GitHub API error (${res.status})`);
 
     const raw  = await res.json();
@@ -630,6 +652,7 @@ async function pullFromGist() {
 
     saveSections();
     renderFrames();
+    state.isDirty = false; updateOpenBtn();
     showToast(`✓ Pulled — ${updated} section${updated !== 1 ? 's' : ''} updated`);
   } catch (e) {
     console.error('Pull from Gist error:', e);
@@ -803,6 +826,7 @@ function renderFrames() {
       e.target.closest('.status-group').querySelectorAll('.status-btn').forEach(b => {
         b.className = 'status-btn' + (b.dataset.status === status ? ' sel-' + status : '');
       });
+      state.isDirty = true; updateOpenBtn();
     });
   });
 
@@ -812,6 +836,7 @@ function renderFrames() {
       ensureSection(e.target.dataset.id);
       state.sections[e.target.dataset.id].notes = e.target.value;
       saveSections();
+      state.isDirty = true; updateOpenBtn();
     });
   });
 
@@ -834,34 +859,30 @@ function buildExportData() {
     const figmaLink = f.figmaLink || (effectiveFileKey && f.id
       ? `https://www.figma.com/design/${effectiveFileKey}/${encodeURIComponent(effectivePageName)}?node-id=${f.id.replace(':', '-')}`
       : '');
-    return {
-      id:              generateId(),
-      name:            f.name,
-      status:          sec.status   || 'existing',
-      notes:           sec.notes    || '',
-      figmaLink,
-      useThemeSpacing: true,
-      collapsed:       true
+    // Omit default values to keep the payload compact (reduces URL length,
+    // avoiding potential truncation by figma.openExternal).
+    const entry = {
+      name:     f.name,
+      status:   sec.status || 'existing',
+      figmaLink
     };
+    if (sec.notes) entry.notes = sec.notes;
+    return entry;
   });
 
-  const pages = {
-    homepage:   { loomUrl: '', figmaUrl: '', sections: [] },
-    collection: { loomUrl: '', figmaUrl: '', sections: [] },
-    product:    { loomUrl: '', figmaUrl: '', sections: [] }
-  };
+  // Use a node-specific Figma URL so the web app's "Populate from Figma"
+  // button drills into exactly the right source frame (not the whole file).
+  const nodeId = state.sourceFrameId
+    ? state.sourceFrameId.replace(':', '-')
+    : '';
+  const pageFigmaUrl = (effectiveFileKey && nodeId)
+    ? `https://www.figma.com/design/${effectiveFileKey}?node-id=${nodeId}`
+    : state.figmaFileUrl;
 
-  if (pages[pageType]) {
-    // Use a node-specific Figma URL so the web app's "Populate from Figma"
-    // button drills into exactly the right source frame (not the whole file).
-    const nodeId = state.sourceFrameId
-      ? state.sourceFrameId.replace(':', '-')
-      : '';
-    pages[pageType].figmaUrl = (effectiveFileKey && nodeId)
-      ? `https://www.figma.com/design/${effectiveFileKey}?node-id=${nodeId}`
-      : state.figmaFileUrl;
-    pages[pageType].sections = sections;
-  }
+  // Only include the active page to minimise URL length — the web app fills
+  // in missing page keys with defaults.
+  const pages = {};
+  pages[pageType] = { figmaUrl: pageFigmaUrl || '', sections };
 
   return {
     title:        state.projectName  || 'Figma Import',
@@ -871,6 +892,9 @@ function buildExportData() {
     figmaFileUrl: effectiveFileKey
       ? `https://www.figma.com/design/${effectiveFileKey}/${encodeURIComponent(effectivePageName)}`
       : (state.figmaFileUrl || ''),
+    // Include gistId so the web app can match the project by Gist when no
+    // figmaFileUrl is stored (e.g. project was created manually in the web app).
+    gistId:       extractGistId(state.gistId),
     activePage:   pageType,
     pages
   };
@@ -891,7 +915,14 @@ document.getElementById('open-btn').addEventListener('click', () => {
   // by URLSearchParams.get() on the receiving end, which would corrupt atob().
   const url     = `${state.appUrl}?import=${encodeURIComponent(encoded)}`;
 
+  // Warn if URL is very long — figma.openExternal may truncate or reject it
+  if (url.length > 8000) {
+    console.warn('[Export] URL length:', url.length, '— may be too long for figma.openExternal');
+    showToast('⚠ Large payload — if the browser opens but shows the library, try removing long notes');
+  }
+
   post({ type: 'open-url', url });
+  state.isDirty = false; updateOpenBtn();
   showToast(`✓ Opening ${inc} section${inc !== 1 ? 's' : ''} in Handover`);
 
   if (!state.hasExported) {
@@ -903,9 +934,10 @@ document.getElementById('open-btn').addEventListener('click', () => {
 
 // ── Settings ─────────────────────────────────────────────────
 document.getElementById('settings-btn').addEventListener('click', () => {
-  document.getElementById('app-url').value       = state.appUrl;
+  document.getElementById('app-url').value        = state.appUrl;
   document.getElementById('figma-file-url').value = state.manualFigmaUrl;
   document.getElementById('gist-id').value        = state.gistId;
+  document.getElementById('github-token').value   = state.githubToken;
   showScreen('screen-settings');
 });
 
@@ -918,7 +950,7 @@ document.getElementById('back-btn').addEventListener('click', goBack);
 document.getElementById('back-btn-2').addEventListener('click', goBack);
 
 // ── Reset all plugin data ─────────────────────────────────────
-const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'gistId', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'gistId', 'githubToken', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
 let _resetConfirming = false;
 
 function resetConfirmClear() {
@@ -946,6 +978,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   state.projectName   = '';
   state.projectTheme  = '';
   state.gistId        = '';
+  state.githubToken   = '';
   state.appUrl        = DEFAULT_URL;
   state.hasExported   = false;
   state.cachedFileKey = '';
@@ -962,18 +995,21 @@ document.getElementById('save-settings-btn').addEventListener('click', () => {
   const url          = document.getElementById('app-url').value.trim() || DEFAULT_URL;
   const manualUrl    = document.getElementById('figma-file-url').value.trim();
   const gistId       = document.getElementById('gist-id').value.trim();
+  const githubToken  = document.getElementById('github-token').value.trim();
   state.appUrl        = url;
   state.manualFigmaUrl = manualUrl;
   state.gistId        = gistId;
+  state.githubToken   = githubToken;
   // Extract fileKey from the manual URL so buildExportData can use it
   const m = manualUrl.match(/figma\.com\/(?:design|file)\/([^\/\?#]+)/);
   if (m) {
     state.cachedFileKey = m[1];
     post({ type: 'set-storage', key: 'cachedFileKey', value: m[1] });
   }
-  post({ type: 'set-storage', key: 'appUrl',         value: url       });
-  post({ type: 'set-storage', key: 'manualFigmaUrl', value: manualUrl });
-  post({ type: 'set-storage', key: 'gistId',         value: gistId    });
+  post({ type: 'set-storage', key: 'appUrl',         value: url         });
+  post({ type: 'set-storage', key: 'manualFigmaUrl', value: manualUrl   });
+  post({ type: 'set-storage', key: 'gistId',         value: gistId      });
+  post({ type: 'set-storage', key: 'githubToken',    value: githubToken });
   showToast('✓ Settings saved');
   goBack();
 });
@@ -1045,6 +1081,7 @@ window.onmessage = event => {
     if (key === 'projectName')  { state.projectName  = value; document.getElementById('project-name').value  = value; }
     if (key === 'projectTheme') { state.projectTheme = value; document.getElementById('project-theme').value = value; }
     if (key === 'gistId')        { state.gistId        = value || ''; }
+    if (key === 'githubToken')   { state.githubToken   = value || ''; }
     if (key === 'hasExported')   { state.hasExported   = !!value; updatePullBtn(); }
     if (key === 'cachedFileKey') { state.cachedFileKey   = value || ''; }
     if (key === 'manualFigmaUrl') {
@@ -1068,7 +1105,7 @@ window.onmessage = event => {
 };
 
 // ── Initialise: load stored values ────────────────────────────
-['appUrl', 'projectName', 'projectTheme', 'gistId', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'].forEach(key => post({ type: 'get-storage', key }));
+['appUrl', 'projectName', 'projectTheme', 'gistId', 'githubToken', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'].forEach(key => post({ type: 'get-storage', key }));
 
 // ── Theme toggle ──────────────────────────────────────────────
 function initTheme() {
