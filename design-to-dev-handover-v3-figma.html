@@ -682,27 +682,6 @@
   }
   .figma-error-msg.show { display: block; }
 
-  /* ─── Voice note button ─────────────────────────────────────── */
-  .notes-wrap { display: flex; gap: 8px; align-items: flex-start; }
-  .notes-wrap textarea.input-text { flex: 1; min-height: 200px; }
-  .voice-btn {
-    flex-shrink: 0; width: 36px; height: 36px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--bg-input);
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s; color: var(--text-mute); margin-top: 0;
-  }
-  .voice-btn:hover { border-color: #F87171; background: rgba(248,113,113,0.08); color: #F87171; }
-  .voice-btn.recording {
-    border-color: #F87171; background: rgba(248,113,113,0.15); color: #F87171;
-    animation: voice-pulse 1.2s ease-in-out infinite;
-  }
-  .voice-btn svg { width: 16px; height: 16px; pointer-events: none; }
-  .viewer-mode .voice-btn { display: none !important; }
-  @keyframes voice-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.5); }
-    50%       { box-shadow: 0 0 0 7px rgba(248,113,113,0); }
-  }
-
   /* ─── Theme spacing checkbox ────────────────────────────────── */
   .theme-spacing-row {
     display: flex; align-items: flex-start; gap: 9px; margin-top: 10px; margin-bottom: 12px;
@@ -1180,8 +1159,6 @@ const PAGE_DEFS = {
 // ─── Pages state ───────────────────────────────────────────────
 let activePage   = 'homepage';
 let activeFilter = 'all';
-let voiceRecognizingId = null;
-let voiceSpeechRec     = null;
 let pages = defaultPages();
 
 function savePagesData() { saveCurrentProject(); }
@@ -1948,16 +1925,7 @@ function render() {
           <div style="display:flex;flex-direction:column;">
             <div class="field" style="flex:1;display:flex;flex-direction:column;">
               <div class="field-label">Notes for Developer</div>
-              <div class="notes-wrap">
-                <textarea class="input-text notes-textarea" style="flex:1;min-height:200px;"${VIEWER_MODE ? ' readonly' : ` onchange="setField('${s.id}','notes',this.value)"`}>${esc(s.notes||'')}</textarea>
-                ${!VIEWER_MODE ? `
-                <button class="voice-btn${voiceRecognizingId===s.id?' recording':''}" onclick="toggleVoiceNote('${s.id}')" title="${voiceRecognizingId===s.id?'Stop recording':'Record voice note'}">
-                  ${voiceRecognizingId===s.id
-                    ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>`
-                    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
-                  }
-                </button>` : ''}
-              </div>
+              <textarea class="input-text notes-textarea" style="min-height:200px;"${VIEWER_MODE ? ' readonly' : ` onchange="setField('${s.id}','notes',this.value)"`}>${esc(s.notes||'')}</textarea>
             </div>
           </div>
         </div>
@@ -2097,6 +2065,39 @@ function parseFigmaUrl(url) {
 }
 
 // ─── Fetch frames from Figma API ──────────────────────────────
+
+// Mirrors the plugin's findPrefixedSections — recursively collects
+// any frames prefixed with '//', stripping the prefix from display names.
+// Always recurses so nested // frames inside a // frame are also found.
+const FIGMA_SECTION_PREFIX = '//';
+
+// Single strip helper used everywhere a section name is written.
+function stripSectionPrefix(name) {
+  if (!name) return '';
+  let n = name;
+  while (n.startsWith(FIGMA_SECTION_PREFIX)) n = n.slice(FIGMA_SECTION_PREFIX.length).trimStart();
+  return n.trim();
+}
+
+function findPrefixedSectionsInApiNode(node, fileKey) {
+  const results = [];
+  for (const child of (node.children || [])) {
+    if (child.visible === false) continue;
+    const isContainer = child.type === 'FRAME' || child.type === 'COMPONENT'
+                     || child.type === 'GROUP' || child.type === 'SECTION';
+    if (!isContainer) continue;
+    if (child.name.startsWith(FIGMA_SECTION_PREFIX)) {
+      results.push({
+        name:      stripSectionPrefix(child.name),
+        figmaLink: `https://www.figma.com/design/${fileKey}?node-id=${child.id.replace(':', '-')}`
+      });
+    }
+    // Always recurse — a // frame may itself contain further // frames
+    results.push(...findPrefixedSectionsInApiNode(child, fileKey));
+  }
+  return results;
+}
+
 async function fetchFigmaFrames(figmaUrl, token) {
   const parsed = parseFigmaUrl(figmaUrl);
   if (!parsed) throw new Error('Could not parse the Figma URL. Make sure it includes a node-id parameter (e.g. ?node-id=1-2).');
@@ -2111,14 +2112,19 @@ async function fetchFigmaFrames(figmaUrl, token) {
   const data = await res.json();
   const node = data.nodes?.[nodeId]?.document;
   if (!node) throw new Error('No node data returned from Figma. Try refreshing your Figma URL.');
-  const children = node.children || [];
-  const frames = children.filter(c =>
+
+  // 1. Try recursive // prefix search (mirrors plugin behaviour)
+  const prefixed = findPrefixedSectionsInApiNode(node, fileKey);
+  if (prefixed.length > 0) return prefixed;
+
+  // 2. Fallback: direct visible children (original behaviour)
+  const frames = (node.children || []).filter(c =>
     (c.type === 'FRAME' || c.type === 'COMPONENT' || c.type === 'GROUP' || c.type === 'SECTION')
     && c.visible !== false
   );
   if (!frames.length) throw new Error('No visible frames found inside this Figma node. Try selecting a parent frame or page node in Figma and updating the URL.');
   return frames.map(c => ({
-    name:      c.name,
+    name:      stripSectionPrefix(c.name),
     figmaLink: `https://www.figma.com/design/${fileKey}?node-id=${c.id.replace(':', '-')}`
   }));
 }
@@ -2178,7 +2184,7 @@ function showFigmaPreview(pageId, frames) {
   const rowsHtml = frames.map((f, i) => `
     <div class="figma-preview-row">
       <span class="figma-preview-row-num">${String(i + 1).padStart(2, '0')}</span>
-      <span class="figma-preview-row-name">${esc(f.name)}</span>
+      <span class="figma-preview-row-name">${esc(stripSectionPrefix(f.name))}</span>
       <a class="figma-preview-row-link" href="${esc(f.figmaLink)}" target="_blank" rel="noopener">↗ View</a>
     </div>`).join('');
 
@@ -2211,7 +2217,7 @@ function applyFigmaFrames(pageId) {
   if (!frames) return;
   pages[pageId].sections = frames.map(f => ({
     id:             generateId(),
-    name:           f.name,
+    name:           stripSectionPrefix(f.name),
     status:         'existing',
     useThemeSpacing: true,
     notes:          '',
@@ -2221,75 +2227,6 @@ function applyFigmaFrames(pageId) {
   delete window._figmaPendingFrames;
   savePagesData(); render(); scheduleSave();
   document.querySelector('.overlay')?.remove();
-}
-
-// ─── Voice note transcription ───────────────────────────────────
-function toggleVoiceNote(sectionId) {
-  // Stop if already recording for this section
-  if (voiceRecognizingId === sectionId) {
-    voiceSpeechRec?.stop();
-    return;
-  }
-  // Stop any existing recording first
-  if (voiceSpeechRec) { voiceSpeechRec.stop(); }
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    alert('Voice notes require Chrome or Edge — speech recognition is not supported in this browser.');
-    return;
-  }
-
-  voiceRecognizingId = sectionId;
-  render(); // update button state to recording
-
-  const recognition = new SR();
-  recognition.continuous    = true;
-  recognition.interimResults = true;
-  recognition.lang          = 'en-GB';
-  voiceSpeechRec = recognition;
-
-  // Capture the notes value before recording starts
-  const section    = curSections().find(s => String(s.id) === String(sectionId));
-  const baseNotes  = (section?.notes || '').trimEnd();
-  let   lastFinal  = '';
-  let   latestText = baseNotes; // tracks full display value (finals + last interim)
-
-  recognition.onresult = event => {
-    let newFinals    = '';
-    let interimChunk = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      if (event.results[i].isFinal) newFinals    += event.results[i][0].transcript;
-      else                           interimChunk += event.results[i][0].transcript;
-    }
-    lastFinal += newFinals; // accumulate finals
-    const prefix = baseNotes ? baseNotes + ' ' : '';
-    latestText = (prefix + lastFinal + (interimChunk ? ' ' + interimChunk : '')).trim();
-    // Live update textarea (don't save yet — avoids re-render lag)
-    const textarea = document.querySelector(`.card[data-id="${sectionId}"] .notes-textarea`);
-    if (textarea) textarea.value = latestText;
-  };
-
-  recognition.onend = () => {
-    voiceRecognizingId = null;
-    voiceSpeechRec     = null;
-    // Use latestText: captures interim words Chrome may not finalize when stop() is called
-    const prefix = baseNotes ? baseNotes + ' ' : '';
-    const final  = latestText || (prefix + lastFinal).trim();
-    const sec    = curSections().find(s => String(s.id) === String(sectionId));
-    if (sec) sec.notes = final;
-    savePagesData();
-    scheduleSave();
-    render();
-  };
-
-  recognition.onerror = event => {
-    console.warn('Speech recognition error:', event.error);
-    voiceRecognizingId = null;
-    voiceSpeechRec     = null;
-    render();
-  };
-
-  recognition.start();
 }
 
 // ─── Render General / Sitewide tab ─────────────────────────────
@@ -2380,6 +2317,84 @@ function renderGeneralTab() {
 function handlePluginImport(data) {
   projects = loadProjects();
 
+  // Extract Figma file key from a URL so we can match projects by file
+  // regardless of which page was active when the URL was generated.
+  const extractFileKey = url => {
+    const m = url && url.match(/figma\.com\/(?:design|file)\/([^\/\?#]+)/);
+    return m ? m[1] : null;
+  };
+
+  const incomingFileKey = extractFileKey(data.figmaFileUrl);
+  const existingProj    = incomingFileKey
+    ? projects.find(p => extractFileKey(p.generalData?.figmaFileUrl) === incomingFileKey)
+    : null;
+
+  if (existingProj) {
+    // ── Update top-level fields ──
+    if (data.title)        existingProj.title      = data.title;
+    if (data.theme)        existingProj.theme       = data.theme;
+    if (data.activePage)   existingProj.activePage  = data.activePage;
+    if (data.figmaFileUrl) existingProj.generalData.figmaFileUrl = data.figmaFileUrl;
+    existingProj.updatedAt = Date.now();
+
+    // ── Merge sections for the imported page only ──
+    const pageKey          = data.activePage || 'homepage';
+    const incomingSections = data.pages?.[pageKey]?.sections || [];
+    const existingSections = existingProj.pages?.[pageKey]?.sections || [];
+
+    // Update the page's Figma URL if one was sent
+    if (data.pages?.[pageKey]?.figmaUrl) {
+      existingProj.pages[pageKey].figmaUrl = data.pages[pageKey].figmaUrl;
+    }
+
+    // Build lookups by figmaLink (primary) and name (fallback).
+    // Name fallback handles the case where fileKey was null on export so figmaLinks are empty.
+    const existingByLink = {};
+    const existingByName = {};
+    existingSections.forEach(s => {
+      if (s.figmaLink) existingByLink[s.figmaLink] = s;
+      if (s.name) existingByName[s.name.toLowerCase().trim()] = s;
+    });
+
+    // Track which existing sections were matched so we can keep unmatched ones
+    const matchedIds = new Set();
+
+    const mergedSections = incomingSections.map(incoming => {
+      // Strip // prefix from incoming name (defensive: in case plugin toSection didn't strip it)
+      const cleanName = stripSectionPrefix(incoming.name);
+      const existing = existingByLink[incoming.figmaLink]
+                    || existingByName[cleanName.toLowerCase().trim()];
+      if (!existing) {
+        // New section not previously in the web app — add it
+        return { ...incoming, name: cleanName, id: generateId() };
+      }
+      matchedIds.add(existing.id);
+      return {
+        ...existing,
+        name:      cleanName,
+        // Preserve existing figmaLink if incoming has none (e.g. plugin exported with null fileKey)
+        figmaLink: incoming.figmaLink || existing.figmaLink,
+        // Plugin notes win if non-empty; otherwise keep any notes added in the web app
+        notes:  incoming.notes || existing.notes,
+        // Plugin status wins if designer changed it from the default; otherwise keep web-app status
+        status: (incoming.status && incoming.status !== 'existing') ? incoming.status : existing.status,
+      };
+    });
+
+    // Append any sections that exist only in the web app (added manually, not from Figma)
+    existingSections
+      .filter(s => !matchedIds.has(s.id))
+      .forEach(s => mergedSections.push(s));
+
+    existingProj.pages[pageKey].sections = mergedSections;
+
+    saveProjects();
+    history.replaceState({}, '', '?project=' + existingProj.id);
+    openProject(existingProj.id);
+    return;
+  }
+
+  // ── No matching project found — create a new one ──
   const id  = generateId();
   const proj = {
     id,
@@ -2398,10 +2413,13 @@ function handlePluginImport(data) {
     }
   };
 
-  // Ensure all page keys exist and sections have IDs
+  // Ensure all page keys exist; ensure sections have IDs and strip any // prefix from names
   Object.keys(PAGE_DEFS).forEach(k => {
     if (!proj.pages[k]) proj.pages[k] = { loomUrl: '', figmaUrl: '', sections: [] };
-    (proj.pages[k].sections || []).forEach(s => { if (!s.id) s.id = generateId(); else s.id = String(s.id); });
+    (proj.pages[k].sections || []).forEach(s => {
+      if (!s.id) s.id = generateId(); else s.id = String(s.id);
+      if (s.name) s.name = stripSectionPrefix(s.name);
+    });
   });
 
   projects.push(proj);

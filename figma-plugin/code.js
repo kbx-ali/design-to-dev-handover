@@ -7,27 +7,59 @@ figma.showUI(__html__, {
   title:  'Design → Dev Handover'
 });
 
+// Prefix that marks a frame as an explicit section, regardless of nesting depth.
+const SECTION_PREFIX = '//';
+
+// Recursively search all descendants of `node` for frames/components/groups
+// whose name starts with SECTION_PREFIX. Returns them as section objects,
+// with the prefix stripped from the display name.
+function findPrefixedSections(node, fileKey, pageName) {
+  const results = [];
+  for (const child of (node.children || [])) {
+    if (child.visible === false) continue;
+    const isContainer = child.type === 'FRAME' || child.type === 'COMPONENT' || child.type === 'GROUP';
+    if (!isContainer) continue;
+
+    if (child.name.startsWith(SECTION_PREFIX)) {
+      results.push({
+        id:        child.id,
+        name:      child.name.slice(SECTION_PREFIX.length).trim(),
+        figmaLink: fileKey
+          ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${child.id.replace(':', '-')}`
+          : ''
+      });
+    }
+    // Always recurse — a // frame may itself contain further // frames
+    results.push(...findPrefixedSections(child, fileKey, pageName));
+  }
+  return results;
+}
+
 function buildPageData() {
   const page     = figma.currentPage;
   const fileKey  = figma.fileKey || '';
   const pageName = page.name;
 
-  // Build every top-level frame with its own resolved sections list.
-  // If a frame has child frames/groups those children become sections;
-  // otherwise the frame itself is the single section.
+  const toSection = node => ({
+    id:        node.id,
+    name:      node.name.startsWith(SECTION_PREFIX) ? node.name.slice(SECTION_PREFIX.length).trim() : node.name,
+    figmaLink: fileKey
+      ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${node.id.replace(':', '-')}`
+      : ''
+  });
+
   const topFrames = page.children
     .filter(n => n.type === 'FRAME' && n.visible !== false)
     .map(n => {
+      // 1. Look for explicitly prefixed sections anywhere in the subtree
+      const prefixed = findPrefixedSections(n, fileKey, pageName);
+      if (prefixed.length > 0) {
+        return { id: n.id, name: n.name, childCount: prefixed.length, sections: prefixed };
+      }
+
+      // 2. Fallback: direct children (original behaviour, no prefix used)
       const childFrames = (n.children || [])
         .filter(c => (c.type === 'FRAME' || c.type === 'COMPONENT' || c.type === 'GROUP') && c.visible !== false);
-
-      const toSection = node => ({
-        id:        node.id,
-        name:      node.name,
-        figmaLink: fileKey
-          ? `https://www.figma.com/design/${fileKey}/${encodeURIComponent(pageName)}?node-id=${node.id.replace(':', '-')}`
-          : ''
-      });
 
       return {
         id:         n.id,
