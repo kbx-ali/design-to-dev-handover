@@ -1656,7 +1656,9 @@ function exportToClickUp(btn) {
   const proj = getActiveProject();
   if (!proj) return;
 
-  const statusTag = { existing: 'Existing Section', modified: 'Needs New Settings', bespoke: 'Bespoke Section' };
+  const statusTag    = { existing: 'existing section', modified: 'needs new settings', bespoke: 'custom-dev' };
+  const projName     = proj.title || 'Untitled Project';
+  const pageLabelMap = { homepage: 'HOMEPAGE', collection: 'COLLECTION PAGE', product: 'PRODUCT PAGE' };
 
   function csvCell(val) {
     const s = (val == null ? '' : String(val));
@@ -1666,10 +1668,9 @@ function exportToClickUp(btn) {
     return s;
   }
 
-  const rows = [['Task Name', 'Description', 'Priority', 'Tags', 'Parent Task']];
-  const pageOrder = ['homepage', 'collection', 'product'];
+  const rows = [['Task Name', 'Task Content', 'Status', 'Priority', 'tags', 'List']];
 
-  pageOrder.forEach(key => {
+  ['homepage', 'collection', 'product'].forEach(key => {
     const pg = proj.pages[key];
     if (!pg) return;
     const def = PAGE_DEFS[key];
@@ -1677,24 +1678,23 @@ function exportToClickUp(btn) {
     const sections = pg.sections || [];
     if (sections.length === 0) return;
 
-    // Parent task row for this page
-    const parentDescParts = [];
-    if (pg.loomUrl)  parentDescParts.push('Loom: '  + pg.loomUrl);
-    if (pg.figmaUrl) parentDescParts.push('Figma: ' + pg.figmaUrl);
-    rows.push([def.label, parentDescParts.join('\n'), '', '', '']);
+    // Page task — capitalised label + project name
+    const parentName    = (pageLabelMap[key] || def.label.toUpperCase()) + ' - ' + projName;
+    const parentContent = [
+      pg.figmaUrl ? 'Figma: ' + pg.figmaUrl : '',
+      pg.loomUrl  ? 'Loom: '  + pg.loomUrl  : ''
+    ].filter(Boolean).join('\n');
 
-    // Subtask rows for each section
+    rows.push([parentName, parentContent, 'Open', '', '', projName]);
+
+    // Section tasks — flat, manual subtask conversion in ClickUp
     sections.forEach(s => {
-      const descParts = [];
-      if (s.notes)    descParts.push(s.notes);
-      if (s.figmaLink) descParts.push('Figma: ' + s.figmaLink);
-      rows.push([
-        s.name,
-        descParts.join('\n\n'),
-        '',
-        statusTag[s.status] || '',
-        def.label
-      ]);
+      const content = [
+        s.notes     || '',
+        s.figmaLink ? 'Figma: ' + s.figmaLink : ''
+      ].filter(Boolean).join('\n\n');
+
+      rows.push([s.name, content, 'Open', '', statusTag[s.status] || '', projName]);
     });
   });
 
