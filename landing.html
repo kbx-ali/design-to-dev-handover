@@ -1896,8 +1896,8 @@
       'hero-cursor-ali':    [{x:6,y:12},{x:11,y:30},{x:5,y:52},{x:13,y:70},{x:8,y:86},{x:15,y:65},{x:7,y:40}],
       'hero-cursor-elodie': [{x:83,y:10},{x:89,y:32},{x:79,y:55},{x:86,y:74},{x:92,y:46},{x:81,y:22},{x:87,y:6}],
       'hero-cursor-kel':    [{x:22,y:8},{x:17,y:22},{x:24,y:38},{x:19,y:55},{x:14,y:70},{x:21,y:82},{x:16,y:92}],
-      'hero-cursor-lucy':   [{x:74,y:80},{x:80,y:90},{x:87,y:78},{x:82,y:92},{x:76,y:96},{x:70,y:84},{x:78,y:88}],
-      'hero-cursor-alec':   [{x:5,y:86},{x:11,y:94},{x:3,y:78},{x:9,y:72},{x:16,y:86},{x:7,y:90},{x:13,y:80}],
+      'hero-cursor-lucy':   [{x:74,y:8},{x:80,y:26},{x:87,y:44},{x:82,y:62},{x:76,y:80},{x:70,y:56},{x:78,y:34}],
+      'hero-cursor-alec':   [{x:40,y:14},{x:52,y:30},{x:44,y:48},{x:56,y:66},{x:48,y:82},{x:60,y:50},{x:50,y:28}],
       'hero-cursor-nate':   [{x:89,y:20},{x:94,y:36},{x:88,y:54},{x:93,y:68},{x:96,y:40},{x:90,y:26},{x:95,y:14}],
       'hero-cursor-tom':    [{x:16,y:24},{x:9,y:36},{x:19,y:50},{x:11,y:62},{x:20,y:42},{x:10,y:28},{x:17,y:54}],
       'hero-cursor-mell':   [{x:76,y:16},{x:71,y:6},{x:79,y:26},{x:73,y:13},{x:81,y:20},{x:69,y:10},{x:78,y:4}]
@@ -1906,8 +1906,9 @@
     // Simple looping waypoint animator (for CTA)
     function animateCursor(el, waypoints, base) {
       if (!el) return;
-      gsap.set(el, { left: waypoints[0].x+'%', top: waypoints[0].y+'%' });
-      let i = 1;
+      const start = Math.floor(Math.random() * waypoints.length);
+      gsap.set(el, { left: waypoints[start].x+'%', top: waypoints[start].y+'%' });
+      let i = start + 1;
       (function step() {
         const wp = waypoints[i++ % waypoints.length];
         gsap.to(el, { left: wp.x+'%', top: wp.y+'%',
@@ -1917,10 +1918,11 @@
     }
 
     // Interruptible stepper (for hero — supports button attraction)
-    function makeStepper(el, waypoints, baseDur) {
+    function makeStepper(el, waypoints, baseDur, startPos) {
       if (!el) return null;
+      const sp = startPos || { x: 5 + Math.random() * 88, y: 5 + Math.random() * 85 };
       let idx = 0, paused = false;
-      gsap.set(el, { left: waypoints[0].x+'%', top: waypoints[0].y+'%' });
+      gsap.set(el, { left: sp.x.toFixed(1)+'%', top: sp.y.toFixed(1)+'%' });
       function step() {
         if (paused) return;
         idx = (idx + 1) % waypoints.length;
@@ -1958,9 +1960,27 @@
     const heroEls = heroIds.map(id => document.getElementById(id)).filter(Boolean);
     gsap.to(heroEls, { opacity: 0.88, duration: 1.2, stagger: 0.14, ease: 'power2.out', delay: 1.0 });
 
+    // Divide hero into 8 zones and pick a random point in each, then shuffle.
+    // This guarantees all cursors start spread across the full hero on every load.
+    const heroZones = [
+      { x:[4,40],  y:[4,35]  },  // top-left
+      { x:[58,94], y:[4,35]  },  // top-right
+      { x:[4,25],  y:[40,88] },  // mid-left
+      { x:[73,94], y:[40,88] },  // mid-right
+      { x:[28,52], y:[4,22]  },  // top-centre
+      { x:[28,52], y:[72,92] },  // bottom-centre
+      { x:[4,40],  y:[58,92] },  // bottom-left
+      { x:[58,94], y:[58,92] },  // bottom-right
+    ];
+    const rndInZone = z => ({
+      x: z.x[0] + Math.random() * (z.x[1] - z.x[0]),
+      y: z.y[0] + Math.random() * (z.y[1] - z.y[0])
+    });
+    const heroStarts = heroZones.map(rndInZone).sort(() => Math.random() - 0.5);
+
     heroIds.forEach((id, i) => {
       const el = document.getElementById(id);
-      steppers[id] = makeStepper(el, heroPaths[id], heroBases[i]);
+      steppers[id] = makeStepper(el, heroPaths[id], heroBases[i], heroStarts[i]);
     });
 
     // ── plug-ui-input project name typewriter ──

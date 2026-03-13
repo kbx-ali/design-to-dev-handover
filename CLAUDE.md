@@ -106,20 +106,55 @@ Figma re-reads all plugin files from disk on each relaunch. Skipping this step m
 - After merging, `saveToGist()` is called immediately — this prevents the 15-second Gist poller from overwriting the merged data with stale Gist content before the user can see the changes (the poller uses `lastHash` equality to skip unchanged data; without the immediate save, `lastHash` is empty and the poller always overwrites)
 - Diagnostic `console.log('[PluginImport] ...')` lines trace: incoming gistId + fileKey, which project was matched (and by which method), section-level merge results. Check the browser console to debug any matching issues
 
-## Planned future work
+## Landing page (`landing.html`)
 
-### Designer onboarding landing page
-Build a public landing page for designers (new and existing) to:
-- **Download the web app files** (`index.html` + `design-to-dev-handover-v3-figma.html`) for self-hosting
-- **Get the Figma plugin** (link to Figma Community or manual install instructions)
-- **Step-by-step setup guide:**
-  1. Get a GitHub token (Gist scope only)
-  2. Get a Figma personal access token
-  3. Install the Figma plugin
-  4. Host the web app (Netlify Drop recommended for simplicity)
-  5. Configure tokens in the app settings
-- Should be branded Kubix, clean and simple
-- Separate from the handover tool itself — purely informational/download page
+A public-facing designer onboarding page now exists at `kbx-ali.github.io/design-to-dev-handover/landing.html`. It covers:
+- Hero section with animated named cursors (Ali, Tom, Kel, Nate, Elodie, Mell, Alec, Lucy) roaming the full hero area with randomised starting positions on each load
+- Features grid, how-it-works flow, setup guide, download cards
+- Download buttons point to `/releases/latest/download/handover-app.zip` and `/releases/latest/download/figma-plugin.zip`
+- Version badge fetches the latest GitHub release tag via the API
+
+### Landing page icon set (all pixel-art SVGs)
+| Location | Icon |
+|---|---|
+| Get Started buttons (nav + hero + bottom CTA) | `zap` |
+| Plugin section button | `section-plus` |
+| Share the link | `external-link` |
+| Status at a glance card | `eye` |
+| All the links! card | `eye` |
+| Export Task Breakdown card | `tournament` |
+| Features grid — Status card | `unlink` (teal `#0D6987`) |
+| Features grid — Links card | `eye` (orchid `#E591E5`) |
+
+### Landing page cursor animation notes
+- 8 cursors defined in `heroPaths` object — each has 7 waypoints as `{x, y}` percentages of the `.hero-cursors` container
+- Starting positions are zone-based random on each load (hero divided into 8 zones, positions shuffled before assignment) — no two loads look the same
+- Alec and Lucy previously had all waypoints at y:72–96 (below fold) — fixed to full vertical range y:8–82
+- `makeStepper()` sets cursor to random start position via `gsap.set`, then animates through waypoints in a loop
+- Cursor names: Ali (yellow), Tom (yellow), Kel (green), Nate (purple), Elodie (purple), Mell (teal), Alec (purple), Lucy (teal)
+
+### Landing page copy
+- Section label: **"Our Internal Figma Plugin"**
+- Plugin heading: **"Tag Sections. Make Notes. One Click Sync."**
+- Typewriter animation cycles: *Ruffingtons*, *Just Vitamins*, *Sheridans Cheesemongers*
+- Mock stat label: **SECTIONS**
+- Mock pill value: **Project Name here...**
+- Footer heart: `love-emoji.png` (replaces inline SVG)
+
+### ⚠️ Setup guide — known onboarding issue
+New users who navigate directly to the editor URL (`/design-to-dev-handover-v3-figma.html`) without any `localStorage` tokens will see the "Project link required" protection page. The setup guide needs to be updated with real screenshots to clarify:
+1. Go to the **direct editor URL** (not the root)
+2. The editor gate requires `gist_token` + `figma_token` in `localStorage` before it will render
+3. Screenshots of token setup screens (GitHub + Figma) should replace the current stylised mockups in the setup guide steps — screenshots are being added by the team this weekend
+
+## Release packaging (`release.sh` + `dist/`)
+- `release.sh` — packages `dist/handover-app.zip` (index.html + editor) and `dist/figma-plugin.zip` (manifest + code + ui)
+- Run `bash release.sh` then drag both zips into a new GitHub Release
+- `dist/` zips are also committed to the repo and served via GitHub Pages at `/dist/` for direct download
+- Current release: **v1.0.0**
+- To cut a new release: run `release.sh`, commit updated `dist/`, create GitHub Release with the new tag, attach both zips
+
+## Planned future work
 
 ---
 
@@ -215,3 +250,41 @@ The plugin uses a `//` prefix to identify section frames when a page has interme
 
 ### Critical deployment note
 All previous session fixes (gistId-first matching, status merge fix, dirty state tracking, GitHub token for pull, immediate saveToGist after merge) were in the **working tree only** — never committed or deployed. The plugin opens the **deployed** web app at `kbx-ali.github.io`, which still had the old buggy `handlePluginImport`. This was the root cause of all three reported issues. **All changes must be committed and pushed to GitHub Pages for the fixes to take effect.**
+
+---
+
+## Session log — 2026-03-13
+
+### What was built / changed
+
+#### Landing page created (`landing.html`)
+- Full designer onboarding page built from scratch and deployed to GitHub Pages
+- Features: hero with animated cursors, features grid, how-it-works flow, setup guide, download cards
+- Pixel icon set throughout (zap, eye, unlink, tournament, section-plus, external-link)
+- Typewriter animation on plugin UI mockup cycling project names: *Ruffingtons*, *Just Vitamins*, *Sheridans Cheesemongers*
+- `love-emoji.png` used in footer
+- Deployed alongside existing files; no changes to `index.html` or editor required
+
+#### Release packaging
+- `release.sh` script created — builds `dist/handover-app.zip` and `dist/figma-plugin.zip`
+- `dist/` committed and pushed to GitHub Pages
+- v1.0.0 release notes written (full feature description)
+- Release guide documented: run script → commit dist → GitHub Releases → attach zips
+
+#### Plugin: first-launch & new-file detection (already built, confirmed working)
+- **Welcome screen** (`screen-welcome`) — shown when `!state.hasExported && !state.cachedFileKey`. Explains setup flow, has "Open Web App" button and skip link. Logic waits for all 8 storage keys + page-data before deciding to avoid flicker.
+- **New-file modal** (`#new-file-modal`) — shown when `state.fileKey !== state.cachedFileKey`. Blurred backdrop, "Looks like a new Figma file", "Start a new project" clears project state + updates cachedFileKey, "Continue where I left off" just updates cachedFileKey.
+- `checkFileContext()` called by `_maybeCheckFileContext()` once all init data is loaded
+- To test welcome screen: **Settings → Reset All Data**, then relaunch plugin
+- To test new-file modal: open plugin in a different Figma file after having used it in another
+
+#### Elodie onboarding issue diagnosed
+- **Symptom:** Elodie uploaded the zip to Netlify Drop, opened root URL, saw "Project link required"
+- **Root cause:** The protection gate in the editor requires `gist_token` + `figma_token` in `localStorage`. A fresh browser has neither, so the gate fires and replaces the body before anything renders. The root URL correctly shows the neutral page — this is by design.
+- **Fix/workaround:** Direct users to the editor URL explicitly: `https://[their-netlify-site].netlify.app/design-to-dev-handover-v3-figma.html`. From there they can enter tokens and the gate will pass on next load.
+- **TODO:** Update landing page setup guide with real screenshots + explicit editor URL in step 3
+
+#### Cursor animation fixes
+- **Issue:** Alec and Lucy were always below the fold — their waypoints were all at y:72–96%
+- **Fix:** Updated both cursors' waypoint paths to span full vertical range (y:8–82)
+- All 8 cursors now have zone-based random starting positions on each load — hero divided into 8 zones, one cursor assigned per zone, zones shuffled before assignment
