@@ -925,11 +925,12 @@ const VIEWER_MODE = !!new URLSearchParams(location.search).get('gist');
 // let straight through — no friction for existing users.
 (function () {
   const params = new URLSearchParams(location.search);
-  if (VIEWER_MODE || params.get('import')) return; // shared viewer links always work
+  if (VIEWER_MODE || params.get('import') || params.get('setup')) return; // viewer, import, and first-time setup always pass
   const hasCredentials = localStorage.getItem('gist_token') || localStorage.getItem('figma_token');
   if (hasCredentials) return; // designer with stored tokens — let through
 
   // No credentials and no project link → show neutral access page
+  const setupUrl = location.pathname + '?setup=1';
   document.body.innerHTML = '';
   document.body.style.cssText = 'margin:0;background:#141416;display:flex;align-items:center;justify-content:center;height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;';
   document.body.innerHTML = `
@@ -938,6 +939,9 @@ const VIEWER_MODE = !!new URLSearchParams(location.search).get('gist');
       <h2 style="font-size:18px;font-weight:700;margin-bottom:10px;letter-spacing:-0.01em;">Project link required</h2>
       <p style="font-size:13px;color:#6E6E74;line-height:1.65;margin-bottom:22px;">This is an internal handover tool. To view a project, use the full link provided by your designer.</p>
       <span style="display:inline-block;background:#28282B;border:1px solid #3E3E42;border-radius:99px;padding:8px 18px;font-size:12px;color:#A0A0A6;">Contact your designer for the project link</span>
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid #28282B;">
+        <a href="${setupUrl}" style="font-size:12px;color:#6E6E74;text-decoration:none;">Setting this up for the first time? <span style="color:#FFFF00;">Enter your tokens →</span></a>
+      </div>
     </div>`;
   throw 0; // stop all further script execution
 })();
@@ -2048,6 +2052,12 @@ function stripSectionPrefix(name) {
   migrateV1();
   projects = loadProjects(); // reload after potential migration
   renderLibrary();
+
+  // ── ?setup=1 — first-time setup: auto-open the settings modal ──
+  if (params.get('setup')) {
+    // Small delay so the library has rendered before the modal opens
+    setTimeout(() => openGlobalSettings(), 300);
+  }
 })();
 
 // ═══════════════════════════════════════════════════════════════
