@@ -339,6 +339,82 @@ html, body {
 #pull-btn .icon-pull-spin { display: none; }
 #pull-btn.pulling .icon-pull      { display: none; }
 #pull-btn.pulling .icon-pull-spin { display: block; animation: kbx-spin 0.7s linear infinite; }
+
+/* ── Welcome screen ──────────────────────────────────────── */
+#screen-welcome .content {
+  align-items: center; justify-content: center; text-align: center; gap: 20px;
+}
+.welcome-icon {
+  width: 52px; height: 52px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto;
+}
+.welcome-title {
+  font-family: var(--font-heading); font-size: 16px; font-weight: 700;
+  color: var(--text); line-height: 1.3;
+}
+.welcome-desc {
+  font-size: 12px; color: var(--text-mute); line-height: 1.7;
+  max-width: 280px; margin: 0 auto;
+}
+.welcome-steps {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  text-align: left; display: flex; flex-direction: column; gap: 10px;
+  width: 100%;
+}
+.welcome-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 11.5px; color: var(--text-sec); line-height: 1.5;
+}
+.welcome-step-num {
+  flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--kbx-teal); color: #fff;
+  font-size: 10px; font-weight: 700; display: flex;
+  align-items: center; justify-content: center; margin-top: 1px;
+}
+.welcome-skip {
+  font-size: 11px; color: var(--text-sub); background: none; border: none;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+  font-family: var(--font-body); padding: 0; transition: color 0.15s;
+}
+.welcome-skip:hover { color: var(--text-mute); }
+
+/* ── New-file modal ──────────────────────────────────────── */
+#new-file-modal {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#new-file-modal.show { display: flex; }
+.modal-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px 18px 18px; width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.75);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.modal-icon {
+  width: 42px; height: 42px; background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-title {
+  font-family: var(--font-heading); font-size: 15px; font-weight: 700;
+  color: var(--text); line-height: 1.3;
+}
+.modal-sub {
+  font-size: 11.5px; color: var(--text-mute); line-height: 1.65; margin-top: -4px;
+}
+.modal-prev {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-sub);
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 10px; display: inline-block;
+  font-family: var(--font-body);
+}
+.modal-btns { display: flex; flex-direction: column; gap: 7px; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -499,7 +575,71 @@ html, body {
 
   </div><!-- /screen-settings -->
 
+
+  <!-- ═══ WELCOME SCREEN (first ever launch) ════════════════════ -->
+  <div id="screen-welcome" class="screen">
+    <div class="hdr">
+      <div class="hdr-logo">
+        <svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="2" width="1" height="1" fill="#FFFF00"/><rect x="17" y="2" width="1" height="1" fill="#FFFF00"/><rect x="18" y="2" width="1" height="1" fill="#FFFF00"/><rect x="6" y="3" width="1" height="1" fill="#FFFF00"/><rect x="7" y="3" width="1" height="1" fill="#FFFF00"/><rect x="8" y="3" width="1" height="1" fill="#FFFF00"/><rect x="16" y="3" width="1" height="1" fill="#FFFF00"/><rect x="17" y="3" width="1" height="1" fill="#FFFF00"/><rect x="18" y="3" width="1" height="1" fill="#FFFF00"/><rect x="6" y="4" width="1" height="1" fill="#FFFF00"/><rect x="7" y="4" width="1" height="1" fill="#FFFF00"/><rect x="8" y="4" width="1" height="1" fill="#FFFF00"/><rect x="16" y="4" width="1" height="1" fill="#FFFF00"/><rect x="17" y="4" width="1" height="1" fill="#FFFF00"/><rect x="18" y="4" width="1" height="1" fill="#FFFF00"/><rect x="6" y="5" width="1" height="1" fill="#FFFF00"/><rect x="7" y="5" width="1" height="1" fill="#FFFF00"/><rect x="8" y="5" width="1" height="1" fill="#FFFF00"/><rect x="15" y="5" width="1" height="1" fill="#FFFF00"/><rect x="16" y="5" width="1" height="1" fill="#FFFF00"/><rect x="17" y="5" width="1" height="1" fill="#FFFF00"/><rect x="3" y="6" width="1" height="1" fill="#FFFF00"/><rect x="4" y="6" width="1" height="1" fill="#FFFF00"/><rect x="5" y="6" width="1" height="1" fill="#FFFF00"/><rect x="15" y="6" width="1" height="1" fill="#FFFF00"/><rect x="16" y="6" width="1" height="1" fill="#FFFF00"/><rect x="17" y="6" width="1" height="1" fill="#FFFF00"/><rect x="3" y="7" width="1" height="1" fill="#FFFF00"/><rect x="4" y="7" width="1" height="1" fill="#FFFF00"/><rect x="5" y="7" width="1" height="1" fill="#FFFF00"/><rect x="15" y="7" width="1" height="1" fill="#FFFF00"/><rect x="16" y="7" width="1" height="1" fill="#FFFF00"/><rect x="17" y="7" width="1" height="1" fill="#FFFF00"/><rect x="3" y="8" width="1" height="1" fill="#FFFF00"/><rect x="4" y="8" width="1" height="1" fill="#FFFF00"/><rect x="5" y="8" width="1" height="1" fill="#FFFF00"/><rect x="14" y="8" width="1" height="1" fill="#FFFF00"/><rect x="15" y="8" width="1" height="1" fill="#FFFF00"/><rect x="16" y="8" width="1" height="1" fill="#FFFF00"/><rect x="0" y="9" width="1" height="1" fill="#FFFF00"/><rect x="1" y="9" width="1" height="1" fill="#FFFF00"/><rect x="2" y="9" width="1" height="1" fill="#FFFF00"/><rect x="14" y="9" width="1" height="1" fill="#FFFF00"/><rect x="15" y="9" width="1" height="1" fill="#FFFF00"/><rect x="16" y="9" width="1" height="1" fill="#FFFF00"/><rect x="0" y="10" width="1" height="1" fill="#FFFF00"/><rect x="1" y="10" width="1" height="1" fill="#FFFF00"/><rect x="2" y="10" width="1" height="1" fill="#FFFF00"/><rect x="14" y="10" width="1" height="1" fill="#FFFF00"/><rect x="15" y="10" width="1" height="1" fill="#FFFF00"/><rect x="16" y="10" width="1" height="1" fill="#FFFF00"/><rect x="19" y="10" width="1" height="1" fill="#FFFF00"/><rect x="20" y="10" width="1" height="1" fill="#FFFF00"/><rect x="21" y="10" width="1" height="1" fill="#FFFF00"/><rect x="0" y="11" width="1" height="1" fill="#FFFF00"/><rect x="1" y="11" width="1" height="1" fill="#FFFF00"/><rect x="2" y="11" width="1" height="1" fill="#FFFF00"/><rect x="13" y="11" width="1" height="1" fill="#FFFF00"/><rect x="14" y="11" width="1" height="1" fill="#FFFF00"/><rect x="15" y="11" width="1" height="1" fill="#FFFF00"/><rect x="19" y="11" width="1" height="1" fill="#FFFF00"/><rect x="20" y="11" width="1" height="1" fill="#FFFF00"/><rect x="21" y="11" width="1" height="1" fill="#FFFF00"/><rect x="3" y="12" width="1" height="1" fill="#FFFF00"/><rect x="4" y="12" width="1" height="1" fill="#FFFF00"/><rect x="5" y="12" width="1" height="1" fill="#FFFF00"/><rect x="13" y="12" width="1" height="1" fill="#FFFF00"/><rect x="14" y="12" width="1" height="1" fill="#FFFF00"/><rect x="15" y="12" width="1" height="1" fill="#FFFF00"/><rect x="19" y="12" width="1" height="1" fill="#FFFF00"/><rect x="20" y="12" width="1" height="1" fill="#FFFF00"/><rect x="21" y="12" width="1" height="1" fill="#FFFF00"/><rect x="3" y="13" width="1" height="1" fill="#FFFF00"/><rect x="4" y="13" width="1" height="1" fill="#FFFF00"/><rect x="5" y="13" width="1" height="1" fill="#FFFF00"/><rect x="13" y="13" width="1" height="1" fill="#FFFF00"/><rect x="14" y="13" width="1" height="1" fill="#FFFF00"/><rect x="15" y="13" width="1" height="1" fill="#FFFF00"/><rect x="22" y="13" width="1" height="1" fill="#FFFF00"/><rect x="23" y="13" width="1" height="1" fill="#FFFF00"/><rect x="24" y="13" width="1" height="1" fill="#FFFF00"/><rect x="3" y="14" width="1" height="1" fill="#FFFF00"/><rect x="4" y="14" width="1" height="1" fill="#FFFF00"/><rect x="5" y="14" width="1" height="1" fill="#FFFF00"/><rect x="12" y="14" width="1" height="1" fill="#FFFF00"/><rect x="13" y="14" width="1" height="1" fill="#FFFF00"/><rect x="14" y="14" width="1" height="1" fill="#FFFF00"/><rect x="22" y="14" width="1" height="1" fill="#FFFF00"/><rect x="23" y="14" width="1" height="1" fill="#FFFF00"/><rect x="24" y="14" width="1" height="1" fill="#FFFF00"/><rect x="6" y="15" width="1" height="1" fill="#FFFF00"/><rect x="7" y="15" width="1" height="1" fill="#FFFF00"/><rect x="8" y="15" width="1" height="1" fill="#FFFF00"/><rect x="12" y="15" width="1" height="1" fill="#FFFF00"/><rect x="13" y="15" width="1" height="1" fill="#FFFF00"/><rect x="14" y="15" width="1" height="1" fill="#FFFF00"/><rect x="22" y="15" width="1" height="1" fill="#FFFF00"/><rect x="23" y="15" width="1" height="1" fill="#FFFF00"/><rect x="24" y="15" width="1" height="1" fill="#FFFF00"/><rect x="6" y="16" width="1" height="1" fill="#FFFF00"/><rect x="7" y="16" width="1" height="1" fill="#FFFF00"/><rect x="8" y="16" width="1" height="1" fill="#FFFF00"/><rect x="12" y="16" width="1" height="1" fill="#FFFF00"/><rect x="13" y="16" width="1" height="1" fill="#FFFF00"/><rect x="14" y="16" width="1" height="1" fill="#FFFF00"/><rect x="25" y="16" width="1" height="1" fill="#FFFF00"/><rect x="26" y="16" width="1" height="1" fill="#FFFF00"/><rect x="27" y="16" width="1" height="1" fill="#FFFF00"/><rect x="6" y="17" width="1" height="1" fill="#FFFF00"/><rect x="7" y="17" width="1" height="1" fill="#FFFF00"/><rect x="8" y="17" width="1" height="1" fill="#FFFF00"/><rect x="11" y="17" width="1" height="1" fill="#FFFF00"/><rect x="12" y="17" width="1" height="1" fill="#FFFF00"/><rect x="13" y="17" width="1" height="1" fill="#FFFF00"/><rect x="25" y="17" width="1" height="1" fill="#FFFF00"/><rect x="26" y="17" width="1" height="1" fill="#FFFF00"/><rect x="27" y="17" width="1" height="1" fill="#FFFF00"/><rect x="11" y="18" width="1" height="1" fill="#FFFF00"/><rect x="12" y="18" width="1" height="1" fill="#FFFF00"/><rect x="13" y="18" width="1" height="1" fill="#FFFF00"/><rect x="25" y="18" width="1" height="1" fill="#FFFF00"/><rect x="26" y="18" width="1" height="1" fill="#FFFF00"/><rect x="27" y="18" width="1" height="1" fill="#FFFF00"/><rect x="11" y="19" width="1" height="1" fill="#FFFF00"/><rect x="12" y="19" width="1" height="1" fill="#FFFF00"/><rect x="13" y="19" width="1" height="1" fill="#FFFF00"/><rect x="22" y="19" width="1" height="1" fill="#FFFF00"/><rect x="23" y="19" width="1" height="1" fill="#FFFF00"/><rect x="24" y="19" width="1" height="1" fill="#FFFF00"/><rect x="10" y="20" width="1" height="1" fill="#FFFF00"/><rect x="11" y="20" width="1" height="1" fill="#FFFF00"/><rect x="12" y="20" width="1" height="1" fill="#FFFF00"/><rect x="22" y="20" width="1" height="1" fill="#FFFF00"/><rect x="23" y="20" width="1" height="1" fill="#FFFF00"/><rect x="24" y="20" width="1" height="1" fill="#FFFF00"/><rect x="10" y="21" width="1" height="1" fill="#FFFF00"/><rect x="11" y="21" width="1" height="1" fill="#FFFF00"/><rect x="12" y="21" width="1" height="1" fill="#FFFF00"/><rect x="22" y="21" width="1" height="1" fill="#FFFF00"/><rect x="23" y="21" width="1" height="1" fill="#FFFF00"/><rect x="24" y="21" width="1" height="1" fill="#FFFF00"/><rect x="10" y="22" width="1" height="1" fill="#FFFF00"/><rect x="11" y="22" width="1" height="1" fill="#FFFF00"/><rect x="12" y="22" width="1" height="1" fill="#FFFF00"/><rect x="19" y="22" width="1" height="1" fill="#FFFF00"/><rect x="20" y="22" width="1" height="1" fill="#FFFF00"/><rect x="21" y="22" width="1" height="1" fill="#FFFF00"/><rect x="9" y="23" width="1" height="1" fill="#FFFF00"/><rect x="10" y="23" width="1" height="1" fill="#FFFF00"/><rect x="11" y="23" width="1" height="1" fill="#FFFF00"/><rect x="19" y="23" width="1" height="1" fill="#FFFF00"/><rect x="20" y="23" width="1" height="1" fill="#FFFF00"/><rect x="21" y="23" width="1" height="1" fill="#FFFF00"/><rect x="9" y="24" width="1" height="1" fill="#FFFF00"/><rect x="10" y="24" width="1" height="1" fill="#FFFF00"/><rect x="11" y="24" width="1" height="1" fill="#FFFF00"/><rect x="19" y="24" width="1" height="1" fill="#FFFF00"/><rect x="20" y="24" width="1" height="1" fill="#FFFF00"/><rect x="21" y="24" width="1" height="1" fill="#FFFF00"/><rect x="9" y="25" width="1" height="1" fill="#FFFF00"/><rect x="10" y="25" width="1" height="1" fill="#FFFF00"/><rect x="11" y="25" width="1" height="1" fill="#FFFF00"/></svg>
+        <div class="hdr-logo-text">
+          <div class="title">Design → Dev</div>
+          <div class="subtitle">Handover</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="welcome-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><path fill="var(--kbx-yellow)" d="M12 1h2v8h8v4h-2v-2h-8V5h-2V3h2zM8 7V5h2v2zM6 9V7h2v2zm-2 2V9h2v2zm10 8v2h-2v2h-2v-8H2v-4h2v2h8v6zm2-2v2h-2v-2zm2-2v2h-2v-2zm0 0h2v-2h-2z"/></svg>
+      </div>
+      <div class="welcome-title">Set up the web app first</div>
+      <p class="welcome-desc">The plugin syncs to a hosted web app. You'll need to set that up before using the plugin — it only takes a few minutes.</p>
+
+      <div class="welcome-steps">
+        <div class="welcome-step">
+          <span class="welcome-step-num">1</span>
+          <span>Host the web app files on <strong>Netlify Drop</strong> (drag &amp; drop, free, 30 seconds)</span>
+        </div>
+        <div class="welcome-step">
+          <span class="welcome-step-num">2</span>
+          <span>Open your hosted app and paste in your <strong>GitHub token</strong> and <strong>Figma token</strong> in Settings</span>
+        </div>
+        <div class="welcome-step">
+          <span class="welcome-step-num">3</span>
+          <span>Come back here, open <strong>Settings</strong> and paste your app URL + the same GitHub token</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer" style="flex-direction:column; gap:8px;">
+      <button class="btn-primary" id="welcome-open-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M21 11V3h-8v2h4v2h-2v2h-2v2h-2v2H9v2h2v-2h2v-2h2V9h2V7h2v4zM11 5H3v16h16v-8h-2v6H5V7h6z"/></svg>
+        Open Web App
+      </button>
+      <button class="welcome-skip" id="welcome-skip-btn">I've already configured the app →</button>
+    </div>
+  </div><!-- /screen-welcome -->
+
 </div><!-- /root -->
+
+<!-- ═══ NEW-FILE MODAL (different file detected) ══════════════ -->
+<div id="new-file-modal">
+  <div class="modal-card">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="var(--kbx-yellow)" d="M3 3h2v2H3zm4 0h2v2H7zm2 16H7v2h2zm2 0h2v2h-2zM5 7H3v2h2zm14 0h2v2h-2zm2 4h-2v2h2zM3 11h2v2H3zm2 4H3v2h2zm12 0h2v2h2v2h-2v2h-2v-2h-2v-2h2zM5 19H3v2h2zm6-16h2v2h-2zm6 0h-2v2h2zm4 0h-2v2h2z"/></svg>
+    </div>
+    <div class="modal-title">Looks like a new Figma file</div>
+    <p class="modal-sub">This file is different from the one you last worked on. What would you like to do?</p>
+    <div class="modal-prev" id="modal-prev-project">—</div>
+    <div class="modal-btns">
+      <button class="btn-primary" id="modal-new-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h2v2H3zm4 0h2v2H7zm2 16H7v2h2zm2 0h2v2h-2zM5 7H3v2h2zm14 0h2v2h-2zm2 4h-2v2h2zM3 11h2v2H3zm2 4H3v2h2zm12 0h2v2h2v2h-2v2h-2v-2h-2v-2h2zM5 19H3v2h2zm6-16h2v2h-2zm6 0h-2v2h2zm4 0h-2v2h2z"/></svg>
+        Start a new project
+      </button>
+      <button class="btn-secondary" id="modal-continue-btn">Continue where I left off</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1045,6 +1185,7 @@ window.onmessage = event => {
 
   if (msg.type === 'page-data') {
     const d = msg.data;
+    _pageDataReady = true;
     state.pageName     = d.pageName;
     state.fileKey      = d.fileKey;
     state.figmaFileUrl = d.figmaFileUrl;
@@ -1076,6 +1217,8 @@ window.onmessage = event => {
 
   if (msg.type === 'storage-value') {
     const { key, value } = msg;
+    // Count every init key response (even null) so we know when all are loaded
+    if (INIT_KEYS.includes(key)) { _initStorageCount++; _maybeCheckFileContext(); }
     if (!value) return;
     if (key === 'appUrl')       { state.appUrl       = value; }
     if (key === 'projectName')  { state.projectName  = value; document.getElementById('project-name').value  = value; }
@@ -1104,8 +1247,78 @@ window.onmessage = event => {
   }
 };
 
+// ── File context detection ────────────────────────────────────
+// We wait for all 8 storage keys AND page-data before deciding which screen
+// to show, to avoid flickering from stale state.
+const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'gistId', 'githubToken', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+let _initStorageCount = 0;
+let _pageDataReady    = false;
+
+function _maybeCheckFileContext() {
+  if (_initStorageCount >= INIT_KEYS.length && _pageDataReady) checkFileContext();
+}
+
+function checkFileContext() {
+  // Case 1: Brand new install — never exported, no cached file key
+  if (!state.hasExported && !state.cachedFileKey) {
+    showScreen('screen-welcome');
+    return;
+  }
+  // Case 2: Different Figma file detected (live key present, differs from cached)
+  if (state.fileKey && state.cachedFileKey && state.fileKey !== state.cachedFileKey) {
+    const prevEl = document.getElementById('modal-prev-project');
+    if (prevEl) prevEl.textContent = state.projectName
+      ? `Last project: ${state.projectName}`
+      : 'Last file key: ' + state.cachedFileKey.slice(0, 8) + '…';
+    document.getElementById('new-file-modal').classList.add('show');
+    return;
+  }
+  // Case 3: Same file (or draft) — normal main screen, nothing to do
+}
+
+// "Start a new project" — keep settings, clear project-specific state
+document.getElementById('modal-new-btn').addEventListener('click', () => {
+  // Update cachedFileKey so we don't re-trigger this check on next open
+  state.cachedFileKey = state.fileKey;
+  post({ type: 'set-storage', key: 'cachedFileKey', value: state.fileKey });
+  // Clear project-specific state
+  state.projectName  = '';  state.projectTheme = '';
+  state.gistId       = '';  state.hasExported  = false;
+  state.sections     = {};  state.isDirty      = false;
+  state.manualFigmaUrl = '';
+  post({ type: 'set-storage', key: 'projectName',   value: '' });
+  post({ type: 'set-storage', key: 'projectTheme',  value: '' });
+  post({ type: 'set-storage', key: 'gistId',        value: '' });
+  post({ type: 'set-storage', key: 'hasExported',   value: false });
+  post({ type: 'set-storage', key: 'manualFigmaUrl',value: '' });
+  document.getElementById('project-name').value  = '';
+  document.getElementById('project-theme').value = '';
+  updatePullBtn(); updateOpenBtn();
+  renderFrames();
+  document.getElementById('new-file-modal').classList.remove('show');
+  showToast('Starting fresh — sections cleared');
+});
+
+// "Continue where I left off" — just update the cached key, keep everything
+document.getElementById('modal-continue-btn').addEventListener('click', () => {
+  state.cachedFileKey = state.fileKey;
+  post({ type: 'set-storage', key: 'cachedFileKey', value: state.fileKey });
+  document.getElementById('new-file-modal').classList.remove('show');
+  showToast('Continuing with previous project');
+});
+
+// Welcome screen — open web app
+document.getElementById('welcome-open-btn').addEventListener('click', () => {
+  post({ type: 'open-url', url: state.appUrl });
+});
+
+// Welcome screen — skip (already configured)
+document.getElementById('welcome-skip-btn').addEventListener('click', () => {
+  showScreen('screen-main');
+});
+
 // ── Initialise: load stored values ────────────────────────────
-['appUrl', 'projectName', 'projectTheme', 'gistId', 'githubToken', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'].forEach(key => post({ type: 'get-storage', key }));
+INIT_KEYS.forEach(key => post({ type: 'get-storage', key }));
 
 // ── Theme toggle ──────────────────────────────────────────────
 function initTheme() {
