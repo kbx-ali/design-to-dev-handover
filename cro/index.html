@@ -14,6 +14,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
 
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -407,6 +408,15 @@
     .variant-img-preview { margin-top:6px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--input-bg);max-height:180px; }
     .variant-img-preview img { display:block;width:100%;height:180px;object-fit:contain; }
     .drive-convert-note { display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#34a853;margin-top:2px; }
+    .variant-input-row { display:flex;gap:6px;align-items:center; }
+    .variant-input-row .form-input { flex:1;min-width:0; }
+    .upload-drive-btn { flex-shrink:0;width:36px;height:36px;border-radius:8px;border:1px solid var(--input-bd);background:var(--input-bg);color:var(--text-mute);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s; }
+    .upload-drive-btn:hover { background:var(--bg-card-hover);color:var(--text);border-color:var(--border-lt); }
+    .upload-drive-btn:disabled { opacity:0.4;cursor:not-allowed; }
+    .upload-drive-btn.uploading { animation:pulse-upload 1s ease infinite; }
+    @keyframes pulse-upload { 0%,100%{opacity:0.4} 50%{opacity:1} }
+    .drive-folder-hint { font-size:10.5px;color:var(--text-mute);margin-top:2px;display:flex;align-items:center;gap:4px; }
+    .drive-folder-hint svg { flex-shrink:0; }
     .form-select option { background:var(--bg-card);color:var(--text); }
 
     /* ── SLIDERS ───────────────────────────────────────────── */
@@ -929,6 +939,15 @@
           <img id="proj-logo-preview" src="" alt="" style="display:none;max-height:28px;max-width:140px;object-fit:contain;border-radius:4px;opacity:0.7" onerror="this.style.display='none'">
         </div>
       </div>
+      <div class="form-field">
+        <label class="form-label" for="proj-drive-folder">Google Drive Folder <span style="font-weight:400;opacity:0.5">(optional — for image uploads)</span></label>
+        <input class="form-input" id="proj-drive-folder" type="text" placeholder="Paste a Google Drive folder URL…" autocomplete="off"
+          onkeydown="if(event.key==='Enter')saveNewProject()">
+        <div class="drive-folder-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Enables direct image uploads to Drive from the test editor
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn-ghost" onclick="closeModal('modal-new-project')">Cancel</button>
@@ -960,6 +979,15 @@
           onkeydown="if(event.key==='Enter')saveProjectCardRename()">
         <div style="margin-top:8px;min-height:28px">
           <img id="rename-logo-preview" src="" alt="" style="display:none;max-height:28px;max-width:140px;object-fit:contain;border-radius:4px;opacity:0.7" onerror="this.style.display='none'">
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="rename-drive-folder">Google Drive Folder <span style="font-weight:400;opacity:0.5">(optional — for image uploads)</span></label>
+        <input class="form-input" id="rename-drive-folder" type="text" placeholder="Paste a Google Drive folder URL…" autocomplete="off"
+          onkeydown="if(event.key==='Enter')saveProjectCardRename()">
+        <div class="drive-folder-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          Enables direct image uploads to Drive from the test editor
         </div>
       </div>
     </div>
@@ -1050,8 +1078,14 @@
         <!-- Variant image URLs -->
         <div class="form-field">
           <label class="form-label" for="t-ctrl-img">Control Image URL (Variant A)</label>
-          <input class="form-input" id="t-ctrl-img" type="url" placeholder="https://… or paste a Google Drive share link"
-            oninput="previewVariantImg('t-ctrl-img','t-ctrl-preview','t-ctrl-drive-note')">
+          <div class="variant-input-row">
+            <input class="form-input" id="t-ctrl-img" type="url" placeholder="https://… or paste a Google Drive share link"
+              oninput="previewVariantImg('t-ctrl-img','t-ctrl-preview','t-ctrl-drive-note')">
+            <button type="button" class="upload-drive-btn" id="t-ctrl-upload" title="Upload image to Google Drive"
+              onclick="uploadVariantToDrive('t-ctrl-img','t-ctrl-preview','t-ctrl-drive-note','t-ctrl-upload')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </button>
+          </div>
           <div id="t-ctrl-drive-note" class="drive-convert-note" style="display:none">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             Google Drive link detected — will be auto-converted on save
@@ -1062,8 +1096,14 @@
         </div>
         <div class="form-field">
           <label class="form-label" for="t-chlg-img">Challenger Image URL (Variant B)</label>
-          <input class="form-input" id="t-chlg-img" type="url" placeholder="https://… or paste a Google Drive share link"
-            oninput="previewVariantImg('t-chlg-img','t-chlg-preview','t-chlg-drive-note')">
+          <div class="variant-input-row">
+            <input class="form-input" id="t-chlg-img" type="url" placeholder="https://… or paste a Google Drive share link"
+              oninput="previewVariantImg('t-chlg-img','t-chlg-preview','t-chlg-drive-note')">
+            <button type="button" class="upload-drive-btn" id="t-chlg-upload" title="Upload image to Google Drive"
+              onclick="uploadVariantToDrive('t-chlg-img','t-chlg-preview','t-chlg-drive-note','t-chlg-upload')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </button>
+          </div>
           <div id="t-chlg-drive-note" class="drive-convert-note" style="display:none">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             Google Drive link detected — will be auto-converted on save
@@ -1072,6 +1112,8 @@
             <img src="" alt="Challenger preview" onerror="this.parentElement.style.display='none'">
           </div>
         </div>
+        <!-- Hidden file input for Drive uploads -->
+        <input type="file" id="drive-file-picker" accept="image/*" style="display:none">
 
       </div>
 
@@ -1340,6 +1382,8 @@ const state = {
   clientSort:             { col: 'ice', dir: 'desc' },
   theme:                  'dark',
   detachProjectListener:  null,  // Firestore onSnapshot unsubscribe fn
+  driveFolderId:          null,  // Current project's Google Drive folder ID
+  driveAccessToken:       null,  // Google OAuth token for Drive API
 };
 
 let auth, db;
@@ -1434,8 +1478,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────────────────────
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/drive.file');
   provider.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
-  auth.signInWithPopup(provider).catch(err => {
+  auth.signInWithPopup(provider).then(result => {
+    // Store Google OAuth access token for Drive API uploads
+    if (result.credential && result.credential.accessToken) {
+      state.driveAccessToken = result.credential.accessToken;
+      console.log('[Auth] Drive access token captured');
+    }
+  }).catch(err => {
     const errEl = document.getElementById('login-err');
     console.error('[Auth error]', err.code, err.message);
     if (err.code === 'auth/popup-closed-by-user') return;
@@ -1488,6 +1539,8 @@ function doSignOut() {
     state.projects = [];
     state.currentDocId = null;
     state.currentTests = [];
+    state.driveAccessToken = null;
+    state.driveFolderId = null;
     showScreen('login');
   });
 }
@@ -1508,12 +1561,13 @@ async function loadProjects() {
   }
 }
 
-async function createProject(name, logoInput) {
+async function createProject(name, logoInput, driveFolderUrl) {
   const doc = await db.collection('projects').add({
     name: name.trim(),
     created: new Date().toISOString().split('T')[0],
     tests: [],
     clientLogo: logoInput || '',
+    driveFolderId: extractDriveFolderId(driveFolderUrl) || '',
   });
   return doc.id;
 }
@@ -1573,7 +1627,7 @@ function renderProjects(projects) {
         <div class="pc-foot" onclick="event.stopPropagation()">
           <button class="btn-yellow" style="font-size:11px;padding:6px 12px" onclick="openProject('${p.id}','${escHtml(p.name)}')">Open →</button>
           <div style="display:flex;gap:6px">
-            <button class="pc-rename-btn" onclick="openRenameModal('${p.id}','${escHtml(p.name).replace(/'/g,"\\'")}','${(p.clientLogo||'').replace(/'/g,"\\'")}')">
+            <button class="pc-rename-btn" onclick="openRenameModal('${p.id}','${escHtml(p.name).replace(/'/g,"\\'")}','${(p.clientLogo||'').replace(/'/g,"\\'")}','${(p.driveFolderId||'').replace(/'/g,"\\'")}')">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
               Rename
             </button>
@@ -1626,6 +1680,9 @@ function openProject(docId, name) {
     const logoUrl = getLogo(data.clientLogo || '');
     if (logoUrl) { logoEl.src = logoUrl; logoEl.style.display = 'block'; }
     else { logoEl.style.display = 'none'; }
+
+    // Store Drive folder ID for uploads
+    state.driveFolderId = data.driveFolderId || null;
 
     if (firstLoad) {
       // Initial load — same as the old get() call
@@ -2099,6 +2156,7 @@ function openNewProjectModal() {
   document.getElementById('proj-name-input').value = '';
   document.getElementById('proj-logo-input').value = '';
   document.getElementById('proj-logo-preview').style.display = 'none';
+  document.getElementById('proj-drive-folder').value = '';
   openModal('modal-new-project');
   setTimeout(() => document.getElementById('proj-name-input').focus(), 100);
 }
@@ -2107,10 +2165,11 @@ async function saveNewProject() {
   const name = document.getElementById('proj-name-input').value.trim();
   if (!name) { document.getElementById('proj-name-input').focus(); return; }
   const logo = document.getElementById('proj-logo-input').value.trim();
+  const driveFolder = document.getElementById('proj-drive-folder').value.trim();
   const btn = document.getElementById('save-proj-btn');
   btn.textContent = 'Creating…'; btn.disabled = true;
   try {
-    await createProject(name, logo);
+    await createProject(name, logo, driveFolder);
     closeModal('modal-new-project');
     showToast('Project created!', 'success');
     loadProjects();
@@ -2390,7 +2449,7 @@ async function saveProjectRename() {
 // ─────────────────────────────────────────────────────────────
 // PROJECT RENAME — card modal
 // ─────────────────────────────────────────────────────────────
-function openRenameModal(docId, currentName, currentLogo) {
+function openRenameModal(docId, currentName, currentLogo, currentDriveFolder) {
   document.getElementById('rename-proj-id').value = docId;
   document.getElementById('rename-proj-input').value = currentName;
   const logoInp = document.getElementById('rename-proj-logo');
@@ -2399,6 +2458,9 @@ function openRenameModal(docId, currentName, currentLogo) {
   const previewUrl = getLogo(currentLogo || '');
   if (previewUrl) { prev.src = previewUrl; prev.style.display = 'block'; prev.onerror = () => { prev.style.display = 'none'; }; }
   else { prev.style.display = 'none'; prev.src = ''; }
+  // Populate Drive folder — reconstruct URL from stored ID for display
+  const driveInp = document.getElementById('rename-drive-folder');
+  driveInp.value = currentDriveFolder ? `https://drive.google.com/drive/folders/${currentDriveFolder}` : '';
   openModal('modal-rename-project');
   setTimeout(() => {
     const inp = document.getElementById('rename-proj-input');
@@ -2411,10 +2473,15 @@ async function saveProjectCardRename() {
   const newName = document.getElementById('rename-proj-input').value.trim();
   if (!newName) return;
   const logo = document.getElementById('rename-proj-logo').value.trim();
+  const driveFolder = document.getElementById('rename-drive-folder').value.trim();
   const btn = document.getElementById('save-rename-btn');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    await db.collection('projects').doc(docId).update({ name: newName, clientLogo: logo });
+    await db.collection('projects').doc(docId).update({
+      name: newName,
+      clientLogo: logo,
+      driveFolderId: extractDriveFolderId(driveFolder) || '',
+    });
     closeModal('modal-rename-project');
     showToast('Project updated!', 'success');
     loadProjects();
@@ -2782,6 +2849,145 @@ async function importCsv() {
   } finally {
     btn.disabled = false;
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// GOOGLE DRIVE UPLOAD
+// ─────────────────────────────────────────────────────────────
+
+function extractDriveFolderId(url) {
+  if (!url) return '';
+  const s = url.trim();
+  // Accept raw folder ID (no slashes)
+  if (/^[a-zA-Z0-9_-]{20,}$/.test(s)) return s;
+  // Extract from any Drive folder URL variant
+  const m = s.match(/folders\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : '';
+}
+
+async function ensureDriveToken() {
+  // If we already have a token, test it's still valid
+  if (state.driveAccessToken) {
+    try {
+      const r = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+        headers: { Authorization: `Bearer ${state.driveAccessToken}` }
+      });
+      if (r.ok) return state.driveAccessToken;
+    } catch (e) { /* token expired — fall through to re-auth */ }
+  }
+
+  // Re-authenticate to get a fresh access token with Drive scope
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/drive.file');
+  provider.setCustomParameters({ hd: 'kubixmedia.co.uk' });
+
+  try {
+    const result = await auth.signInWithPopup(provider);
+    if (result.credential && result.credential.accessToken) {
+      state.driveAccessToken = result.credential.accessToken;
+      return state.driveAccessToken;
+    }
+    throw new Error('No access token returned');
+  } catch (e) {
+    if (e.code === 'auth/popup-closed-by-user') throw new Error('Sign-in cancelled');
+    throw new Error('Could not get Drive access: ' + (e.message || e.code));
+  }
+}
+
+async function uploadFileToDrive(file, folderId, accessToken) {
+  // Build multipart request body
+  const metadata = {
+    name: file.name,
+    parents: [folderId],
+  };
+
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', file);
+
+  // Upload the file
+  const uploadRes = await fetch(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
+    { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form }
+  );
+
+  if (!uploadRes.ok) {
+    const err = await uploadRes.json().catch(() => ({}));
+    throw new Error(err.error?.message || `Upload failed (${uploadRes.status})`);
+  }
+
+  const fileData = await uploadRes.json();
+
+  // Set file to "anyone with link can view"
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+  });
+
+  return fileData;
+}
+
+function uploadVariantToDrive(inputId, previewId, noteId, btnId) {
+  // Check project has a Drive folder configured
+  if (!state.driveFolderId) {
+    showToast('No Google Drive folder configured for this project. Add one in project settings (edit button on project card).', 'error');
+    return;
+  }
+
+  const btn = document.getElementById(btnId);
+  const picker = document.getElementById('drive-file-picker');
+
+  // Set up one-time file selection handler
+  const handler = async (e) => {
+    const file = e.target.files[0];
+    picker.removeEventListener('change', handler);
+    picker.value = '';
+    if (!file) return;
+
+    // Validate it's an image
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select an image file (PNG, JPG, etc.)', 'error');
+      return;
+    }
+
+    // Max 10MB
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image is too large (max 10MB)', 'error');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('uploading');
+    btn.title = 'Uploading…';
+
+    try {
+      const token = await ensureDriveToken();
+      const fileData = await uploadFileToDrive(file, state.driveFolderId, token);
+
+      // Build the thumbnail URL and set it
+      const driveUrl = `https://drive.google.com/file/d/${fileData.id}/view`;
+      const thumbnailUrl = convertDriveUrl(driveUrl);
+
+      document.getElementById(inputId).value = thumbnailUrl;
+      previewVariantImg(inputId, previewId, noteId);
+
+      showToast(`Uploaded "${file.name}" to Drive`, 'success');
+    } catch (err) {
+      console.error('[Drive upload]', err);
+      showToast('Upload failed: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('uploading');
+      btn.title = 'Upload image to Google Drive';
+    }
+  };
+
+  picker.addEventListener('change', handler);
+  picker.click();
 }
 </script>
 </body>
