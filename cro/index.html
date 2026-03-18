@@ -369,7 +369,7 @@
     .tp-variant-block { margin-bottom:28px; }
     .tp-variant-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--teal-lt);margin-bottom:10px;display:flex;align-items:center;gap:8px; }
     .tp-variant-label span { height:1px;flex:1;background:var(--border); }
-    .tp-variant-img { width:100%;border-radius:10px;border:1px solid var(--border);display:block; }
+    .tp-variant-img { display:block;height:360px;width:auto;max-width:100%;object-fit:contain;border-radius:10px;border:1px solid var(--border);margin:0 auto; }
     .tp-variant-empty { width:100%;height:140px;border-radius:10px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-mute);font-size:12px;font-style:italic; }
     .tp-select-wrap { display:flex;align-items:center;gap:10px;flex:1;min-width:0; }
     .tp-select { font-family:'Domine',serif;font-size:14px;font-weight:700;color:var(--text);background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;max-width:380px;flex:1; }
@@ -1922,14 +1922,13 @@ function previewVariantImg(inputId, previewId, noteId) {
 function convertDriveUrl(url) {
   if (!url) return url;
   const s = url.trim();
-  // Already converted to old uc?export=view format — re-extract ID and upgrade
-  const ucMatch = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (s.includes('drive.google.com/uc') && ucMatch) {
-    return `https://lh3.googleusercontent.com/d/${ucMatch[1]}`;
-  }
-  // /file/d/ID/view  or  /file/d/ID/preview  or  drive share links
-  const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
+  if (!s.includes('drive.google.com') && !s.includes('googleusercontent.com')) return s;
+  // Extract the file ID from any Drive URL variant:
+  // /file/d/ID/view, uc?id=ID, uc?export=view&id=ID, thumbnail?id=ID, lh3/d/ID
+  const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+          || s.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+          || s.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
+  if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200`;
   return s;
 }
 
@@ -2336,12 +2335,12 @@ function showHypTooltip(testId, prefix) {
     html += `<div class="ht-variants">`;
     html += `<div class="ht-var"><span class="ht-var-lbl">Control (A)</span>`;
     html += t.controlImg
-      ? `<img src="${escHtml(convertDriveUrl(t.controlImg))}" alt="Control">`
+      ? `<img src="${convertDriveUrl(t.controlImg)}" alt="Control">`
       : `<div class="ht-var-empty">No image</div>`;
     html += `</div>`;
     html += `<div class="ht-var"><span class="ht-var-lbl">Challenger (B)</span>`;
     html += t.challengerImg
-      ? `<img src="${escHtml(convertDriveUrl(t.challengerImg))}" alt="Challenger">`
+      ? `<img src="${convertDriveUrl(t.challengerImg)}" alt="Challenger">`
       : `<div class="ht-var-empty">No image</div>`;
     html += `</div></div>`;
   }
