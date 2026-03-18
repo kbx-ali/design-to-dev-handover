@@ -1,0 +1,9 @@
+[[redirects]]
+  from = "/cro"
+  to   = "/cro/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cro/"
+  to   = "/cro/index.html"
+  status = 200
