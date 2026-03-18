@@ -2382,6 +2382,7 @@ function populateTestPreview(testId) {
 let csvState = { headers: [], rows: [], mappings: {} };
 
 const CSV_FIELDS = [
+  { key: 'testId',        label: 'Test ID / Reference' },
   { key: 'title',         label: 'Test Title / Name' },
   { key: 'hypothesis',    label: 'Hypothesis' },
   { key: 'observation',   label: 'Observation / Insight' },
@@ -2400,7 +2401,8 @@ const CSV_FIELDS = [
 function guessCsvMappings(headers) {
   const m = {};
   const rules = {
-    title:         ['title','name','test name','test title','test id','id','ref'],
+    testId:        ['test id','test ref','test #','ref','id','#','no.','number'],
+    title:         ['title','name','test name','test title','hypothesis name'],
     hypothesis:    ['hypothesis','hyp','description','desc','what','test description'],
     observation:   ['observation','insight','data','background','rationale','why','evidence'],
     page:          ['page','pages','location','url','section','area'],
@@ -2550,8 +2552,9 @@ async function importCsv() {
       const confidence = clamp(get(row,'confidence'), 5);
       const ease       = clamp(get(row,'ease'), 5);
       const ice        = Math.round((impact + confidence + ease) / 3 * 10) / 10;
+      const rawId = get(row,'testId');
       return {
-        id:            'csv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+        id:            rawId || ('csv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7)),
         title:         get(row,'title'),
         hypothesis:    get(row,'hypothesis'),
         observation:   get(row,'observation'),
