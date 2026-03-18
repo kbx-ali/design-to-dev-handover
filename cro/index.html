@@ -350,6 +350,33 @@
     .modal { background:var(--modal-bg);border:1px solid var(--modal-bd);border-radius:16px;width:100%;max-width:480px;overflow:hidden; }
     .modal-lg { max-width:580px; }
     .modal-sm { max-width:380px; }
+    .modal-xl { max-width:min(1120px,96vw);width:min(1120px,96vw); }
+    /* ── TEST PREVIEW MODAL ─────────────────────────────────── */
+    .tp-layout { display:grid;grid-template-columns:360px 1fr;min-height:0; }
+    .tp-left { padding:28px 28px 32px;overflow-y:auto;border-right:1px solid var(--border);max-height:calc(90vh - 64px); }
+    .tp-right { padding:28px 32px 32px;overflow-y:auto;background:var(--bg);max-height:calc(90vh - 64px); }
+    .tp-field { margin-bottom:20px; }
+    .tp-field-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mute);margin-bottom:6px; }
+    .tp-field-value { font-size:13px;color:var(--text-sec);line-height:1.65; }
+    .tp-title { font-family:'Domine',serif;font-size:19px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:20px; }
+    .tp-ice-row { display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px; }
+    .tp-ice-cell { background:var(--bg-card);padding:14px 8px;text-align:center; }
+    .tp-ice-cell-lbl { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-mute);margin-bottom:6px; }
+    .tp-ice-cell-val { font-family:'Domine',serif;font-size:24px;font-weight:700;color:var(--text);line-height:1; }
+    .tp-ice-cell-val.hi { color:var(--kbx-yellow); } [data-theme="light"] .tp-ice-cell-val.hi { color:#7A7A00; }
+    .tp-ice-cell-val.mid { color:var(--kbx-orchid); }
+    .tp-variant-block { margin-bottom:28px; }
+    .tp-variant-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--teal-lt);margin-bottom:10px;display:flex;align-items:center;gap:8px; }
+    .tp-variant-label span { height:1px;flex:1;background:var(--border); }
+    .tp-variant-img { width:100%;border-radius:10px;border:1px solid var(--border);display:block; }
+    .tp-variant-empty { width:100%;height:140px;border-radius:10px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-mute);font-size:12px;font-style:italic; }
+    .tp-select-wrap { display:flex;align-items:center;gap:10px;flex:1;min-width:0; }
+    .tp-select { font-family:'Domine',serif;font-size:14px;font-weight:700;color:var(--text);background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;max-width:380px;flex:1; }
+    .tp-back { display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--teal-lt);background:none;border:none;cursor:pointer;padding:0;white-space:nowrap; }
+    .tp-back:hover { opacity:0.75; }
+    .tp-figma-btn { display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--teal-lt);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--teal-lt);cursor:pointer;text-decoration:none;margin-top:4px; }
+    .tp-figma-btn:hover { background:rgba(13,105,135,0.08); }
+    .tp-row-clickable { cursor:pointer; }
     .modal-hd { display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border); }
     .modal-title { font-family:'Domine',serif;font-size:17px;font-weight:700;color:var(--text); }
     .modal-close { width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-mute);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.15s; }
@@ -1045,6 +1072,94 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: TEST PREVIEW (client)                                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="modal-test-preview" class="modal-overlay" onclick="closeModalBg(event,'modal-test-preview')">
+  <div class="modal modal-xl" style="max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-hd" style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <div class="tp-select-wrap">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mute);white-space:nowrap">Select Test</div>
+        <select id="tp-test-select" class="tp-select" onchange="switchTestPreview(this.value)"></select>
+        <div id="tp-status-badge-hd"></div>
+      </div>
+      <button class="tp-back" onclick="closeModal('modal-test-preview')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Roadmap
+      </button>
+      <button class="modal-close" onclick="closeModal('modal-test-preview')">✕</button>
+    </div>
+    <div class="tp-layout" style="flex:1;min-height:0;">
+
+      <!-- LEFT: Details -->
+      <div class="tp-left">
+        <div id="tp-title" class="tp-title"></div>
+
+        <div class="tp-field">
+          <div class="tp-field-label">Observation / Data Insight</div>
+          <div class="tp-field-value" id="tp-observation"></div>
+        </div>
+        <div class="tp-field">
+          <div class="tp-field-label">Design Hypothesis</div>
+          <div class="tp-field-value" id="tp-hypothesis"></div>
+        </div>
+        <div class="tp-field">
+          <div class="tp-field-label">Test Status</div>
+          <div id="tp-status-badge"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="tp-field">
+            <div class="tp-field-label">Target Metric</div>
+            <div class="tp-field-value" id="tp-metrics"></div>
+          </div>
+          <div class="tp-field">
+            <div class="tp-field-label">Location</div>
+            <div class="tp-field-value" id="tp-page"></div>
+          </div>
+        </div>
+
+        <div class="tp-field">
+          <div class="tp-field-label">Prioritisation (ICE Rating)</div>
+          <div class="tp-ice-row">
+            <div class="tp-ice-cell"><div class="tp-ice-cell-lbl">Impact</div><div class="tp-ice-cell-val" id="tp-impact"></div></div>
+            <div class="tp-ice-cell"><div class="tp-ice-cell-lbl">Confidence</div><div class="tp-ice-cell-val" id="tp-confidence"></div></div>
+            <div class="tp-ice-cell"><div class="tp-ice-cell-lbl">Ease</div><div class="tp-ice-cell-val" id="tp-ease"></div></div>
+            <div class="tp-ice-cell"><div class="tp-ice-cell-lbl">Total ICE</div><div class="tp-ice-cell-val" id="tp-ice-total" style="font-size:26px"></div></div>
+          </div>
+        </div>
+
+        <div class="tp-field" id="tp-figma-wrap" style="display:none">
+          <div class="tp-field-label">Prototype</div>
+          <a id="tp-figma-btn" class="tp-figma-btn" href="" target="_blank">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            View Figma Prototype
+          </a>
+        </div>
+
+        <div class="tp-field" id="tp-notes-wrap" style="display:none">
+          <div class="tp-field-label">Notes / Learnings</div>
+          <div class="tp-field-value" id="tp-notes" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Variant images -->
+      <div class="tp-right">
+        <div class="tp-variant-block">
+          <div class="tp-variant-label">Control (Variant A)<span></span></div>
+          <img id="tp-control-img" class="tp-variant-img" src="" alt="Control" style="display:none" onerror="this.style.display='none';document.getElementById('tp-control-empty').style.display='flex'">
+          <div id="tp-control-empty" class="tp-variant-empty">No control image added yet</div>
+        </div>
+        <div class="tp-variant-block">
+          <div class="tp-variant-label">Challenger (Variant B) — Design Preview / Mockup<span></span></div>
+          <img id="tp-challenger-img" class="tp-variant-img" src="" alt="Challenger" style="display:none" onerror="this.style.display='none';document.getElementById('tp-challenger-empty').style.display='flex'">
+          <div id="tp-challenger-empty" class="tp-variant-empty">No challenger image added yet</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
 <!-- MODAL: LEARNINGS                                             -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div id="modal-learnings" class="modal-overlay" onclick="closeModalBg(event,'modal-learnings')">
@@ -1197,7 +1312,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Esc closes modals
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      ['modal-new-project','modal-rename-project','modal-test','modal-delete','modal-delete-project','modal-learnings','modal-csv-import'].forEach(closeModal);
+      ['modal-new-project','modal-rename-project','modal-test','modal-delete','modal-delete-project','modal-learnings','modal-csv-import','modal-test-preview'].forEach(closeModal);
     }
   });
 });
@@ -1638,14 +1753,14 @@ function renderTable(tests, filter, prefix) {
       ? `<span class="td-hyp-sub">${escHtml((t.hypothesis||'').substring(0,70))}${(t.hypothesis||'').length>70?'…':''}</span>`
       : '';
     const hasExtra = t.observation || t.controlImg || t.challengerImg || t.figmaLink;
-    const hoverAttr = hasExtra || t.title
+    const hoverAttr = isDetail && (hasExtra || t.title)
       ? `onmouseenter="showHypTooltip('${t.id}','${prefix}')" onmouseleave="hideHypTooltip()"`
       : '';
 
     return `
-    <tr data-status="${t.status}">
+    <tr data-status="${t.status}" ${!isDetail ? `onclick="openTestPreview('${t.id}')" class="tp-row-clickable"` : ''}>
       <td class="td-id">${escHtml(t.id)}</td>
-      <td style="max-width:260px;cursor:${hasExtra||t.title?'default':'auto'}" ${hoverAttr}>
+      <td style="max-width:260px" ${hoverAttr}>
         <span class="td-hyp-title">${displayTitle}</span>
         ${subLine}
       </td>
@@ -2188,6 +2303,77 @@ function showHypTooltip(testId, prefix) {
 function hideHypTooltip() {
   const tip = document.getElementById('hyp-tooltip');
   if (tip) tip.classList.remove('show');
+}
+
+// ─────────────────────────────────────────────────────────────
+// TEST PREVIEW MODAL (client view)
+// ─────────────────────────────────────────────────────────────
+function openTestPreview(testId) {
+  const tests = state.clientTests;
+  // Build the switcher dropdown — sorted by ICE desc to match table order
+  const sorted = [...tests].sort((a,b) => (b.ice||0) - (a.ice||0));
+  const select = document.getElementById('tp-test-select');
+  select.innerHTML = sorted.map(t =>
+    `<option value="${escHtml(t.id)}" ${t.id === testId ? 'selected' : ''}>${escHtml(t.id)}${t.title ? ' — ' + escHtml(t.title.substring(0,45)) : ''}</option>`
+  ).join('');
+  populateTestPreview(testId);
+  openModal('modal-test-preview');
+}
+
+function switchTestPreview(testId) {
+  populateTestPreview(testId);
+}
+
+function populateTestPreview(testId) {
+  const t = state.clientTests.find(x => x.id === testId);
+  if (!t) return;
+
+  // Header badge
+  document.getElementById('tp-status-badge-hd').innerHTML = statusBadgeHTML(t.status);
+
+  // Left panel
+  document.getElementById('tp-title').textContent      = t.title || t.hypothesis || '—';
+  document.getElementById('tp-observation').textContent = t.observation || '—';
+  document.getElementById('tp-hypothesis').textContent  = t.hypothesis  || '—';
+  document.getElementById('tp-status-badge').innerHTML  = statusBadgeHTML(t.status);
+  document.getElementById('tp-metrics').textContent     = t.metrics || '—';
+  document.getElementById('tp-page').textContent        = t.page    || '—';
+
+  // ICE
+  const ic = t.ice || 0;
+  const cls = ic >= 7.5 ? 'hi' : ic >= 5 ? 'mid' : '';
+  document.getElementById('tp-impact').textContent      = t.impact     || '—';
+  document.getElementById('tp-confidence').textContent  = t.confidence || '—';
+  document.getElementById('tp-ease').textContent        = t.ease       || '—';
+  const iceEl = document.getElementById('tp-ice-total');
+  iceEl.textContent  = ic.toFixed(1);
+  iceEl.className    = 'tp-ice-cell-val ' + cls;
+
+  // Figma
+  const figmaWrap = document.getElementById('tp-figma-wrap');
+  const figmaBtn  = document.getElementById('tp-figma-btn');
+  if (t.figmaLink) { figmaBtn.href = t.figmaLink; figmaWrap.style.display = ''; }
+  else { figmaWrap.style.display = 'none'; }
+
+  // Notes
+  const notesWrap = document.getElementById('tp-notes-wrap');
+  const notesEl   = document.getElementById('tp-notes');
+  if (t.notes) { notesEl.textContent = t.notes; notesWrap.style.display = ''; }
+  else { notesWrap.style.display = 'none'; }
+
+  // Control image
+  const ctrlImg   = document.getElementById('tp-control-img');
+  const ctrlEmpty = document.getElementById('tp-control-empty');
+  if (t.controlImg) {
+    ctrlImg.src = t.controlImg; ctrlImg.style.display = 'block'; ctrlEmpty.style.display = 'none';
+  } else { ctrlImg.style.display = 'none'; ctrlEmpty.style.display = 'flex'; }
+
+  // Challenger image
+  const chalImg   = document.getElementById('tp-challenger-img');
+  const chalEmpty = document.getElementById('tp-challenger-empty');
+  if (t.challengerImg) {
+    chalImg.src = t.challengerImg; chalImg.style.display = 'block'; chalEmpty.style.display = 'none';
+  } else { chalImg.style.display = 'none'; chalEmpty.style.display = 'flex'; }
 }
 
 // ─────────────────────────────────────────────────────────────
