@@ -487,9 +487,9 @@
     .csv-upload-icon { color:var(--text-mute);margin-bottom:12px; }
     .csv-upload-title { font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px; }
     .csv-upload-hint { font-size:11px;color:var(--text-mute); }
-    .csv-map-grid { display:grid;grid-template-columns:1fr 20px 1fr;gap:6px 8px;align-items:center;margin-bottom:20px; }
-    .csv-map-label { font-size:12px;font-weight:600;color:var(--text); }
-    .csv-map-arrow { color:var(--text-mute);font-size:13px;text-align:center; }
+    .csv-map-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px; }
+    .csv-map-field { display:flex;flex-direction:column;gap:4px; }
+    .csv-map-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-mute); }
     .csv-preview-wrap { overflow-x:auto; }
     .csv-preview-table { width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap; }
     .csv-preview-table th { background:var(--bg-card-hover);padding:6px 10px;text-align:left;color:var(--text-mute);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;font-size:10px; }
@@ -2543,10 +2543,11 @@ function showCsvMapper() {
     const opts = ['<option value="">— skip —</option>',
       ...csvState.headers.map(h => `<option value="${escHtml(h)}"${csvState.mappings[f.key] === h ? ' selected' : ''}>${escHtml(h)}</option>`)
     ].join('');
-    return `<div class="csv-map-label">${f.label}</div>
-      <div class="csv-map-arrow">→</div>
+    return `<div class="csv-map-field">
+      <div class="csv-map-label">${f.label}</div>
       <select class="form-input" style="font-size:11px;padding:6px 10px"
-        onchange="csvState.mappings['${f.key}']=this.value;renderCsvPreview()">${opts}</select>`;
+        onchange="csvState.mappings['${f.key}']=this.value;renderCsvPreview()">${opts}</select>
+    </div>`;
   }).join('');
 
   renderCsvPreview();
