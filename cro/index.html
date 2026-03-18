@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRO Planner · Kubix</title>
+  <link rel="icon" type="image/png" href="fav-kubix.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;600;700&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -224,6 +225,11 @@
     thead th { padding:9px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-mute);text-align:left;border-bottom:1px solid var(--border);white-space:nowrap; }
     thead th.r { text-align:right; }
     thead th.c { text-align:center; }
+    thead th.sortable { cursor:pointer;user-select:none; }
+    thead th.sortable:hover { color:var(--text); }
+    thead th.sort-active { color:var(--kbx-yellow); }
+    .sort-arrow { display:inline-block;margin-left:4px;opacity:0.5;font-style:normal; }
+    thead th.sort-active .sort-arrow { opacity:1; }
     tbody tr { border-bottom:1px solid var(--tr-border);transition:background 0.1s; }
     tbody tr:hover { background:var(--tr-hover); }
     tbody tr:last-child { border-bottom:none; }
@@ -770,9 +776,18 @@
         </div>
         <div style="overflow-x:auto;">
           <table>
-            <thead><tr>
-              <th>ID</th><th>Hypothesis</th><th>Page</th><th>Section</th><th>Metrics</th>
-              <th class="c">I</th><th class="c">C</th><th class="c">E</th><th class="r">ICE</th><th>Status</th><th class="r">Actions</th>
+            <thead id="detail-thead"><tr>
+              <th class="sortable" onclick="sortTable('detail','id')">ID<i class="sort-arrow"></i></th>
+              <th class="sortable" onclick="sortTable('detail','hypothesis')">Hypothesis<i class="sort-arrow"></i></th>
+              <th class="sortable" onclick="sortTable('detail','page')">Page<i class="sort-arrow"></i></th>
+              <th class="sortable" onclick="sortTable('detail','section')">Section<i class="sort-arrow"></i></th>
+              <th class="sortable" onclick="sortTable('detail','metrics')">Metrics<i class="sort-arrow"></i></th>
+              <th class="c sortable" onclick="sortTable('detail','impact')">I<i class="sort-arrow"></i></th>
+              <th class="c sortable" onclick="sortTable('detail','confidence')">C<i class="sort-arrow"></i></th>
+              <th class="c sortable" onclick="sortTable('detail','ease')">E<i class="sort-arrow"></i></th>
+              <th class="r sortable sort-active" onclick="sortTable('detail','ice')">ICE<i class="sort-arrow">↓</i></th>
+              <th class="sortable" onclick="sortTable('detail','status')">Status<i class="sort-arrow"></i></th>
+              <th class="r">Actions</th>
             </tr></thead>
             <tbody id="detail-tbody"></tbody>
           </table>
@@ -865,9 +880,18 @@
       </div>
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr>
-            <th>ID</th><th>Hypothesis</th><th>Page</th><th>Section</th><th>Metrics</th>
-            <th class="c">I</th><th class="c">C</th><th class="c">E</th><th class="r">ICE</th><th>Status</th><th class="r"></th>
+          <thead id="client-thead"><tr>
+            <th class="sortable" onclick="sortTable('client','id')">ID<i class="sort-arrow"></i></th>
+            <th class="sortable" onclick="sortTable('client','hypothesis')">Hypothesis<i class="sort-arrow"></i></th>
+            <th class="sortable" onclick="sortTable('client','page')">Page<i class="sort-arrow"></i></th>
+            <th class="sortable" onclick="sortTable('client','section')">Section<i class="sort-arrow"></i></th>
+            <th class="sortable" onclick="sortTable('client','metrics')">Metrics<i class="sort-arrow"></i></th>
+            <th class="c sortable" onclick="sortTable('client','impact')">I<i class="sort-arrow"></i></th>
+            <th class="c sortable" onclick="sortTable('client','confidence')">C<i class="sort-arrow"></i></th>
+            <th class="c sortable" onclick="sortTable('client','ease')">E<i class="sort-arrow"></i></th>
+            <th class="r sortable sort-active" onclick="sortTable('client','ice')">ICE<i class="sort-arrow">↓</i></th>
+            <th class="sortable" onclick="sortTable('client','status')">Status<i class="sort-arrow"></i></th>
+            <th class="r"></th>
           </tr></thead>
           <tbody id="client-tbody"></tbody>
         </table>
@@ -1312,6 +1336,8 @@ const state = {
   deletingTestId:         null,
   activeFilter:           'all',
   clientFilter:           'all',
+  detailSort:             { col: 'ice', dir: 'desc' },
+  clientSort:             { col: 'ice', dir: 'desc' },
   theme:                  'dark',
   detachProjectListener:  null,  // Firestore onSnapshot unsubscribe fn
 };
@@ -1817,12 +1843,66 @@ function renderByStatus(tests, prefix) {
 // ─────────────────────────────────────────────────────────────
 // RENDER: TABLE
 // ─────────────────────────────────────────────────────────────
+const SORT_COLS = {
+  id:         (a,b) => (a.id||'').localeCompare(b.id||''),
+  hypothesis: (a,b) => (a.title||a.hypothesis||'').localeCompare(b.title||b.hypothesis||''),
+  page:       (a,b) => (a.page||'').localeCompare(b.page||''),
+  section:    (a,b) => (a.section||'').localeCompare(b.section||''),
+  metrics:    (a,b) => (a.metrics||'').localeCompare(b.metrics||''),
+  status:     (a,b) => (a.status||'').localeCompare(b.status||''),
+  impact:     (a,b) => (a.impact||0)-(b.impact||0),
+  confidence: (a,b) => (a.confidence||0)-(b.confidence||0),
+  ease:       (a,b) => (a.ease||0)-(b.ease||0),
+  ice:        (a,b) => (a.ice||0)-(b.ice||0),
+};
+
+function sortTable(prefix, col) {
+  const key = prefix === 'detail' ? 'detailSort' : 'clientSort';
+  if (state[key].col === col) {
+    state[key].dir = state[key].dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    state[key].col = col;
+    state[key].dir = ['ice','impact','confidence','ease'].includes(col) ? 'desc' : 'asc';
+  }
+  if (prefix === 'detail') renderDetail();
+  else renderClientTable();
+}
+
+function renderClientTable() {
+  renderTable(state.clientTests, state.clientFilter, 'client');
+}
+
+function updateSortHeaders(prefix) {
+  const { col, dir } = state[prefix === 'detail' ? 'detailSort' : 'clientSort'];
+  const thead = document.getElementById(prefix + '-thead');
+  if (!thead) return;
+  thead.querySelectorAll('th.sortable').forEach(th => {
+    const thCol = th.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1];
+    const arrow = th.querySelector('.sort-arrow');
+    if (thCol === col) {
+      th.classList.add('sort-active');
+      if (arrow) arrow.textContent = dir === 'asc' ? '↑' : '↓';
+    } else {
+      th.classList.remove('sort-active');
+      if (arrow) arrow.textContent = '';
+    }
+  });
+}
+
 function renderTable(tests, filter, prefix) {
   const rows = filter === 'all' ? tests : tests.filter(t => t.status === filter);
-  const sorted = [...rows].sort((a,b) => (b.ice||0)-(a.ice||0));
+  const sortKey = prefix === 'detail' ? 'detailSort' : 'clientSort';
+  const { col, dir } = state[sortKey];
+  const cmp = SORT_COLS[col] || SORT_COLS.ice;
+  const sorted = [...rows].sort((a,b) => dir === 'asc' ? cmp(a,b) : cmp(b,a));
 
+  updateSortHeaders(prefix);
+
+  const colLabel = { id:'ID', hypothesis:'Hypothesis', page:'Page', section:'Section',
+    metrics:'Metrics', impact:'Impact', confidence:'Confidence', ease:'Ease',
+    ice:'ICE', status:'Status' };
   const countEl = document.getElementById(prefix + '-table-count');
-  if (countEl) countEl.textContent = `${sorted.length} test${sorted.length!==1?'s':''} · sorted by ICE`;
+  if (countEl) countEl.textContent = `${sorted.length} test${sorted.length!==1?'s':''} · sorted by ${colLabel[col]||col} ${dir==='asc'?'↑':'↓'}`;
 
   const tbody = document.getElementById(prefix + '-tbody');
   if (!sorted.length) {
