@@ -2439,6 +2439,7 @@ const CSV_FIELDS = [
   { key: 'hypothesis',    label: 'Hypothesis' },
   { key: 'observation',   label: 'Observation / Insight' },
   { key: 'page',          label: 'Page / Location' },
+  { key: 'section',       label: 'Section' },
   { key: 'status',        label: 'Status' },
   { key: 'impact',        label: 'Impact Score (1–10)' },
   { key: 'confidence',    label: 'Confidence Score (1–10)' },
@@ -2457,7 +2458,8 @@ function guessCsvMappings(headers) {
     title:         ['title','name','test name','test title','hypothesis name'],
     hypothesis:    ['hypothesis','hyp','description','desc','what','test description'],
     observation:   ['observation','insight','data','background','rationale','why','evidence'],
-    page:          ['page','pages','location','url','section','area'],
+    page:          ['page','pages','location','url','area'],
+    section:       ['section','component','element','part','zone','feature'],
     status:        ['status','state','stage','phase'],
     impact:        ['impact','i score','impact score'],
     confidence:    ['confidence','c score','confidence score'],
@@ -2554,7 +2556,7 @@ function renderCsvPreview() {
   const area = document.getElementById('csv-preview-area');
   const mapped = CSV_FIELDS.filter(f => csvState.mappings[f.key]);
   if (!mapped.length) { area.innerHTML = ''; return; }
-  const rows = csvState.rows.slice(0, 4);
+  const rows = csvState.rows.slice(0, 2);
   const head = mapped.map(f => `<th>${escHtml(f.label)}</th>`).join('');
   const body = rows.map(row => {
     const cells = mapped.map(f => {
@@ -2564,7 +2566,7 @@ function renderCsvPreview() {
     }).join('');
     return `<tr>${cells}</tr>`;
   }).join('');
-  area.innerHTML = `<p style="font-size:11px;color:var(--text-mute);margin:16px 0 8px">${csvState.rows.length} row${csvState.rows.length!==1?'s':''} found — preview of first ${Math.min(4,csvState.rows.length)}:</p>
+  area.innerHTML = `<p style="font-size:11px;color:var(--text-mute);margin:16px 0 8px">${csvState.rows.length} row${csvState.rows.length!==1?'s':''} found — preview of first ${Math.min(2,csvState.rows.length)}:</p>
     <div class="csv-preview-wrap"><table class="csv-preview-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
@@ -2611,6 +2613,7 @@ async function importCsv() {
         hypothesis:    get(row,'hypothesis'),
         observation:   get(row,'observation'),
         page:          normaliseCsvPage(get(row,'page')),
+        section:       get(row,'section'),
         status:        normaliseCsvStatus(get(row,'status')),
         impact, confidence, ease, ice,
         metrics:       get(row,'metrics'),
