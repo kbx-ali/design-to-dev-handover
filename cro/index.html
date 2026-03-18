@@ -195,21 +195,19 @@
 
     /* ── KPI ROW ───────────────────────────────────────────── */
     .kpi-row { display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:24px 44px; }
-    .kpi-card { background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px 22px 18px;position:relative;overflow:hidden;transition:border-color 0.2s,background 0.2s; }
-    .kpi-card:hover { background:var(--bg-card-hover);border-color:var(--border-lt); }
+    .kpi-card { background:var(--kpi-accent);border:none;border-radius:14px;padding:20px 22px 18px;position:relative;overflow:hidden;transition:filter 0.2s; }
+    .kpi-card:hover { filter:brightness(1.08); }
     .kpi-card.clickable { cursor:pointer; }
-    .kpi-card.clickable:hover { border-color:var(--teal-lt); }
-    .kpi-card::after { content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kpi-accent); }
-    .kpi-icon { position:absolute;top:16px;right:16px;color:var(--kpi-accent,var(--text));opacity:0.2; }
-    .kpi-value { font-family:'Domine',serif;font-size:54px;font-weight:400;line-height:1;color:var(--kpi-accent,var(--text));margin-bottom:6px;letter-spacing:-0.03em; }
-    .kpi-value.dim { color:var(--text-mute); }
-    .kpi-title { font-size:10px;font-weight:700;color:var(--text-mute);text-transform:uppercase;letter-spacing:0.1em; }
-    .kpi-sub   { font-size:11px;color:var(--text-mute);margin-top:5px; }
+    .kpi-icon { position:absolute;top:16px;right:16px;color:var(--kpi-text,#28282B);opacity:0.3; }
+    .kpi-value { font-family:'Domine',serif;font-size:54px;font-weight:700;line-height:1;color:var(--kpi-text,#28282B);margin-bottom:6px;letter-spacing:-0.03em; }
+    .kpi-value.dim { opacity:0.4; }
+    .kpi-title { font-size:10px;font-weight:700;color:var(--kpi-text,#28282B);text-transform:uppercase;letter-spacing:0.1em;opacity:0.8; }
+    .kpi-sub   { font-size:11px;color:var(--kpi-text,#28282B);margin-top:5px;opacity:0.55; }
 
     /* ── PANEL ─────────────────────────────────────────────── */
     .panel { background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden; }
     .panel-hd { padding:16px 22px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px; }
-    .panel-title { font-family:'Domine',serif;font-size:15px;font-weight:700;color:var(--text); }
+    .panel-title { font-family:'Domine',serif;font-size:15px;font-weight:400;color:var(--text); }
     .panel-note  { font-size:11px;color:var(--text-mute);font-weight:600; }
     .panel-body  { padding:16px 22px 20px; }
 
@@ -255,7 +253,7 @@
     .pc-top-logo { max-height:38px;max-width:140px;object-fit:contain; }
     .pc-top-bar { width:100%;height:4px;background:rgba(0,0,0,0.15);border-radius:2px; }
     .pc-body { padding:20px 22px 16px; }
-    .pc-name { font-family:'Domine',serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px; }
+    .pc-name { font-family:'Domine',serif;font-size:17px;font-weight:400;color:var(--text);margin-bottom:4px; }
     .pc-meta { font-size:11px;color:var(--text-mute);margin-bottom:16px; }
     .pc-stats { display:flex;gap:14px;margin-bottom:16px; }
     .pc-stat { text-align:center; }
@@ -270,7 +268,7 @@
     .nav-bar { display:flex;align-items:center;gap:12px;padding:16px 44px;border-bottom:1px solid var(--border);background:var(--bg-card); }
     .nav-back { display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--text-mute);cursor:pointer;transition:all 0.15s; }
     .nav-back:hover { background:var(--flt-hover-bg);color:var(--text); }
-    .nav-title { font-family:'Domine',serif;font-size:18px;font-weight:700;color:var(--text);flex:1; }
+    .nav-title { font-family:'Domine',serif;font-size:18px;font-weight:400;color:var(--text);flex:1; }
     .nav-actions { display:flex;align-items:center;gap:8px; }
 
     /* ── SIDE-BY-SIDE (priority + side panels) ─────────────── */
@@ -312,7 +310,7 @@
     #screen-login { display:flex;flex-direction:column;min-height:100vh; }
     .login-card { background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:48px 44px;max-width:420px;width:100%;text-align:center; }
     .login-k { width:56px;height:56px;display:flex;align-items:center;justify-content:center;color:var(--kbx-yellow);margin:0 auto 20px; }
-    .login-h1 { font-family:'Domine',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:8px; }
+    .login-h1 { font-family:'Domine',serif;font-size:26px;font-weight:400;color:var(--text);margin-bottom:8px; }
     .login-sub { font-size:13px;color:var(--text-mute);line-height:1.65;margin-bottom:32px; }
     .btn-google { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card-hover);font-family:inherit;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.15s;margin-bottom:16px; }
     .btn-google:hover { border-color:var(--border-lt);transform:translateY(-1px); }
@@ -323,7 +321,7 @@
     /* ── CONFIG MISSING SCREEN ─────────────────────────────── */
     #screen-config { display:flex;flex-direction:column;min-height:100vh; }
     .config-card { background:var(--bg-card);border:1px solid rgba(255,255,0,0.25);border-radius:20px;padding:48px 44px;max-width:520px;width:100%; }
-    .config-title { font-family:'Domine',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px; }
+    .config-title { font-family:'Domine',serif;font-size:22px;font-weight:400;color:var(--text);margin-bottom:8px; }
     .config-sub { font-size:13px;color:var(--text-mute);line-height:1.65;margin-bottom:24px; }
     .config-steps { display:flex;flex-direction:column;gap:12px;margin-bottom:28px; }
     .config-step { display:flex;gap:12px;align-items:flex-start; }
@@ -341,12 +339,14 @@
     .client-header-body { display:flex;align-items:flex-end;justify-content:space-between;gap:24px; }
     .client-name { font-size:12px;font-weight:700;color:var(--kbx-mint);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px; }
     [data-theme="light"] .client-name { color:#1A7A34; }
-    .client-h1 { font-family:'Domine',serif;font-size:34px;font-weight:700;color:var(--text);line-height:1.1;letter-spacing:-0.01em; }
+    .client-h1 { font-family:'Domine',serif;font-size:34px;font-weight:400;color:var(--text);line-height:1.1;letter-spacing:-0.01em; }
     .client-desc { font-size:13px;color:var(--text-mute);margin-top:8px; }
     .client-logo { display:block;max-height:48px;width:auto;max-width:200px;object-fit:contain;margin-bottom:14px; }
     .detail-logo { max-height:28px;width:auto;max-width:160px;object-fit:contain;flex-shrink:0; }
     [data-theme="dark"] .detail-logo { filter:brightness(0) invert(1); }
-    .health-card { background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:16px 22px;max-width:380px;flex-shrink:0; }
+    .health-card { background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:20px 24px;max-width:420px;flex-shrink:0;display:flex;gap:20px;align-items:flex-start; }
+    .health-content { flex:1;min-width:0; }
+    .health-card .client-logo { flex-shrink:0;max-height:36px;max-width:120px;margin-bottom:0;order:1; }
     .health-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mute);margin-bottom:8px; }
     .health-body  { font-size:12.5px;color:var(--text-sec);line-height:1.65; }
     .health-body strong { color:var(--kbx-yellow);font-weight:700; }
@@ -366,7 +366,7 @@
     .tp-field { margin-bottom:20px; }
     .tp-field-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mute);margin-bottom:6px; }
     .tp-field-value { font-size:13px;color:var(--text-sec);line-height:1.65; }
-    .tp-title { font-family:'Domine',serif;font-size:19px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:20px; }
+    .tp-title { font-family:'Domine',serif;font-size:19px;font-weight:400;color:var(--text);line-height:1.3;margin-bottom:20px; }
     .tp-ice-row { display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px; }
     .tp-ice-cell { background:var(--bg-card);padding:14px 8px;text-align:center; }
     .tp-ice-cell-lbl { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-mute);margin-bottom:6px; }
@@ -379,14 +379,14 @@
     .tp-variant-img { display:block;height:360px;width:auto;max-width:100%;object-fit:contain;border-radius:10px;border:1px solid var(--border);margin:0 auto; }
     .tp-variant-empty { width:100%;height:140px;border-radius:10px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-mute);font-size:12px;font-style:italic; }
     .tp-select-wrap { display:flex;align-items:center;gap:10px;flex:1;min-width:0; }
-    .tp-select { font-family:'Domine',serif;font-size:14px;font-weight:700;color:var(--text);background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;max-width:380px;flex:1; }
+    .tp-select { font-family:'Domine',serif;font-size:14px;font-weight:400;color:var(--text);background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;max-width:380px;flex:1; }
     .tp-back { display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--teal-lt);background:none;border:none;cursor:pointer;padding:0;white-space:nowrap; }
     .tp-back:hover { opacity:0.75; }
     .tp-figma-btn { display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--teal-lt);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--teal-lt);cursor:pointer;text-decoration:none;margin-top:4px; }
     .tp-figma-btn:hover { background:rgba(13,105,135,0.08); }
     .tp-row-clickable { cursor:pointer; }
     .modal-hd { display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid var(--border); }
-    .modal-title { font-family:'Domine',serif;font-size:17px;font-weight:700;color:var(--text); }
+    .modal-title { font-family:'Domine',serif;font-size:17px;font-weight:400;color:var(--text); }
     .modal-close { width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-mute);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.15s; }
     .modal-close:hover { background:var(--flt-hover-bg);color:var(--text); }
     .modal-body { padding:20px 24px; }
@@ -434,7 +434,7 @@
     /* ── EMPTY STATE ───────────────────────────────────────── */
     .empty-state { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center; }
     .empty-state-icon { font-size:36px;margin-bottom:16px;opacity:0.5; }
-    .empty-state-title { font-family:'Domine',serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px; }
+    .empty-state-title { font-family:'Domine',serif;font-size:18px;font-weight:400;color:var(--text);margin-bottom:8px; }
     .empty-state-sub { font-size:13px;color:var(--text-mute);max-width:320px;line-height:1.65; }
 
     /* ── TOAST ─────────────────────────────────────────────── */
@@ -484,11 +484,11 @@
 
     /* ── PROJECT RENAME ────────────────────────────────────── */
     .nav-title-wrap { display:flex;align-items:center;gap:8px;flex:1;min-width:0; }
-    .nav-title { font-family:'Domine',serif;font-size:18px;font-weight:700;color:var(--text); }
+    .nav-title { font-family:'Domine',serif;font-size:18px;font-weight:400;color:var(--text); }
     .nav-title.hidden { display:none; }
     .live-dot { width:8px;height:8px;border-radius:50%;background:#94F7A1;flex-shrink:0;animation:pulse-dot 2.5s ease-in-out infinite; }
     @keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(148,247,161,0.5);opacity:1} 50%{box-shadow:0 0 0 5px rgba(148,247,161,0);opacity:0.7} }
-    .nav-title-input { font-family:'Domine',serif;font-size:18px;font-weight:700;color:var(--text);background:var(--input-bg);border:1px solid var(--input-focus-bd);border-radius:7px;padding:4px 10px;outline:none;display:none;min-width:180px;flex:1; }
+    .nav-title-input { font-family:'Domine',serif;font-size:18px;font-weight:400;color:var(--text);background:var(--input-bg);border:1px solid var(--input-focus-bd);border-radius:7px;padding:4px 10px;outline:none;display:none;min-width:180px;flex:1; }
     .nav-title-input.visible { display:block; }
     .edit-name-btn { display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:5px;border:1px solid transparent;background:transparent;color:var(--text-mute);cursor:pointer;transition:all 0.15s;flex-shrink:0; }
     .edit-name-btn:hover { background:var(--flt-hover-bg);color:var(--text);border-color:var(--border); }
@@ -697,7 +697,7 @@
       <div class="section-hd">
         <div>
           <div class="sec-label lbl-yellow" style="margin-bottom:8px"><div class="sec-label-dot"></div>Client Projects</div>
-          <h2 style="font-family:'Domine',serif;font-size:24px;font-weight:700;color:var(--text)">CRO Planner</h2>
+          <h2 style="font-family:'Domine',serif;font-size:24px;font-weight:400;color:var(--text)">CRO Planner</h2>
         </div>
         <button class="btn-yellow" onclick="openNewProjectModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -836,13 +836,15 @@
       <div class="client-header-body">
         <div>
           <div class="client-name" id="client-name-lbl"></div>
-          <h1 class="client-h1">CRO Planner</h1>
-          <p class="client-desc">ICE-scored test backlog &nbsp;·&nbsp; Shopify conversion optimisation</p>
+          <h1 class="client-h1">CRO Roadmap</h1>
+          <p class="client-desc">ICE-Scored Test Backlog &nbsp;·&nbsp; Shopify CRO</p>
         </div>
         <div class="health-card">
-          <img id="client-logo-img" class="client-logo" src="" alt="" style="display:none;margin-bottom:14px" onerror="this.style.display='none'">
-          <div class="health-label">Overall Health</div>
-          <div class="health-body" id="client-health"></div>
+          <div class="health-content">
+            <div class="health-label">Overall Health</div>
+            <div class="health-body" id="client-health"></div>
+          </div>
+          <img id="client-logo-img" class="client-logo" src="" alt="" style="display:none" onerror="this.style.display='none'">
         </div>
       </div>
     </div>
@@ -1750,15 +1752,15 @@ function renderKPIs(tests, prefix) {
   const ICO_LEARN  = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path fill="currentColor" d="M13 2h-2v4h2zm2 6H9v2H7v4h2v4h6v-4h2v-4h-2zm0 2v4h-2v2h-2v-2H9v-4zM9 20h6v2H9zm14-9v2h-4v-2zM5 13v-2H1v2zm12-7h2v2h-2zm2 0h2V4h-2zM5 6h2v2H5zm0 0V4H3v2z"/></svg>`;
 
   const kpis = [
-    { icon:ICO_TOTAL,  value:total,      cls: total?'':'dim',      title:'Total Tests',   sub:'Backlog size',         accent:'var(--kbx-yellow)', click:'' },
-    { icon:ICO_ACTIVE, value:active,     cls: active?'':'dim',     title:'Active Tests',  sub:'Currently live',       accent:'var(--kbx-mint)',   click:'' },
-    { icon:ICO_HIGH,   value:highImpact, cls: highImpact?'':'dim', title:'High Impact',   sub:`Score 8+ · ${hiPct}%`, accent:'var(--kbx-orchid)', click:'' },
-    { icon:ICO_ICE,    value:avgIce,     cls:'',                   title:'Avg ICE Score', sub:'Portfolio health',      accent:'var(--teal-lt)',    click:'' },
-    { icon:ICO_LEARN,  value:learnings,  cls: learnings?'':'dim',  title:'Learnings',     sub:'Click to view',        accent:'rgba(255,255,255,0.45)', click:`openLearningsModal('${prefix}')` },
+    { icon:ICO_TOTAL,  value:total,      cls: total?'':'dim',      title:'Total Tests',   sub:'Backlog size',         accent:'var(--kbx-yellow)', text:'#28282B', click:'' },
+    { icon:ICO_ACTIVE, value:active,     cls: active?'':'dim',     title:'Active Tests',  sub:'Currently live',       accent:'var(--kbx-mint)',   text:'#28282B', click:'' },
+    { icon:ICO_HIGH,   value:highImpact, cls: highImpact?'':'dim', title:'High Impact',   sub:`Score 8+ · ${hiPct}%`, accent:'var(--kbx-orchid)', text:'#28282B', click:'' },
+    { icon:ICO_ICE,    value:avgIce,     cls:'',                   title:'Avg ICE Score', sub:'Portfolio health',      accent:'var(--teal-lt)',    text:'#FFFFFF', click:'' },
+    { icon:ICO_LEARN,  value:learnings,  cls: learnings?'':'dim',  title:'Learnings',     sub:'Click to view',        accent:'#541A80',           text:'#FFFFFF', click:`openLearningsModal('${prefix}')` },
   ];
 
   document.getElementById(prefix + '-kpis').innerHTML = kpis.map(k => `
-    <div class="kpi-card${k.click ? ' clickable' : ''}" style="--kpi-accent:${k.accent}"${k.click ? ` onclick="${k.click}"` : ''}>
+    <div class="kpi-card${k.click ? ' clickable' : ''}" style="--kpi-accent:${k.accent};--kpi-text:${k.text}"${k.click ? ` onclick="${k.click}"` : ''}>
       <span class="kpi-icon">${k.icon}</span>
       <div class="kpi-value ${k.cls}">${k.value}</div>
       <div class="kpi-title">${k.title}</div>
