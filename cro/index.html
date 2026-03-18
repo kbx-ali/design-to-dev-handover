@@ -297,7 +297,7 @@
     /* ── LOGIN SCREEN ──────────────────────────────────────── */
     #screen-login { display:flex;flex-direction:column;min-height:100vh; }
     .login-card { background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:48px 44px;max-width:420px;width:100%;text-align:center; }
-    .login-k { width:56px;height:56px;background:var(--kbx-yellow);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Domine',serif;font-weight:700;font-size:24px;color:var(--kbx-black);margin:0 auto 20px; }
+    .login-k { width:56px;height:56px;display:flex;align-items:center;justify-content:center;color:var(--kbx-yellow);margin:0 auto 20px; }
     .login-h1 { font-family:'Domine',serif;font-size:26px;font-weight:700;color:var(--text);margin-bottom:8px; }
     .login-sub { font-size:13px;color:var(--text-mute);line-height:1.65;margin-bottom:32px; }
     .btn-google { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card-hover);font-family:inherit;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.15s;margin-bottom:16px; }
@@ -512,8 +512,8 @@
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:60px 20px;">
     <div class="login-card">
-      <div class="login-k">K</div>
-      <h1 class="login-h1">CRO Dashboard</h1>
+      <div class="login-k"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><path d="M14 6h8v8h-2v-4h-2V8h-4zm2 6v-2h2v2zm-2 2v-2h2v2zm-2 0h2v2h-2zm-2-2h2v2h-2zm-2 0v-2h2v2zm-2 2v-2h2v2zm-2 2v-2h2v2zm0 0v2H2v-2z"/></svg></div>
+      <h1 class="login-h1">CRO Planner</h1>
       <p class="login-sub">Sign in with your Kubix Google account to manage client CRO programmes.</p>
       <div class="login-err" id="login-err"></div>
       <button class="btn-google" onclick="signInWithGoogle()">
