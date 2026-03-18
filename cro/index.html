@@ -239,7 +239,9 @@
     .project-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px; }
     .project-card { background:var(--bg-card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color 0.2s,background 0.2s,transform 0.2s;cursor:pointer; }
     .project-card:hover { background:var(--bg-card-hover);border-color:var(--border-lt);transform:translateY(-2px); }
-    .pc-top { height:4px;background:var(--kbx-yellow); }
+    .pc-top { height:54px;background:var(--kbx-yellow);display:flex;align-items:center;padding:0 18px; }
+    .pc-top-logo { max-height:32px;max-width:120px;object-fit:contain;filter:brightness(0);opacity:0.6; }
+    .pc-top-bar { width:100%;height:4px;background:rgba(0,0,0,0.15);border-radius:2px; }
     .pc-body { padding:20px 22px 16px; }
     .pc-name { font-family:'Domine',serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px; }
     .pc-meta { font-size:11px;color:var(--text-mute);margin-bottom:16px; }
@@ -329,6 +331,8 @@
     [data-theme="light"] .client-name { color:#1A7A34; }
     .client-h1 { font-family:'Domine',serif;font-size:34px;font-weight:700;color:var(--text);line-height:1.1;letter-spacing:-0.01em; }
     .client-desc { font-size:13px;color:var(--text-mute);margin-top:8px; }
+    .client-logo { display:block;max-height:48px;width:auto;max-width:200px;object-fit:contain;margin-bottom:14px;border-radius:6px; }
+    [data-theme="dark"] .client-logo { filter:brightness(0) invert(1); }
     .health-card { background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:16px 22px;max-width:380px;flex-shrink:0; }
     .health-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mute);margin-bottom:8px; }
     .health-body  { font-size:12.5px;color:var(--text-sec);line-height:1.65; }
@@ -683,6 +687,7 @@
       </div>
       <div class="client-header-body">
         <div>
+          <img id="client-logo-img" class="client-logo" src="" alt="" style="display:none" onerror="this.style.display='none'">
           <div class="client-name" id="client-name-lbl"></div>
           <h1 class="client-h1">CRO Planner</h1>
           <p class="client-desc">ICE-scored test backlog &nbsp;·&nbsp; Shopify conversion optimisation</p>
@@ -768,6 +773,15 @@
         <input class="form-input" id="proj-name-input" type="text" placeholder="e.g. Ruffingtons" autocomplete="off"
           onkeydown="if(event.key==='Enter')saveNewProject()">
       </div>
+      <div class="form-field">
+        <label class="form-label" for="proj-logo-input">Client Logo <span style="font-weight:400;opacity:0.5">(optional)</span></label>
+        <input class="form-input" id="proj-logo-input" type="text" placeholder="e.g. ruffingtons.co.uk or https://…/logo.png" autocomplete="off"
+          oninput="previewLogoInput('proj-logo-input','proj-logo-preview')"
+          onkeydown="if(event.key==='Enter')saveNewProject()">
+        <div style="margin-top:8px;min-height:28px">
+          <img id="proj-logo-preview" src="" alt="" style="display:none;max-height:28px;max-width:140px;object-fit:contain;border-radius:4px;opacity:0.7" onerror="this.style.display='none'">
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn-ghost" onclick="closeModal('modal-new-project')">Cancel</button>
@@ -782,7 +796,7 @@
 <div id="modal-rename-project" class="modal-overlay" onclick="closeModalBg(event,'modal-rename-project')">
   <div class="modal modal-sm">
     <div class="modal-hd">
-      <div class="modal-title">Rename Project</div>
+      <div class="modal-title">Edit Project</div>
       <button class="modal-close" onclick="closeModal('modal-rename-project')">✕</button>
     </div>
     <div class="modal-body">
@@ -792,10 +806,19 @@
         <input class="form-input" id="rename-proj-input" type="text" autocomplete="off"
           onkeydown="if(event.key==='Enter')saveProjectCardRename()">
       </div>
+      <div class="form-field">
+        <label class="form-label" for="rename-proj-logo">Client Logo <span style="font-weight:400;opacity:0.5">(optional)</span></label>
+        <input class="form-input" id="rename-proj-logo" type="text" placeholder="e.g. ruffingtons.co.uk or https://…/logo.png" autocomplete="off"
+          oninput="previewLogoInput('rename-proj-logo','rename-logo-preview')"
+          onkeydown="if(event.key==='Enter')saveProjectCardRename()">
+        <div style="margin-top:8px;min-height:28px">
+          <img id="rename-logo-preview" src="" alt="" style="display:none;max-height:28px;max-width:140px;object-fit:contain;border-radius:4px;opacity:0.7" onerror="this.style.display='none'">
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn-ghost" onclick="closeModal('modal-rename-project')">Cancel</button>
-      <button class="btn-yellow" onclick="saveProjectCardRename()" id="save-rename-btn">Save Name</button>
+      <button class="btn-yellow" onclick="saveProjectCardRename()" id="save-rename-btn">Save</button>
     </div>
   </div>
 </div>
@@ -1166,11 +1189,12 @@ async function loadProjects() {
   }
 }
 
-async function createProject(name) {
+async function createProject(name, logoInput) {
   const doc = await db.collection('projects').add({
     name: name.trim(),
     created: new Date().toISOString().split('T')[0],
     tests: [],
+    clientLogo: logoInput || '',
   });
   return doc.id;
 }
@@ -1209,9 +1233,14 @@ function renderProjects(projects) {
       .map(([s,c]) => `<span class="badge badge-${s.toLowerCase()}" style="font-size:10px;padding:2px 7px"><span class="badge-dot"></span>${c} ${s}</span>`)
       .join('');
 
+    const cardLogoUrl = getLogo(p.clientLogo || '');
     return `
       <div class="project-card" onclick="openProject('${p.id}','${escHtml(p.name)}')">
-        <div class="pc-top" style="background:${color}"></div>
+        <div class="pc-top" style="background:${color}">
+          ${cardLogoUrl
+            ? `<img class="pc-top-logo" src="${cardLogoUrl}" alt="${escHtml(p.name)}" onerror="this.style.display='none'">`
+            : '<div class="pc-top-bar"></div>'}
+        </div>
         <div class="pc-body">
           <div class="pc-name">${escHtml(p.name)}</div>
           <div class="pc-meta">Created ${p.created || '—'} &nbsp;·&nbsp; ${total} test${total!==1?'s':''}</div>
@@ -1225,7 +1254,7 @@ function renderProjects(projects) {
         <div class="pc-foot" onclick="event.stopPropagation()">
           <button class="btn-yellow" style="font-size:11px;padding:6px 12px" onclick="openProject('${p.id}','${escHtml(p.name)}')">Open →</button>
           <div style="display:flex;gap:6px">
-            <button class="pc-rename-btn" onclick="openRenameModal('${p.id}','${escHtml(p.name).replace(/'/g,"\\'")}')">
+            <button class="pc-rename-btn" onclick="openRenameModal('${p.id}','${escHtml(p.name).replace(/'/g,"\\'")}','${(p.clientLogo||'').replace(/'/g,"\\'")}')">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
               Rename
             </button>
@@ -1591,6 +1620,17 @@ async function loadClientView(docId) {
     document.getElementById('client-updated').textContent =
       'Updated: ' + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 
+    // Client logo
+    const logoEl  = document.getElementById('client-logo-img');
+    const logoUrl = getLogo(data.clientLogo || '');
+    if (logoUrl) {
+      logoEl.src = logoUrl;
+      logoEl.style.display = 'block';
+      logoEl.onerror = () => { logoEl.style.display = 'none'; };
+    } else {
+      logoEl.style.display = 'none';
+    }
+
     // Health text
     const total      = state.clientTests.length;
     const hiImpact   = state.clientTests.filter(t => (t.ice||0) >= 8).length;
@@ -1612,10 +1652,39 @@ async function loadClientView(docId) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// LOGO HELPER
+// ─────────────────────────────────────────────────────────────
+function getLogo(input) {
+  if (!input) return '';
+  const s = input.trim();
+  if (!s) return '';
+  if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  // Treat as domain → Clearbit
+  const domain = s.replace(/^www\./i, '').split('/')[0];
+  return `https://logo.clearbit.com/${domain}`;
+}
+
+function previewLogoInput(inputId, previewId) {
+  const val = document.getElementById(inputId).value.trim();
+  const img = document.getElementById(previewId);
+  const url = getLogo(val);
+  if (url) {
+    img.src = url;
+    img.style.display = 'block';
+    img.onerror = () => { img.style.display = 'none'; };
+  } else {
+    img.style.display = 'none';
+    img.src = '';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // NEW PROJECT MODAL
 // ─────────────────────────────────────────────────────────────
 function openNewProjectModal() {
   document.getElementById('proj-name-input').value = '';
+  document.getElementById('proj-logo-input').value = '';
+  document.getElementById('proj-logo-preview').style.display = 'none';
   openModal('modal-new-project');
   setTimeout(() => document.getElementById('proj-name-input').focus(), 100);
 }
@@ -1623,10 +1692,11 @@ function openNewProjectModal() {
 async function saveNewProject() {
   const name = document.getElementById('proj-name-input').value.trim();
   if (!name) { document.getElementById('proj-name-input').focus(); return; }
+  const logo = document.getElementById('proj-logo-input').value.trim();
   const btn = document.getElementById('save-proj-btn');
   btn.textContent = 'Creating…'; btn.disabled = true;
   try {
-    await createProject(name);
+    await createProject(name, logo);
     closeModal('modal-new-project');
     showToast('Project created!', 'success');
     loadProjects();
@@ -1904,9 +1974,15 @@ async function saveProjectRename() {
 // ─────────────────────────────────────────────────────────────
 // PROJECT RENAME — card modal
 // ─────────────────────────────────────────────────────────────
-function openRenameModal(docId, currentName) {
+function openRenameModal(docId, currentName, currentLogo) {
   document.getElementById('rename-proj-id').value = docId;
   document.getElementById('rename-proj-input').value = currentName;
+  const logoInp = document.getElementById('rename-proj-logo');
+  logoInp.value = currentLogo || '';
+  const prev = document.getElementById('rename-logo-preview');
+  const previewUrl = getLogo(currentLogo || '');
+  if (previewUrl) { prev.src = previewUrl; prev.style.display = 'block'; prev.onerror = () => { prev.style.display = 'none'; }; }
+  else { prev.style.display = 'none'; prev.src = ''; }
   openModal('modal-rename-project');
   setTimeout(() => {
     const inp = document.getElementById('rename-proj-input');
@@ -1918,17 +1994,18 @@ async function saveProjectCardRename() {
   const docId   = document.getElementById('rename-proj-id').value;
   const newName = document.getElementById('rename-proj-input').value.trim();
   if (!newName) return;
+  const logo = document.getElementById('rename-proj-logo').value.trim();
   const btn = document.getElementById('save-rename-btn');
   btn.textContent = 'Saving…'; btn.disabled = true;
   try {
-    await db.collection('projects').doc(docId).update({ name: newName });
+    await db.collection('projects').doc(docId).update({ name: newName, clientLogo: logo });
     closeModal('modal-rename-project');
-    showToast('Project renamed!', 'success');
+    showToast('Project updated!', 'success');
     loadProjects();
   } catch (e) {
     showToast('Error: ' + e.message, 'error');
   } finally {
-    btn.textContent = 'Save Name'; btn.disabled = false;
+    btn.textContent = 'Save'; btn.disabled = false;
   }
 }
 
