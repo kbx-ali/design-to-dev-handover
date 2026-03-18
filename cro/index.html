@@ -447,6 +447,20 @@
     .pc-rename-btn { display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:11px;font-weight:600;color:var(--text-mute);cursor:pointer;transition:all 0.15s; }
     .pc-rename-btn:hover { background:var(--flt-hover-bg);color:var(--text); }
 
+    /* ── CSV IMPORT ─────────────────────────────────────────── */
+    .csv-upload-area { border:2px dashed var(--border);border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s; }
+    .csv-upload-area:hover,.csv-upload-area.drag { border-color:var(--kbx-yellow);background:rgba(255,232,0,0.04); }
+    .csv-upload-icon { color:var(--text-mute);margin-bottom:12px; }
+    .csv-upload-title { font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px; }
+    .csv-upload-hint { font-size:11px;color:var(--text-mute); }
+    .csv-map-grid { display:grid;grid-template-columns:1fr 20px 1fr;gap:6px 8px;align-items:center;margin-bottom:20px; }
+    .csv-map-label { font-size:12px;font-weight:600;color:var(--text); }
+    .csv-map-arrow { color:var(--text-mute);font-size:13px;text-align:center; }
+    .csv-preview-wrap { overflow-x:auto; }
+    .csv-preview-table { width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap; }
+    .csv-preview-table th { background:var(--bg-card-hover);padding:6px 10px;text-align:left;color:var(--text-mute);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;font-size:10px; }
+    .csv-preview-table td { padding:5px 10px;border-top:1px solid var(--border);color:var(--text-sec);max-width:180px;overflow:hidden;text-overflow:ellipsis; }
+
     /* ── FOOTER ────────────────────────────────────────────── */
     .dash-footer { padding:18px 44px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
     .footer-l { font-size:11px;font-weight:700;color:var(--text-sec); }
@@ -601,6 +615,10 @@
         <button class="btn-ghost" onclick="copyClientLink()" id="copy-link-btn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           Copy Client Link
+        </button>
+        <button class="btn-ghost" onclick="openCsvImport()" title="Import tests from a CSV file">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Import CSV
         </button>
         <button class="btn-yellow" onclick="openTestModal(null)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -957,6 +975,49 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ -->
+<!-- MODAL: CSV IMPORT                                            -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="modal-csv-import" class="modal-overlay" onclick="closeModalBg(event,'modal-csv-import')">
+  <div class="modal modal-lg">
+    <div class="modal-hd">
+      <div class="modal-title">Import Tests from CSV</div>
+      <button class="modal-close" onclick="closeModal('modal-csv-import')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Step 1: Upload -->
+      <div id="csv-step-upload">
+        <div class="csv-upload-area"
+          onclick="document.getElementById('csv-file-input').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="event.preventDefault();this.classList.remove('drag');handleCsvDrop(event)">
+          <div class="csv-upload-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          </div>
+          <div class="csv-upload-title">Drop your CSV here or click to browse</div>
+          <div class="csv-upload-hint">Any column layout — you'll map columns to fields in the next step</div>
+        </div>
+        <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none" onchange="handleCsvFile(this.files[0])">
+      </div>
+
+      <!-- Step 2: Map columns + preview -->
+      <div id="csv-step-map" style="display:none">
+        <p style="font-size:12px;color:var(--text-mute);margin-bottom:18px">Match your spreadsheet columns to the fields below. Unmapped fields are skipped. Auto-guessed where possible.</p>
+        <div class="csv-map-grid" id="csv-map-grid"></div>
+        <div id="csv-preview-area"></div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('modal-csv-import')">Cancel</button>
+      <button class="btn-ghost" id="csv-back-btn" onclick="csvGoBack()" style="display:none">← Back</button>
+      <button class="btn-yellow" id="csv-import-btn" onclick="importCsv()" style="display:none">Import Tests</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
 <!-- MODAL: LEARNINGS                                             -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div id="modal-learnings" class="modal-overlay" onclick="closeModalBg(event,'modal-learnings')">
@@ -1109,7 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Esc closes modals
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      ['modal-new-project','modal-rename-project','modal-test','modal-delete','modal-learnings'].forEach(closeModal);
+      ['modal-new-project','modal-rename-project','modal-test','modal-delete','modal-learnings','modal-csv-import'].forEach(closeModal);
     }
   });
 });
@@ -2063,6 +2124,209 @@ function showHypTooltip(testId, prefix) {
 function hideHypTooltip() {
   const tip = document.getElementById('hyp-tooltip');
   if (tip) tip.classList.remove('show');
+}
+
+// ─────────────────────────────────────────────────────────────
+// CSV IMPORT
+// ─────────────────────────────────────────────────────────────
+let csvState = { headers: [], rows: [], mappings: {} };
+
+const CSV_FIELDS = [
+  { key: 'title',         label: 'Test Title / Name' },
+  { key: 'hypothesis',    label: 'Hypothesis' },
+  { key: 'observation',   label: 'Observation / Insight' },
+  { key: 'page',          label: 'Page / Location' },
+  { key: 'status',        label: 'Status' },
+  { key: 'impact',        label: 'Impact Score (1–10)' },
+  { key: 'confidence',    label: 'Confidence Score (1–10)' },
+  { key: 'ease',          label: 'Ease Score (1–10)' },
+  { key: 'metrics',       label: 'Metrics / KPI' },
+  { key: 'notes',         label: 'Notes / Learnings' },
+  { key: 'figmaLink',     label: 'Figma Link' },
+  { key: 'controlImg',    label: 'Control Image URL' },
+  { key: 'challengerImg', label: 'Challenger Image URL' },
+];
+
+function guessCsvMappings(headers) {
+  const m = {};
+  const rules = {
+    title:         ['title','name','test name','test title','test id','id','ref'],
+    hypothesis:    ['hypothesis','hyp','description','desc','what','test description'],
+    observation:   ['observation','insight','data','background','rationale','why','evidence'],
+    page:          ['page','pages','location','url','section','area'],
+    status:        ['status','state','stage','phase'],
+    impact:        ['impact','i score','impact score'],
+    confidence:    ['confidence','c score','confidence score'],
+    ease:          ['ease','e score','ease score','effort'],
+    metrics:       ['metric','metrics','kpi','measure','primary metric'],
+    notes:         ['note','notes','learning','learnings','result','results','outcome','findings'],
+    figmaLink:     ['figma','figma link','figma url','prototype','proto'],
+    controlImg:    ['control','control image','variant a','control url'],
+    challengerImg: ['challenger','challenger image','variant b','challenger url'],
+  };
+  headers.forEach(h => {
+    const hl = h.toLowerCase().trim();
+    for (const [field, matches] of Object.entries(rules)) {
+      if (!m[field] && matches.some(v => hl.includes(v))) m[field] = h;
+    }
+  });
+  return m;
+}
+
+function parseCSVText(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return null;
+  function parseLine(line) {
+    const out = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (line[i] === ',' && !inQ) { out.push(cur.trim()); cur = ''; }
+      else cur += line[i];
+    }
+    out.push(cur.trim()); return out;
+  }
+  const headers = parseLine(lines[0]);
+  const rows = lines.slice(1).map(parseLine).filter(r => r.some(c => c));
+  return { headers, rows };
+}
+
+function openCsvImport() {
+  csvState = { headers: [], rows: [], mappings: {} };
+  document.getElementById('csv-step-upload').style.display = 'block';
+  document.getElementById('csv-step-map').style.display = 'none';
+  document.getElementById('csv-import-btn').style.display = 'none';
+  document.getElementById('csv-back-btn').style.display = 'none';
+  document.getElementById('csv-file-input').value = '';
+  openModal('modal-csv-import');
+}
+
+function csvGoBack() {
+  document.getElementById('csv-step-upload').style.display = 'block';
+  document.getElementById('csv-step-map').style.display = 'none';
+  document.getElementById('csv-import-btn').style.display = 'none';
+  document.getElementById('csv-back-btn').style.display = 'none';
+}
+
+function handleCsvDrop(e) { handleCsvFile(e.dataTransfer.files[0]); }
+
+function handleCsvFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const parsed = parseCSVText(e.target.result);
+    if (!parsed) { showToast('Could not parse CSV — check the file format', 'error'); return; }
+    csvState.headers = parsed.headers;
+    csvState.rows    = parsed.rows;
+    csvState.mappings = guessCsvMappings(parsed.headers);
+    showCsvMapper();
+  };
+  reader.readAsText(file);
+}
+
+function showCsvMapper() {
+  document.getElementById('csv-step-upload').style.display = 'none';
+  document.getElementById('csv-step-map').style.display = 'block';
+  document.getElementById('csv-import-btn').style.display = 'inline-flex';
+  document.getElementById('csv-back-btn').style.display = 'inline-flex';
+  document.getElementById('csv-import-btn').textContent = `Import ${csvState.rows.length} Test${csvState.rows.length !== 1 ? 's' : ''}`;
+
+  const grid = document.getElementById('csv-map-grid');
+  grid.innerHTML = CSV_FIELDS.map(f => {
+    const opts = ['<option value="">— skip —</option>',
+      ...csvState.headers.map(h => `<option value="${escHtml(h)}"${csvState.mappings[f.key] === h ? ' selected' : ''}>${escHtml(h)}</option>`)
+    ].join('');
+    return `<div class="csv-map-label">${f.label}</div>
+      <div class="csv-map-arrow">→</div>
+      <select class="form-input" style="font-size:11px;padding:6px 10px"
+        onchange="csvState.mappings['${f.key}']=this.value;renderCsvPreview()">${opts}</select>`;
+  }).join('');
+
+  renderCsvPreview();
+}
+
+function renderCsvPreview() {
+  const area = document.getElementById('csv-preview-area');
+  const mapped = CSV_FIELDS.filter(f => csvState.mappings[f.key]);
+  if (!mapped.length) { area.innerHTML = ''; return; }
+  const rows = csvState.rows.slice(0, 4);
+  const head = mapped.map(f => `<th>${escHtml(f.label)}</th>`).join('');
+  const body = rows.map(row => {
+    const cells = mapped.map(f => {
+      const i = csvState.headers.indexOf(csvState.mappings[f.key]);
+      const val = (i >= 0 ? row[i] || '' : '').substring(0, 50);
+      return `<td title="${escHtml(val)}">${escHtml(val)}</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+  area.innerHTML = `<p style="font-size:11px;color:var(--text-mute);margin:16px 0 8px">${csvState.rows.length} row${csvState.rows.length!==1?'s':''} found — preview of first ${Math.min(4,csvState.rows.length)}:</p>
+    <div class="csv-preview-wrap"><table class="csv-preview-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function normaliseCsvStatus(raw) {
+  if (!raw) return 'Backlog';
+  const s = raw.toLowerCase();
+  if (['live','running','active','launched'].some(v => s.includes(v))) return 'Live';
+  if (['complet','done','finish'].some(v => s.includes(v))) return 'Completed';
+  if (['design','progress','wip'].some(v => s.includes(v))) return 'Designing';
+  return 'Backlog';
+}
+
+function normaliseCsvPage(raw) {
+  if (!raw) return '';
+  const s = raw.toLowerCase();
+  if (s.includes('home') || s === 'index') return 'Homepage';
+  if (s.includes('collect') || s.includes('plp') || s.includes('categor')) return 'Collection';
+  if (s.includes('product') || s.includes('pdp')) return 'Product';
+  if (s.includes('cart') || s.includes('basket')) return 'Cart';
+  if (s.includes('checkout') || s.includes('payment')) return 'Checkout';
+  return raw.trim();
+}
+
+async function importCsv() {
+  if (!csvState.rows.length) { showToast('No rows to import', 'error'); return; }
+  const btn = document.getElementById('csv-import-btn');
+  btn.textContent = 'Importing…'; btn.disabled = true;
+  try {
+    const get = (row, key) => {
+      const col = csvState.headers.indexOf(csvState.mappings[key] || '');
+      return col >= 0 ? (row[col] || '').trim() : '';
+    };
+    const clamp = (v, fb) => { const n = parseFloat(v); return isNaN(n) ? fb : Math.min(10, Math.max(1, n)); };
+
+    const newTests = csvState.rows.map(row => {
+      const impact     = clamp(get(row,'impact'), 5);
+      const confidence = clamp(get(row,'confidence'), 5);
+      const ease       = clamp(get(row,'ease'), 5);
+      const ice        = Math.round((impact + confidence + ease) / 3 * 10) / 10;
+      return {
+        id:            'csv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+        title:         get(row,'title'),
+        hypothesis:    get(row,'hypothesis'),
+        observation:   get(row,'observation'),
+        page:          normaliseCsvPage(get(row,'page')),
+        status:        normaliseCsvStatus(get(row,'status')),
+        impact, confidence, ease, ice,
+        metrics:       get(row,'metrics'),
+        notes:         get(row,'notes'),
+        figmaLink:     get(row,'figmaLink'),
+        controlImg:    get(row,'controlImg'),
+        challengerImg: get(row,'challengerImg'),
+      };
+    });
+
+    const snap = await db.collection('projects').doc(state.currentDocId).get();
+    const existing = snap.data().tests || [];
+    await saveProjectTests(state.currentDocId, [...existing, ...newTests]);
+
+    closeModal('modal-csv-import');
+    showToast(`Imported ${newTests.length} test${newTests.length!==1?'s':''}!`, 'success');
+  } catch(e) {
+    showToast('Import failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
