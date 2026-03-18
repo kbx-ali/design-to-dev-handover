@@ -1922,9 +1922,14 @@ function previewVariantImg(inputId, previewId, noteId) {
 function convertDriveUrl(url) {
   if (!url) return url;
   const s = url.trim();
-  // /file/d/ID/view  or  /file/d/ID/preview  or  open?id=ID
-  const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  // Already converted to old uc?export=view format — re-extract ID and upgrade
+  const ucMatch = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (s.includes('drive.google.com/uc') && ucMatch) {
+    return `https://lh3.googleusercontent.com/d/${ucMatch[1]}`;
+  }
+  // /file/d/ID/view  or  /file/d/ID/preview  or  drive share links
+  const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m) return `https://lh3.googleusercontent.com/d/${m[1]}`;
   return s;
 }
 
@@ -2331,12 +2336,12 @@ function showHypTooltip(testId, prefix) {
     html += `<div class="ht-variants">`;
     html += `<div class="ht-var"><span class="ht-var-lbl">Control (A)</span>`;
     html += t.controlImg
-      ? `<img src="${escHtml(t.controlImg)}" alt="Control">`
+      ? `<img src="${escHtml(convertDriveUrl(t.controlImg))}" alt="Control">`
       : `<div class="ht-var-empty">No image</div>`;
     html += `</div>`;
     html += `<div class="ht-var"><span class="ht-var-lbl">Challenger (B)</span>`;
     html += t.challengerImg
-      ? `<img src="${escHtml(t.challengerImg)}" alt="Challenger">`
+      ? `<img src="${escHtml(convertDriveUrl(t.challengerImg))}" alt="Challenger">`
       : `<div class="ht-var-empty">No image</div>`;
     html += `</div></div>`;
   }
@@ -2413,14 +2418,14 @@ function populateTestPreview(testId) {
   const ctrlImg   = document.getElementById('tp-control-img');
   const ctrlEmpty = document.getElementById('tp-control-empty');
   if (t.controlImg) {
-    ctrlImg.src = t.controlImg; ctrlImg.style.display = 'block'; ctrlEmpty.style.display = 'none';
+    ctrlImg.src = convertDriveUrl(t.controlImg); ctrlImg.style.display = 'block'; ctrlEmpty.style.display = 'none';
   } else { ctrlImg.style.display = 'none'; ctrlEmpty.style.display = 'flex'; }
 
   // Challenger image
   const chalImg   = document.getElementById('tp-challenger-img');
   const chalEmpty = document.getElementById('tp-challenger-empty');
   if (t.challengerImg) {
-    chalImg.src = t.challengerImg; chalImg.style.display = 'block'; chalEmpty.style.display = 'none';
+    chalImg.src = convertDriveUrl(t.challengerImg); chalImg.style.display = 'block'; chalEmpty.style.display = 'none';
   } else { chalImg.style.display = 'none'; chalEmpty.style.display = 'flex'; }
 }
 
