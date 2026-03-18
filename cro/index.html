@@ -475,7 +475,7 @@
     .edit-name-btn:hover { background:var(--flt-hover-bg);color:var(--text);border-color:var(--border); }
     .pc-rename-btn { display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;font-family:inherit;font-size:11px;font-weight:600;color:var(--text-mute);cursor:pointer;transition:all 0.15s; }
     .pc-rename-btn:hover { background:var(--flt-hover-bg);color:var(--text); }
-    .pc-delete-btn { display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;border:1px solid transparent;background:transparent;font-family:inherit;font-size:11px;font-weight:600;color:var(--text-mute);cursor:pointer;transition:all 0.15s; }
+    .pc-delete-btn { display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--text-mute);cursor:pointer;transition:all 0.15s; }
     .pc-delete-btn:hover { background:rgba(255,80,80,0.1);border-color:rgba(255,80,80,0.25);color:#FF6B6B; }
 
     /* ── CSV IMPORT ─────────────────────────────────────────── */
@@ -1470,9 +1470,8 @@ function renderProjects(projects) {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               Copy link
             </button>
-            <button class="pc-delete-btn" onclick="confirmDeleteProject('${p.id}','${escHtml(p.name).replace(/'/g,"\\'")}')">
+            <button class="pc-delete-btn" onclick="confirmDeleteProject('${p.id}','${escHtml(p.name).replace(/'/g,"\\'")}')" title="Delete project">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></polyline></svg>
-              Delete
             </button>
           </div>
         </div>
