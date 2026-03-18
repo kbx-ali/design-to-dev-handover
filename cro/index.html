@@ -398,6 +398,9 @@
     }
     .form-textarea { resize:vertical;min-height:72px; }
     .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--input-focus-bd); }
+    .variant-img-preview { margin-top:6px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--input-bg);max-height:180px; }
+    .variant-img-preview img { display:block;width:100%;height:180px;object-fit:contain; }
+    .drive-convert-note { display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#34a853;margin-top:2px; }
     .form-select option { background:var(--bg-card);color:var(--text); }
 
     /* ── SLIDERS ───────────────────────────────────────────── */
@@ -957,11 +960,27 @@
         <!-- Variant image URLs -->
         <div class="form-field">
           <label class="form-label" for="t-ctrl-img">Control Image URL (Variant A)</label>
-          <input class="form-input" id="t-ctrl-img" type="url" placeholder="https://…">
+          <input class="form-input" id="t-ctrl-img" type="url" placeholder="https://… or paste a Google Drive share link"
+            oninput="previewVariantImg('t-ctrl-img','t-ctrl-preview','t-ctrl-drive-note')">
+          <div id="t-ctrl-drive-note" class="drive-convert-note" style="display:none">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Google Drive link detected — will be auto-converted on save
+          </div>
+          <div id="t-ctrl-preview" class="variant-img-preview" style="display:none">
+            <img src="" alt="Control preview" onerror="this.parentElement.style.display='none'">
+          </div>
         </div>
         <div class="form-field">
           <label class="form-label" for="t-chlg-img">Challenger Image URL (Variant B)</label>
-          <input class="form-input" id="t-chlg-img" type="url" placeholder="https://…">
+          <input class="form-input" id="t-chlg-img" type="url" placeholder="https://… or paste a Google Drive share link"
+            oninput="previewVariantImg('t-chlg-img','t-chlg-preview','t-chlg-drive-note')">
+          <div id="t-chlg-drive-note" class="drive-convert-note" style="display:none">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Google Drive link detected — will be auto-converted on save
+          </div>
+          <div id="t-chlg-preview" class="variant-img-preview" style="display:none">
+            <img src="" alt="Challenger preview" onerror="this.parentElement.style.display='none'">
+          </div>
         </div>
 
       </div>
@@ -1882,6 +1901,33 @@ function getLogo(input) {
   return `https://logo.clearbit.com/${domain}`;
 }
 
+function previewVariantImg(inputId, previewId, noteId) {
+  const raw = document.getElementById(inputId).value.trim();
+  const note = document.getElementById(noteId);
+  const wrap = document.getElementById(previewId);
+  const img  = wrap.querySelector('img');
+  const isDrive = /drive\.google\.com/.test(raw);
+  note.style.display = isDrive ? 'flex' : 'none';
+  if (raw) {
+    const src = convertDriveUrl(raw);
+    img.src = src;
+    wrap.style.display = 'block';
+    img.onerror = () => { wrap.style.display = 'none'; };
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+// Convert Google Drive share links to direct-embed URLs
+function convertDriveUrl(url) {
+  if (!url) return url;
+  const s = url.trim();
+  // /file/d/ID/view  or  /file/d/ID/preview  or  open?id=ID
+  const m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  return s;
+}
+
 function previewLogoInput(inputId, previewId) {
   const val = document.getElementById(inputId).value.trim();
   const img = document.getElementById(previewId);
@@ -1970,6 +2016,8 @@ function openTestModal(test) {
   document.getElementById('t-figma').value   = test?.figmaLink  || '';
   document.getElementById('t-ctrl-img').value  = test?.controlImg   || '';
   document.getElementById('t-chlg-img').value  = test?.challengerImg || '';
+  previewVariantImg('t-ctrl-img','t-ctrl-preview','t-ctrl-drive-note');
+  previewVariantImg('t-chlg-img','t-chlg-preview','t-chlg-drive-note');
   document.getElementById('t-notes').value   = test?.notes      || '';
   setMetricsValue(test?.metrics || '');
 
@@ -2024,8 +2072,8 @@ async function saveTest() {
       impact: i, confidence: c, ease: e, ice,
       status:       document.getElementById('t-status').value,
       figmaLink:    document.getElementById('t-figma').value.trim(),
-      controlImg:   document.getElementById('t-ctrl-img').value.trim(),
-      challengerImg:document.getElementById('t-chlg-img').value.trim(),
+      controlImg:   convertDriveUrl(document.getElementById('t-ctrl-img').value.trim()),
+      challengerImg:convertDriveUrl(document.getElementById('t-chlg-img').value.trim()),
       notes:        document.getElementById('t-notes').value.trim(),
       updated:      now,
     };
@@ -2564,8 +2612,8 @@ async function importCsv() {
         metrics:       get(row,'metrics'),
         notes:         get(row,'notes'),
         figmaLink:     get(row,'figmaLink'),
-        controlImg:    get(row,'controlImg'),
-        challengerImg: get(row,'challengerImg'),
+        controlImg:    convertDriveUrl(get(row,'controlImg')),
+        challengerImg: convertDriveUrl(get(row,'challengerImg')),
       };
     });
 
