@@ -1095,10 +1095,17 @@ function signInWithGoogle() {
   provider.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
   auth.signInWithPopup(provider).catch(err => {
     const errEl = document.getElementById('login-err');
+    console.error('[Auth error]', err.code, err.message);
     if (err.code === 'auth/popup-closed-by-user') return;
     let msg = 'Sign-in failed. Please try again.';
-    if (err.message && err.message.includes('hd')) {
+    if (err.code === 'auth/unauthorized-domain') {
+      msg = 'Domain not authorised. Add this site to Firebase Auth → Authorised domains.';
+    } else if (err.code === 'auth/popup-blocked') {
+      msg = 'Popup blocked — please allow popups for this site and try again.';
+    } else if (err.message && err.message.includes('hd')) {
       msg = 'Please use your @kubixmedia.co.uk Google account.';
+    } else if (err.code) {
+      msg = `Sign-in failed (${err.code}). Please try again.`;
     }
     errEl.textContent = msg;
     errEl.style.display = 'block';
