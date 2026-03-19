@@ -439,7 +439,7 @@
 
     /* ── EMPTY STATE ───────────────────────────────────────── */
     .empty-state { display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center; }
-    .empty-state-icon { font-size:36px;margin-bottom:16px;opacity:0.5; }
+    .empty-state-icon { display:flex;align-items:center;justify-content:center;margin-bottom:16px;opacity:0.5; }
     .empty-state-title { font-family:'Domine',serif;font-size:18px;font-weight:400;color:var(--text);margin-bottom:8px; }
     .empty-state-sub { font-size:13px;color:var(--text-mute);max-width:320px;line-height:1.65; }
 
@@ -621,7 +621,7 @@
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:60px 20px;">
     <div class="config-card">
-      <div style="font-size:28px;margin-bottom:16px;">🔧</div>
+      <div style="margin-bottom:16px;opacity:0.7;"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" d="M4 2H2v8h2zm16 0h2v8h-2zm-6 6h-4V2H4v2h4v4H4v2h4v4H4v2h4v4H4v2h6v-6h4v6h2v-6h4v-2h-4v-4h4V8h-4V2h-2zm-4 6v-4h4v4zM20 2h-4v2h4zM2 14h2v8H2zm14 6h4v2h-4zm6-6h-2v8h2z"/></svg></div>
       <div class="config-title">Firebase Setup Required</div>
       <div class="config-sub">The app needs a Firebase project to store data and handle login. This is a one-time setup — employees never need to touch it after deployment.</div>
       <div class="config-steps">
@@ -934,7 +934,7 @@
   <div class="modal modal-sm">
     <div class="modal-hd">
       <div class="modal-title">New Project</div>
-      <button class="modal-close" onclick="closeModal('modal-new-project')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-new-project')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="form-field">
@@ -975,7 +975,7 @@
   <div class="modal modal-sm">
     <div class="modal-hd">
       <div class="modal-title">Edit Project</div>
-      <button class="modal-close" onclick="closeModal('modal-rename-project')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-rename-project')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="rename-proj-id">
@@ -1017,7 +1017,7 @@
   <div class="modal modal-lg">
     <div class="modal-hd">
       <div class="modal-title" id="test-modal-title">Add Test</div>
-      <button class="modal-close" onclick="closeModal('modal-test')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-test')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body" style="max-height:72vh;overflow-y:auto;">
       <div class="form-grid">
@@ -1176,7 +1176,7 @@
   <div class="modal modal-lg">
     <div class="modal-hd">
       <div class="modal-title">Import Tests from CSV</div>
-      <button class="modal-close" onclick="closeModal('modal-csv-import')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-csv-import')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body">
 
@@ -1219,7 +1219,7 @@
   <div class="modal modal-sm">
     <div class="modal-hd">
       <div class="modal-title">Delete Project</div>
-      <button class="modal-close" onclick="closeModal('modal-delete-project')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-delete-project')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body">
       <p style="font-size:13px;color:var(--text-sec);line-height:1.6">Are you sure you want to delete <strong id="delete-proj-name" style="color:var(--text)"></strong>? This will permanently remove the project and all its tests from Firestore. This cannot be undone.</p>
@@ -1250,7 +1250,7 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Back to Roadmap
       </button>
-      <button class="modal-close" onclick="closeModal('modal-test-preview')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-test-preview')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="tp-layout" style="flex:1;min-height:0;">
 
@@ -1330,7 +1330,7 @@
   <div class="modal modal-lg">
     <div class="modal-hd">
       <div class="modal-title">Test Learnings</div>
-      <button class="modal-close" onclick="closeModal('modal-learnings')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-learnings')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body" style="max-height:65vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;" id="learnings-list"></div>
   </div>
@@ -1343,7 +1343,7 @@
   <div class="modal modal-sm">
     <div class="modal-hd">
       <div class="modal-title">Delete Test?</div>
-      <button class="modal-close" onclick="closeModal('modal-delete')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-delete')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 5h2v2H5zm4 4H7V7h2zm2 2H9V9h2zm2 0h-2v2H9v2H7v2H5v2h2v-2h2v-2h2v-2h2v2h2v2h2v2h2v-2h-2v-2h-2v-2h-2zm2-2v2h-2V9zm2-2v2h-2V7zm0 0V5h2v2z"/></svg></button>
     </div>
     <div class="modal-body">
       <p style="font-size:13px;color:var(--text-sec);line-height:1.65;">
@@ -1569,7 +1569,7 @@ async function loadProjects() {
     renderProjects(state.projects);
   } catch (e) {
     document.getElementById('projects-container').innerHTML =
-      '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-title">Couldn\'t load projects</div><div class="empty-state-sub">' + e.message + '</div></div>';
+      '<div class="empty-state"><div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path fill="currentColor" d="M13 1h-2v2H9v2H7v2H5v2H3v2H1v2h2v2h2v2h2v2h2v2h2v2h2v-2h2v-2h2v-2h2v-2h2v-2h2v-2h-2V9h-2V7h-2V5h-2V3h-2zm0 2v2h2v2h2v2h2v2h2v2h-2v2h-2v2h-2v2h-2v2h-2v-2H9v-2H7v-2H5v-2H3v-2h2V9h2V7h2V5h2V3zm0 4h-2v6h2zm0 8h-2v2h2z"/></svg></div><div class="empty-state-title">Couldn\'t load projects</div><div class="empty-state-sub">' + e.message + '</div></div>';
   }
 }
 
@@ -1596,7 +1596,7 @@ function renderProjects(projects) {
   if (!projects.length) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4H2v16h20V6H12zm-2 4h10v10H4V6h6zm6 4h-2v-2h-2v2h2v2h-2v2h2v-2h2v2h2v-2h-2zm0 0h2v-2h-2z"/></svg></div>
         <div class="empty-state-title">No projects yet</div>
         <div class="empty-state-sub">Create your first client project to start building a CRO test backlog.</div>
       </div>`;
@@ -1713,7 +1713,7 @@ function openProject(docId, name) {
         renderDetail();
       }
       // Toast regardless — if a modal was open they'll see it when they close it
-      showToast('📡 Project updated by another team member', 'info');
+      showToast('Project updated by another team member', 'info');
     }
   }, err => {
     showToast('Live sync error: ' + err.message, 'error');
@@ -2372,7 +2372,11 @@ function closeModalBg(e, id) {
 function showToast(msg, type = 'info') {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
-  const icons = { success:'✓', error:'✕', info:'→' };
+  const icons = {
+    success: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"><path fill="currentColor" d="M18 6h2v2h-2zm-2 4V8h2v2zm-2 2v-2h2v2zm-2 2h2v-2h-2zm-2 2h2v-2h-2zm-2 0v2h2v-2zm-2-2h2v2H6zm0 0H4v-2h2z"/></svg>`,
+    error:   `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"><path fill="currentColor" d="M5 3H3v18h18V3zm14 2v14H5V5zm-8 4H9V7H7v2h2v2h2v2H9v2H7v2h2v-2h2v-2h2v2h2v2h2v-2h-2v-2h-2v-2h2V9h2V7h-2v2h-2v2h-2z"/></svg>`,
+    info:    `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24"><path fill="currentColor" d="M19 22h-6v-2h6V10h-6V4H5v8H3V2h12v2h2v2h2v2h2v14zM17 6h-2v2h2zM7 12h2v4h4v2h-2v2H9v2H7v-4H3v-2h2v-2h2z"/></svg>`,
+  };
   t.className = `toast toast-${type}`;
   t.innerHTML = `<span>${icons[type]||'·'}</span> ${escHtml(msg)}`;
   c.appendChild(t);
