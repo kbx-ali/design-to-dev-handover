@@ -94,8 +94,16 @@
       --input-bg: #EBEBE4; --input-bd: #D4D4CC; --input-focus-bd: rgba(107,100,0,0.4);
       --modal-bg: #FFFFFF; --modal-bd: #E2E2DC;
       --slider-track: #D4D4CC; --slider-thumb: var(--kbx-yellow);
-      --kbx-yellow: #D4A000; --kbx-yellow-dk: #B88800;
+      --kbx-yellow: #FFFF00; --kbx-yellow-dk: #CCCC00;
     }
+    /* acid yellow text shadow for legibility on light backgrounds */
+    [data-theme="light"] .config-step-txt code,
+    [data-theme="light"] .ht-title,
+    [data-theme="light"] .footer-l span,
+    [data-theme="light"] thead th.sort-active,
+    [data-theme="light"] .pri-rank.r1,
+    [data-theme="light"] .tp-ice-cell-val.hi,
+    [data-theme="light"] .brand-icon { text-shadow:0 1px 3px rgba(0,0,0,0.18); }
 
     /* ── BASE ──────────────────────────────────────────────── */
     html { font-size: 15px; scroll-behavior: smooth; }
@@ -168,8 +176,8 @@
     .lbl-yellow { color:var(--kbx-yellow); } .lbl-yellow .sec-label-dot { background:var(--kbx-yellow); }
     .lbl-mint   { color:var(--kbx-mint);   } .lbl-mint   .sec-label-dot { background:var(--kbx-mint);   }
     .lbl-teal   { color:var(--teal-lt);    } .lbl-teal   .sec-label-dot { background:var(--teal-lt);    }
-    [data-theme="light"] .lbl-yellow { color:var(--kbx-yellow); }
-    [data-theme="light"] .lbl-yellow .sec-label-dot { background:#9A9A00; }
+    [data-theme="light"] .lbl-yellow { color:var(--text); }
+    [data-theme="light"] .lbl-yellow .sec-label-dot { background:var(--text-mute); }
     [data-theme="light"] .lbl-mint   { color:#1A7A34; }
     [data-theme="light"] .lbl-mint   .sec-label-dot { background:#1A7A34; }
 
@@ -349,8 +357,7 @@
     .health-card .client-logo { flex-shrink:0;max-height:36px;max-width:120px;margin-bottom:0;order:1; }
     .health-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-mute);margin-bottom:8px; }
     .health-body  { font-size:12.5px;color:var(--text-sec);line-height:1.65; }
-    .health-body strong { color:var(--kbx-yellow);font-weight:700; }
-    [data-theme="light"] .health-body strong { color:var(--kbx-yellow); }
+    .health-body strong { color:var(--text);font-weight:700; }
 
     /* ── MODALS ────────────────────────────────────────────── */
     .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;padding:20px; }
