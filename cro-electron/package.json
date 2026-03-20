@@ -1,0 +1,44 @@
+{
+  "name": "kubix-cro",
+  "version": "1.0.0",
+  "description": "Kubix CRO Planner — Desktop App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac",
+    "dist:dmg": "electron-builder --mac dmg"
+  },
+  "build": {
+    "appId": "com.kubix.croplanner",
+    "productName": "Kubix CRO",
+    "copyright": "Copyright © 2026 Kubix Media",
+    "files": [
+      "main.js",
+      "preload.js",
+      "auth-preload.js",
+      "splash.html",
+      "assets/**"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "icon": "assets/icon.png",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "target": [
+        { "target": "dmg", "arch": ["arm64"] }
+      ]
+    },
+    "dmg": {
+      "background": "assets/dmg-bg.png",
+      "window": { "width": 660, "height": 400 },
+      "contents": [
+        { "x": 180, "y": 200, "type": "file" },
+        { "x": 480, "y": 200, "type": "link", "path": "/Applications" }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
