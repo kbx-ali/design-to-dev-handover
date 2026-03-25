@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design → Dev Handoff · Kubix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;500;600;700&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ─── Reset ──────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ─── Light mode tokens ──────────────────────────────────── */
+  :root {
+    --font-heading: 'Domine', Georgia, serif;
+    --font-body: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Kubix brand palette */
+    --kbx-yellow:   #FFFF00;
+    --kbx-yellow-dk:#CCCC00;
+    --kbx-black:    #28282B;
+    --kbx-mint:     #94F7A1;
+    --kbx-orchid:   #E591E5;
+    --kbx-purple:   #541A80;
+    --kbx-cream:    #FFF9BD;
+    --kbx-teal:     #0D6987;
+    /* Compat aliases */
+    --kbx-green:    #0D6987;
+    --kbx-green-dk: #095472;
+
+    /* Light palette */
+    --bg-page:   #F5F5F0;
+    --bg-card:   #FFFFFF;
+    --bg-input:  #F2F2EE;
+    --text-pri:  #28282B;
+    --text-sec:  #3C3C40;
+    --text-mute: #6E6E74;
+    --text-sub:  #9E9EA4;
+    --border:    #E2E2DE;
+    --shadow-card:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-hover: 0 4px 12px rgba(0,0,0,0.1);
+
+    /* Status — Existing Section = Mint #94F7A1 */
+    --c-exist:      #28282B;
+    --c-exist-bg:   #94F7A1;
+    --c-exist-bd:   #5EE872;
+    --c-exist-dot:  #2EAB42;
+
+    /* Status — Needs New Settings = Acid Yellow #FFFF00 */
+    --c-mod:        #28282B;
+    --c-mod-bg:     #FFFF00;
+    --c-mod-bd:     #CCCC00;
+    --c-mod-dot:    #999900;
+
+    /* Status — Bespoke Section = Orchid #E591E5 */
+    --c-bespoke:    #28282B;
+    --c-bespoke-bg: #E591E5;
+    --c-bespoke-bd: #C860C8;
+    --c-bespoke-dot:#9E1FA0;
+
+    /* Effort badges */
+    --c-low-bg:  #FFF9BD; --c-low-fg:  #28282B; --c-low-bd:  #D4CE7A;
+    --c-med-bg:  #E0F2F8; --c-med-fg:  #0D6987; --c-med-bd:  #96CCDE;
+    --c-high-bg: #EEE0F8; --c-high-fg: #541A80; --c-high-bd: #C09AD8;
+
+    --radius-card: 12px;
+    --radius-sm:   8px;
+    --grid-line:   rgba(0,0,0,0.06);
+  }
+
+  /* ─── Dark mode tokens ───────────────────────────────────── */
+  [data-theme="dark"] {
+    --bg-page:   #141416;
+    --bg-card:   #28282B;
+    --bg-input:  #333337;
+    --grid-line: rgba(255,255,255,0.04);
+    --text-pri:  #FFFFFF;
+    --text-sec:  #D4D4D8;
+    --text-mute: #A0A0A6;
+    --text-sub:  #6E6E74;
+    --border:    #3E3E42;
+    --shadow-card:  0 1px 4px rgba(0,0,0,0.5);
+    --shadow-hover: 0 4px 16px rgba(0,0,0,0.6);
+
+    /* Status badges keep bold brand colours in dark mode */
+    --c-exist:      #28282B; --c-exist-bg: #94F7A1; --c-exist-bd: #5EE872;
+    --c-mod:        #28282B; --c-mod-bg:   #FFFF00; --c-mod-bd:   #CCCC00;
+    --c-bespoke:    #28282B; --c-bespoke-bg:#E591E5; --c-bespoke-bd:#C860C8;
+
+    /* Effort badges — darkened for dark mode */
+    --c-low-bg:  #3A360A; --c-low-fg:  #FFF9BD; --c-low-bd:  #6A5F10;
+    --c-med-bg:  #0A2F3F; --c-med-fg:  #7FCFE5; --c-med-bd:  #0D6987;
+    --c-high-bg: #280C40; --c-high-fg: #C090E8; --c-high-bd: #541A80;
+  }
+
+  html { font-size: 15px; }
+  body {
+    font-family: var(--font-body);
+    background-color: var(--bg-page);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--text-pri);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  /* ─── Header ─────────────────────────────────────────────── */
+  .header {
+    background: #28282B;
+    color: #fff;
+    position: sticky; top: 0; z-index: 50;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  [data-theme="dark"] .header { background: #1A1A1D; border-bottom-color: rgba(255,255,255,0.05); }
+
+  .header-inner {
+    max-width: 1060px; margin: 0 auto;
+    padding: 0 24px; height: 60px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .header-logo-mark {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .header-logo-mark svg { width: 100%; height: 100%; display: block; }
+  .header-logo-text {
+    font-family: var(--font-heading); font-size: 15px; font-weight: 700;
+    color: #fff; line-height: 1.2;
+  }
+  .header-logo-text span {
+    display: block; font-family: var(--font-body); font-size: 10px;
+    font-weight: 400; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+.header-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .header-meta-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+  .header-meta .hdr-btn { background: var(--bg-card); border-color: var(--border); color: var(--text-pri); }
+  .header-meta .hdr-btn:hover { background: var(--bg-input); color: var(--text-pri); }
+  .header-meta .hdr-btn.mint { background: #94F7A1; border-color: transparent; color: #28282B; }
+  .header-meta .hdr-btn.mint:hover { background: #72e880; }
+
+  /* Project/theme pills — now sit above page tabs in main */
+  .header-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 8px 4px 10px;
+    cursor: pointer; transition: background 0.12s;
+    box-shadow: var(--shadow-card); max-width: 260px;
+  }
+  .header-pill:hover { background: var(--bg-input); }
+  .header-pill-label {
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-sub); flex-shrink: 0;
+  }
+  .header-pill-value {
+    font-size: 12px; font-weight: 600; color: var(--text-pri);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+  }
+  .header-pill-edit { color: var(--text-sub); flex-shrink: 0; opacity: 0; transition: opacity 0.12s; }
+  .header-pill:hover .header-pill-edit { opacity: 1; }
+  .header-pill-edit svg { width: 11px; height: 11px; }
+
+  /* Loom pill */
+  .loom-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.75);
+    text-decoration: none; white-space: nowrap;
+    transition: background 0.12s; cursor: pointer; flex-shrink: 0;
+  }
+  .loom-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .loom-btn .loom-dot { width: 7px; height: 7px; border-radius: 50%; background: #F04848; flex-shrink: 0; }
+
+  .header-right { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+
+  /* Dark mode toggle */
+  .theme-toggle {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.7); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .theme-toggle svg { width: 15px; height: 15px; }
+  .icon-moon { display: block; }
+  .icon-sun  { display: none; }
+  [data-theme="dark"] .icon-moon { display: none; }
+  [data-theme="dark"] .icon-sun  { display: block; }
+
+  .sync-indicator {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600;
+    color: rgba(255,255,255,0.4); padding: 4px 8px;
+  }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .sync-dot.offline { background: rgba(255,255,255,0.25); }
+  .sync-dot.saving  { background: #FFFF00; animation: pulse 1s ease-in-out infinite; }
+  .sync-dot.saved   { background: #94F7A1; }
+  .sync-dot.error   { background: #F87171; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+  .hdr-btn {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.75); border-radius: 7px; padding: 6px 12px;
+    font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    cursor: pointer; transition: all 0.15s; white-space: nowrap; text-decoration: none;
+  }
+  .hdr-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+  .hdr-btn.green { background: var(--kbx-yellow); border-color: transparent; color: #28282B; }
+  .hdr-btn.green:hover { background: var(--kbx-yellow-dk); }
+  .hdr-btn.mint { background: #94F7A1; border-color: transparent; color: #28282B; }
+  .hdr-btn.mint:hover { background: #72e880; }
+  .hdr-btn svg { width: 13px; height: 13px; }
+
+  /* ─── Main ───────────────────────────────────────────────── */
+  .main { max-width: 1060px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  /* ─── Stats bar ──────────────────────────────────────────── */
+  .stats-bar {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 20px 24px;
+    margin-bottom: 20px; display: flex; align-items: center;
+    box-shadow: var(--shadow-card); transition: background 0.2s, border-color 0.2s;
+  }
+  .stat-block { flex: 1; text-align: center; padding: 0 20px; border-right: 1px solid var(--border); }
+  .stat-block:first-child { padding-left: 0; text-align: left; flex: 2; border-right: 1px solid var(--border); }
+  .stat-block:last-child  { border-right: none; }
+  .stat-num { font-family: var(--font-heading); font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .stat-label {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-size: 11px; font-weight: 600; color: var(--text-mute);
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+  .stat-block:first-child .stat-label { justify-content: flex-start; }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-existing { background: #94F7A1; }
+  .dot-modified { background: #FFFF00; }
+  .dot-bespoke  { background: #E591E5; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sub); margin-bottom: 5px; }
+  .progress-track { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; display: flex; }
+  .progress-track div { transition: width 0.4s ease; }
+
+  /* ─── Legend ─────────────────────────────────────────────── */
+  .legend { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .legend-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-sub); margin-right: 4px; }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 99px; padding: 4px 10px;
+    font-size: 11px; font-weight: 600; color: var(--text-sec);
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ─── Toolbar ────────────────────────────────────────────── */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; flex-wrap: wrap; }
+  .filter-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .filter-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-sub); margin-right: 2px; }
+  .filter-btn {
+    border: 1px solid var(--border); background: var(--bg-card); color: var(--text-mute);
+    font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: all 0.12s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .filter-btn:hover { background: var(--bg-input); color: var(--text-sec); }
+  .filter-btn.active { background: var(--text-pri); color: var(--bg-card); border-color: var(--text-pri); }
+  .filter-btn.active-existing { background: var(--c-exist-bg); color: var(--c-exist); border-color: var(--c-exist-bd); }
+  .filter-btn.active-modified { background: var(--c-mod-bg);   color: var(--c-mod);   border-color: var(--c-mod-bd); }
+  .filter-btn.active-bespoke  { background: var(--c-bespoke-bg); color: var(--c-bespoke); border-color: var(--c-bespoke-bd); }
+  .filter-fdot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ─── Cards ──────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); margin-bottom: 10px;
+    box-shadow: var(--shadow-card); transition: box-shadow 0.15s, border-color 0.15s, background 0.2s;
+  }
+  .card:hover { border-color: var(--text-sub); box-shadow: var(--shadow-hover); }
+  .card-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px; cursor: pointer; user-select: none; }
+  .drag-handle {
+    flex-shrink: 0; width: 18px; height: 18px; color: var(--border);
+    cursor: grab; display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; transition: color 0.1s;
+  }
+  .drag-handle:hover { color: var(--text-sub); }
+  .drag-handle:active { cursor: grabbing; }
+  .chevron { flex-shrink: 0; width: 16px; height: 16px; color: var(--text-sub); transition: transform 0.2s; }
+  .chevron.open { transform: rotate(90deg); }
+  .card-num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px;
+    background: var(--bg-input); font-family: var(--font-heading);
+    font-size: 11px; font-weight: 700; color: var(--text-mute);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-name {
+    flex: 1; font-family: var(--font-heading); font-size: 14px; font-weight: 600;
+    color: var(--text-pri); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 99px; border: 1px solid; padding: 3px 9px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .badge.existing { background: var(--c-exist-bg); color: var(--c-exist); border-color: var(--c-exist-bd); }
+  .badge.modified { background: var(--c-mod-bg);   color: var(--c-mod);   border-color: var(--c-mod-bd); }
+  .badge.bespoke  { background: var(--c-bespoke-bg); color: var(--c-bespoke); border-color: var(--c-bespoke-bd); }
+  .effort-badge { border-radius: 6px; border: 1px solid; padding: 2px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; font-family: var(--font-body); text-transform: uppercase; letter-spacing: 0.05em; }
+  .effort-badge.Low    { background: var(--c-low-bg);  color: var(--c-low-fg);  border-color: var(--c-low-bd); }
+  .effort-badge.Medium { background: var(--c-med-bg);  color: var(--c-med-fg);  border-color: var(--c-med-bd); }
+  .effort-badge.High   { background: var(--c-high-bg); color: var(--c-high-fg); border-color: var(--c-high-bd); }
+
+  /* ─── Card body ──────────────────────────────────────────── */
+  .card-body { border-top: 1px solid var(--border); padding: 18px 18px 20px; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sub); margin-bottom: 7px; }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-opt {
+    border: 1px solid var(--border); background: var(--bg-input); color: var(--text-mute);
+    font-family: var(--font-body); font-size: 12px; font-weight: 600;
+    padding: 7px 11px; border-radius: 8px; cursor: pointer; transition: all 0.12s;
+  }
+  .btn-opt:hover { background: var(--border); }
+  .btn-opt.sel-existing { background: var(--c-exist-bg); color: var(--c-exist); border-color: var(--c-exist-bd); box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px var(--c-exist-dot); }
+  .btn-opt.sel-modified { background: var(--c-mod-bg);   color: var(--c-mod);   border-color: var(--c-mod-bd);   box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px var(--c-mod-dot); }
+  .btn-opt.sel-bespoke  { background: var(--c-bespoke-bg); color: var(--c-bespoke); border-color: var(--c-bespoke-bd); box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px var(--c-bespoke-dot); }
+  .btn-opt.sel-effort   { background: var(--text-pri); color: var(--bg-card); border-color: var(--text-pri); }
+
+  .input-text, textarea.input-text {
+    width: 100%; border: 1px solid var(--border); background: var(--bg-input);
+    border-radius: 8px; padding: 8px 11px; font-size: 13px; font-family: var(--font-body);
+    color: var(--text-pri); transition: all 0.15s;
+  }
+  .input-text:focus, textarea.input-text:focus {
+    outline: none; border-color: var(--kbx-teal); background: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(13,105,135,0.15);
+  }
+  .input-text::placeholder, textarea.input-text::placeholder { color: var(--text-sub); }
+  textarea.input-text { resize: vertical; min-height: 130px; line-height: 1.65; }
+
+  .figma-row { display: flex; gap: 7px; }
+  .figma-row .input-text { flex: 1; }
+  .figma-btn {
+    background: #1E1E2E; color: #fff; border: none; border-radius: 8px;
+    padding: 8px 12px; font-size: 12px; font-weight: 700; font-family: var(--font-body);
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
+    white-space: nowrap; transition: background 0.12s;
+  }
+  .figma-btn:hover { background: #2C2C44; }
+  .figma-btn svg { width: 12px; height: 12px; }
+
+  .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .remove-btn { background: none; border: none; font-family: var(--font-body); font-size: 12px; font-weight: 600; color: #F87171; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: background 0.12s; }
+  .remove-btn:hover { background: var(--c-high-bg); }
+
+  /* ─── Add section ────────────────────────────────────────── */
+  .add-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; border: 2px dashed var(--border); background: transparent;
+    border-radius: var(--radius-card); padding: 16px; font-family: var(--font-body);
+    font-size: 13px; font-weight: 700; color: var(--text-sub);
+    cursor: pointer; transition: all 0.15s; margin-top: 6px;
+  }
+  .add-btn:hover { border-color: var(--kbx-teal); background: rgba(13,105,135,0.05); color: var(--kbx-teal); }
+  .add-btn svg { width: 15px; height: 15px; }
+
+  /* ─── Drag & drop ────────────────────────────────────────── */
+  .card.dragging  { opacity: 0.35; transform: scale(0.98); }
+  .card.drag-over { border-color: var(--kbx-yellow) !important; box-shadow: 0 0 0 2px rgba(255,255,0,0.25) !important; }
+
+  /* ─── Viewer / read-only mode ────────────────────────────── */
+  /* Elements hidden in viewer mode */
+  .viewer-mode .hdr-btn-edit-only { display: none !important; }
+  .viewer-mode .drag-handle { visibility: hidden; width: 0; min-width: 0; padding: 0; margin: 0; overflow: hidden; }
+  .viewer-mode .page-link-edit { display: none !important; }
+  /* Header pills become static labels, not interactive */
+  .viewer-mode .header-pill { pointer-events: none; cursor: default; }
+  .viewer-mode .header-pill:hover { background: rgba(255,255,255,0.07) !important; }
+  .viewer-mode .header-pill-edit { display: none !important; }
+  /* Cards don't show hover elevation */
+  .viewer-mode .card:hover { box-shadow: var(--shadow-card) !important; border-color: var(--border) !important; }
+  /* Disabled buttons in viewer mode (status/effort) */
+  .viewer-mode .btn-opt:disabled { cursor: default; opacity: 0.85; }
+  .viewer-mode .btn-opt:disabled:hover { background: var(--bg-input); border-color: var(--border); color: var(--text-sec); box-shadow: none; transform: none; }
+  /* Read-only inputs */
+  .viewer-mode .input-text[readonly] { cursor: default; }
+  .viewer-mode textarea[readonly] { cursor: default; resize: none; }
+  /* Viewer badge — always hidden (kept in DOM but never shown) */
+  .viewer-badge { display: none !important; }
+  /* In viewer mode, also hide the sync indicator — developer doesn't need it */
+  .viewer-mode #sync-indicator { display: none !important; }
+  /* In viewer mode, hide the back-to-library button and global settings */
+  html.viewer-mode #back-btn            { display: none !important; }
+  html.viewer-mode #global-settings-btn { display: none !important; }
+
+  /* ─── Library / Project view states ─────────────────────────── */
+  /* In library view: hide project-specific controls */
+  body.lib-view #sync-indicator    { display: none !important; }
+  body.lib-view .hdr-btn-edit-only { display: none !important; }
+  body.lib-view .header-meta       { display: none; }
+  body.lib-view #back-btn          { display: none !important; }
+
+  /* Back button — shown only in project view */
+  #back-btn {
+    display: none; align-items: center; gap: 6px;
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    color: var(--text-sec); cursor: pointer; transition: all 0.12s;
+    white-space: nowrap; margin-right: 4px;
+  }
+  #back-btn:hover { background: var(--border); color: var(--text-pri); }
+  body.proj-view #back-btn { display: inline-flex; }
+
+  /* ─── Library layout ─────────────────────────────────────────── */
+  .lib-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .lib-title {
+    font-family: var(--font-heading); font-size: 20px; font-weight: 700;
+    color: var(--text-pri);
+  }
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .lib-card {
+    position: relative; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.15s;
+    box-shadow: var(--shadow-card);
+  }
+  .lib-card:hover {
+    border-color: var(--kbx-yellow); box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+  }
+  .lib-card-title {
+    font-size: 15px; font-weight: 700; color: var(--text-pri);
+    margin-bottom: 3px; padding-right: 28px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lib-card-theme {
+    font-size: 12px; color: var(--text-sub); margin-bottom: 12px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lib-card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .lib-card-tag {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-sub);
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 5px; padding: 2px 6px;
+  }
+  .lib-card-date { font-size: 11px; color: var(--text-mute); }
+  .lib-card-delete {
+    position: absolute; top: 14px; right: 14px;
+    background: transparent; border: none; cursor: pointer;
+    font-size: 15px; opacity: 0; transition: opacity 0.12s;
+    padding: 4px; border-radius: 6px; line-height: 1;
+  }
+  .lib-card:hover .lib-card-delete { opacity: 0.5; }
+  .lib-card-delete:hover { opacity: 1 !important; background: rgba(200,50,50,0.1); }
+  .lib-empty {
+    text-align: center; padding: 60px 20px; color: var(--text-mute);
+    font-size: 14px; line-height: 1.7; grid-column: 1 / -1;
+  }
+  .lib-empty strong { color: var(--text-sec); display: block; font-size: 16px; margin-bottom: 6px; }
+
+  /* ─── Overlay / Modal ────────────────────────────────────── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(10,10,24,0.55);
+    backdrop-filter: blur(4px); z-index: 200;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal {
+    background: var(--bg-card); border-radius: 16px; width: 480px; max-width: 100%;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.24); padding: 28px;
+    border: 1px solid var(--border);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-head { margin-bottom: 6px; display: flex; align-items: flex-start; justify-content: space-between; }
+  .modal-title { font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--text-pri); }
+  .modal-close {
+    background: var(--bg-input); border: none; border-radius: 8px;
+    width: 30px; height: 30px; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; color: var(--text-mute); transition: background 0.12s;
+  }
+  .modal-close:hover { background: var(--border); }
+  .modal-desc { font-size: 13px; color: var(--text-mute); margin-bottom: 20px; line-height: 1.6; }
+  .modal-field { margin-bottom: 16px; }
+  .modal-field label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sub); margin-bottom: 6px; }
+  .modal-field input {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; font-size: 13px; font-family: var(--font-body);
+    color: var(--text-pri); background: var(--bg-input); transition: all 0.15s;
+  }
+  .modal-field input:focus { outline: none; border-color: var(--kbx-teal); box-shadow: 0 0 0 3px rgba(13,105,135,0.12); background: var(--bg-card); }
+  .modal-field input::placeholder { color: var(--text-sub); }
+
+  .url-box {
+    background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; color: var(--text-mute); word-break: break-all; line-height: 1.5;
+  }
+  input.url-box {
+    font-family: var(--font-body); outline: none; width: 100%;
+    user-select: text; -webkit-user-select: text;
+  }
+  input.url-box:focus { border-color: var(--kbx-teal); box-shadow: 0 0 0 3px rgba(13,105,135,0.12); }
+  .url-box a { color: var(--kbx-teal); text-decoration: none; font-weight: 600; }
+  .url-box a:hover { text-decoration: underline; }
+  .url-copy-row { display: flex; gap: 7px; margin-top: 6px; }
+  .url-copy-row .url-box { flex: 1; }
+  .copy-btn { background: var(--kbx-yellow); border: none; color: #28282B; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; font-family: var(--font-body); cursor: pointer; transition: background 0.12s; white-space: nowrap; }
+  .copy-btn:hover { background: var(--kbx-yellow-dk); }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; }
+  .modal-btn { padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: var(--font-body); cursor: pointer; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-sec); transition: all 0.12s; }
+  .modal-btn:hover { background: var(--border); }
+  .modal-btn.primary { background: var(--kbx-yellow); color: #28282B; border-color: var(--kbx-yellow); }
+  .modal-btn.primary:hover { background: var(--kbx-yellow-dk); }
+
+  .modal-divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .step-list { list-style: none; counter-reset: step; margin: 12px 0; }
+  .step-list li { counter-increment: step; display: flex; gap: 10px; align-items: flex-start; font-size: 12px; color: var(--text-mute); margin-bottom: 8px; line-height: 1.5; }
+  .step-list li::before { content: counter(step); min-width: 22px; height: 22px; background: var(--text-pri); color: var(--bg-card); border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-list li a { color: var(--kbx-teal); font-weight: 600; }
+
+  /* ─── Page footer ────────────────────────────────────────── */
+  .page-foot {
+    margin-top: 36px; background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    flex-wrap: wrap; box-shadow: var(--shadow-card); transition: background 0.2s, border-color 0.2s;
+  }
+  .page-foot-text { font-size: 12px; color: var(--text-sub); }
+  .page-foot-text strong { color: var(--text-mute); }
+  .page-foot-brand { font-family: var(--font-heading); font-size: 12px; font-weight: 700; color: var(--text-pri); display: flex; align-items: center; gap: 5px; }
+  .page-foot-brand span { color: var(--kbx-teal); }
+
+  /* ─── Page tabs ──────────────────────────────────────────── */
+  .page-tabs {
+    display: flex; gap: 4px; margin-bottom: 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 6px;
+    box-shadow: var(--shadow-card); transition: background 0.2s, border-color 0.2s;
+  }
+  .page-tab {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    flex: 1; padding: 9px 14px; border-radius: 8px; border: none;
+    font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    color: var(--text-mute); background: transparent;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .page-tab:hover { background: var(--bg-input); color: var(--text-sec); }
+  .page-tab.active { background: #FFFF00; color: #28282B; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .page-tab-icon { width: 14px; height: 14px; flex-shrink: 0; }
+  .page-tab-count {
+    background: rgba(0,0,0,0.08); color: inherit;
+    border-radius: 99px; font-size: 10px; font-weight: 700;
+    padding: 1px 7px; min-width: 20px; text-align: center; flex-shrink: 0;
+  }
+  .page-tab:not(.active) .page-tab-count { background: var(--bg-input); color: var(--text-sub); }
+  .page-tab-loom-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #F04848; flex-shrink: 0;
+  }
+
+  /* ─── Page links row (inside stats bar) ──────────────────── */
+  .page-links-row {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 10px; flex-wrap: wrap;
+  }
+  .page-link-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 6px; padding: 4px 10px; border: 1px solid;
+    font-size: 11px; font-weight: 700; text-decoration: none;
+    white-space: nowrap; transition: all 0.12s; cursor: pointer; flex-shrink: 0;
+  }
+  .loom-link { background: rgba(240,72,72,0.08); color: #B83232; border-color: rgba(240,72,72,0.25); }
+  .loom-link:hover { background: rgba(240,72,72,0.16); }
+  [data-theme="dark"] .loom-link { background: rgba(240,72,72,0.15); color: #F48888; border-color: rgba(240,72,72,0.3); }
+  .figma-link { background: var(--bg-input); color: var(--text-sec); border-color: var(--border); }
+  .figma-link:hover { background: var(--border); }
+  .page-link-edit {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid var(--border); background: transparent; color: var(--text-sub);
+    border-radius: 6px; padding: 4px 9px; font-size: 11px; font-weight: 600;
+    font-family: var(--font-body); cursor: pointer; transition: all 0.12s;
+  }
+  .page-link-edit:hover { background: var(--bg-input); color: var(--text-mute); }
+  .page-link-none { font-size: 11px; color: var(--text-sub); font-style: italic; }
+
+  /* ─── Empty state ────────────────────────────────────────── */
+  .empty-state {
+    text-align: center; padding: 52px 24px;
+    background: var(--bg-card); border: 2px dashed var(--border);
+    border-radius: var(--radius-card); margin-bottom: 10px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 14px; }
+  .empty-state-title { font-family: var(--font-heading); font-size: 17px; font-weight: 700; color: var(--text-sec); margin-bottom: 8px; }
+  .empty-state-desc { font-size: 13px; color: var(--text-mute); max-width: 380px; margin: 0 auto 20px; line-height: 1.6; }
+  .empty-state-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+  /* ─── Responsive ─────────────────────────────────────────── */
+  @media (max-width: 760px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .stats-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+    .stat-block { border-right: none; border-bottom: 1px solid var(--border); padding: 0 0 12px; text-align: left; }
+    .stat-block:last-child { border-bottom: none; padding-bottom: 0; }
+    .stat-label { justify-content: flex-start; }
+    .page-tab { font-size: 11px; padding: 8px 10px; gap: 5px; }
+    .page-tab-icon { display: none; }
+  }
+  @media (max-width: 540px) {
+    .header-inner { padding: 0 14px; }
+    .main { padding: 16px 14px 40px; }
+    .card-badges { flex-direction: column; align-items: flex-end; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-inner">
+    <button id="back-btn" onclick="closeProject()" title="Back to all projects">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Projects
+    </button>
+    <div class="header-logo">
+      <div class="header-logo-mark">
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="2" width="1" height="1" fill="#FFFF00"/><rect x="17" y="2" width="1" height="1" fill="#FFFF00"/><rect x="18" y="2" width="1" height="1" fill="#FFFF00"/><rect x="6" y="3" width="1" height="1" fill="#FFFF00"/><rect x="7" y="3" width="1" height="1" fill="#FFFF00"/><rect x="8" y="3" width="1" height="1" fill="#FFFF00"/><rect x="16" y="3" width="1" height="1" fill="#FFFF00"/><rect x="17" y="3" width="1" height="1" fill="#FFFF00"/><rect x="18" y="3" width="1" height="1" fill="#FFFF00"/><rect x="6" y="4" width="1" height="1" fill="#FFFF00"/><rect x="7" y="4" width="1" height="1" fill="#FFFF00"/><rect x="8" y="4" width="1" height="1" fill="#FFFF00"/><rect x="16" y="4" width="1" height="1" fill="#FFFF00"/><rect x="17" y="4" width="1" height="1" fill="#FFFF00"/><rect x="18" y="4" width="1" height="1" fill="#FFFF00"/><rect x="6" y="5" width="1" height="1" fill="#FFFF00"/><rect x="7" y="5" width="1" height="1" fill="#FFFF00"/><rect x="8" y="5" width="1" height="1" fill="#FFFF00"/><rect x="15" y="5" width="1" height="1" fill="#FFFF00"/><rect x="16" y="5" width="1" height="1" fill="#FFFF00"/><rect x="17" y="5" width="1" height="1" fill="#FFFF00"/><rect x="3" y="6" width="1" height="1" fill="#FFFF00"/><rect x="4" y="6" width="1" height="1" fill="#FFFF00"/><rect x="5" y="6" width="1" height="1" fill="#FFFF00"/><rect x="15" y="6" width="1" height="1" fill="#FFFF00"/><rect x="16" y="6" width="1" height="1" fill="#FFFF00"/><rect x="17" y="6" width="1" height="1" fill="#FFFF00"/><rect x="3" y="7" width="1" height="1" fill="#FFFF00"/><rect x="4" y="7" width="1" height="1" fill="#FFFF00"/><rect x="5" y="7" width="1" height="1" fill="#FFFF00"/><rect x="15" y="7" width="1" height="1" fill="#FFFF00"/><rect x="16" y="7" width="1" height="1" fill="#FFFF00"/><rect x="17" y="7" width="1" height="1" fill="#FFFF00"/><rect x="3" y="8" width="1" height="1" fill="#FFFF00"/><rect x="4" y="8" width="1" height="1" fill="#FFFF00"/><rect x="5" y="8" width="1" height="1" fill="#FFFF00"/><rect x="14" y="8" width="1" height="1" fill="#FFFF00"/><rect x="15" y="8" width="1" height="1" fill="#FFFF00"/><rect x="16" y="8" width="1" height="1" fill="#FFFF00"/><rect x="0" y="9" width="1" height="1" fill="#FFFF00"/><rect x="1" y="9" width="1" height="1" fill="#FFFF00"/><rect x="2" y="9" width="1" height="1" fill="#FFFF00"/><rect x="14" y="9" width="1" height="1" fill="#FFFF00"/><rect x="15" y="9" width="1" height="1" fill="#FFFF00"/><rect x="16" y="9" width="1" height="1" fill="#FFFF00"/><rect x="0" y="10" width="1" height="1" fill="#FFFF00"/><rect x="1" y="10" width="1" height="1" fill="#FFFF00"/><rect x="2" y="10" width="1" height="1" fill="#FFFF00"/><rect x="14" y="10" width="1" height="1" fill="#FFFF00"/><rect x="15" y="10" width="1" height="1" fill="#FFFF00"/><rect x="16" y="10" width="1" height="1" fill="#FFFF00"/><rect x="19" y="10" width="1" height="1" fill="#FFFF00"/><rect x="20" y="10" width="1" height="1" fill="#FFFF00"/><rect x="21" y="10" width="1" height="1" fill="#FFFF00"/><rect x="0" y="11" width="1" height="1" fill="#FFFF00"/><rect x="1" y="11" width="1" height="1" fill="#FFFF00"/><rect x="2" y="11" width="1" height="1" fill="#FFFF00"/><rect x="13" y="11" width="1" height="1" fill="#FFFF00"/><rect x="14" y="11" width="1" height="1" fill="#FFFF00"/><rect x="15" y="11" width="1" height="1" fill="#FFFF00"/><rect x="19" y="11" width="1" height="1" fill="#FFFF00"/><rect x="20" y="11" width="1" height="1" fill="#FFFF00"/><rect x="21" y="11" width="1" height="1" fill="#FFFF00"/><rect x="3" y="12" width="1" height="1" fill="#FFFF00"/><rect x="4" y="12" width="1" height="1" fill="#FFFF00"/><rect x="5" y="12" width="1" height="1" fill="#FFFF00"/><rect x="13" y="12" width="1" height="1" fill="#FFFF00"/><rect x="14" y="12" width="1" height="1" fill="#FFFF00"/><rect x="15" y="12" width="1" height="1" fill="#FFFF00"/><rect x="19" y="12" width="1" height="1" fill="#FFFF00"/><rect x="20" y="12" width="1" height="1" fill="#FFFF00"/><rect x="21" y="12" width="1" height="1" fill="#FFFF00"/><rect x="3" y="13" width="1" height="1" fill="#FFFF00"/><rect x="4" y="13" width="1" height="1" fill="#FFFF00"/><rect x="5" y="13" width="1" height="1" fill="#FFFF00"/><rect x="13" y="13" width="1" height="1" fill="#FFFF00"/><rect x="14" y="13" width="1" height="1" fill="#FFFF00"/><rect x="15" y="13" width="1" height="1" fill="#FFFF00"/><rect x="22" y="13" width="1" height="1" fill="#FFFF00"/><rect x="23" y="13" width="1" height="1" fill="#FFFF00"/><rect x="24" y="13" width="1" height="1" fill="#FFFF00"/><rect x="3" y="14" width="1" height="1" fill="#FFFF00"/><rect x="4" y="14" width="1" height="1" fill="#FFFF00"/><rect x="5" y="14" width="1" height="1" fill="#FFFF00"/><rect x="12" y="14" width="1" height="1" fill="#FFFF00"/><rect x="13" y="14" width="1" height="1" fill="#FFFF00"/><rect x="14" y="14" width="1" height="1" fill="#FFFF00"/><rect x="22" y="14" width="1" height="1" fill="#FFFF00"/><rect x="23" y="14" width="1" height="1" fill="#FFFF00"/><rect x="24" y="14" width="1" height="1" fill="#FFFF00"/><rect x="6" y="15" width="1" height="1" fill="#FFFF00"/><rect x="7" y="15" width="1" height="1" fill="#FFFF00"/><rect x="8" y="15" width="1" height="1" fill="#FFFF00"/><rect x="12" y="15" width="1" height="1" fill="#FFFF00"/><rect x="13" y="15" width="1" height="1" fill="#FFFF00"/><rect x="14" y="15" width="1" height="1" fill="#FFFF00"/><rect x="22" y="15" width="1" height="1" fill="#FFFF00"/><rect x="23" y="15" width="1" height="1" fill="#FFFF00"/><rect x="24" y="15" width="1" height="1" fill="#FFFF00"/><rect x="6" y="16" width="1" height="1" fill="#FFFF00"/><rect x="7" y="16" width="1" height="1" fill="#FFFF00"/><rect x="8" y="16" width="1" height="1" fill="#FFFF00"/><rect x="12" y="16" width="1" height="1" fill="#FFFF00"/><rect x="13" y="16" width="1" height="1" fill="#FFFF00"/><rect x="14" y="16" width="1" height="1" fill="#FFFF00"/><rect x="25" y="16" width="1" height="1" fill="#FFFF00"/><rect x="26" y="16" width="1" height="1" fill="#FFFF00"/><rect x="27" y="16" width="1" height="1" fill="#FFFF00"/><rect x="6" y="17" width="1" height="1" fill="#FFFF00"/><rect x="7" y="17" width="1" height="1" fill="#FFFF00"/><rect x="8" y="17" width="1" height="1" fill="#FFFF00"/><rect x="11" y="17" width="1" height="1" fill="#FFFF00"/><rect x="12" y="17" width="1" height="1" fill="#FFFF00"/><rect x="13" y="17" width="1" height="1" fill="#FFFF00"/><rect x="25" y="17" width="1" height="1" fill="#FFFF00"/><rect x="26" y="17" width="1" height="1" fill="#FFFF00"/><rect x="27" y="17" width="1" height="1" fill="#FFFF00"/><rect x="11" y="18" width="1" height="1" fill="#FFFF00"/><rect x="12" y="18" width="1" height="1" fill="#FFFF00"/><rect x="13" y="18" width="1" height="1" fill="#FFFF00"/><rect x="25" y="18" width="1" height="1" fill="#FFFF00"/><rect x="26" y="18" width="1" height="1" fill="#FFFF00"/><rect x="27" y="18" width="1" height="1" fill="#FFFF00"/><rect x="11" y="19" width="1" height="1" fill="#FFFF00"/><rect x="12" y="19" width="1" height="1" fill="#FFFF00"/><rect x="13" y="19" width="1" height="1" fill="#FFFF00"/><rect x="22" y="19" width="1" height="1" fill="#FFFF00"/><rect x="23" y="19" width="1" height="1" fill="#FFFF00"/><rect x="24" y="19" width="1" height="1" fill="#FFFF00"/><rect x="10" y="20" width="1" height="1" fill="#FFFF00"/><rect x="11" y="20" width="1" height="1" fill="#FFFF00"/><rect x="12" y="20" width="1" height="1" fill="#FFFF00"/><rect x="22" y="20" width="1" height="1" fill="#FFFF00"/><rect x="23" y="20" width="1" height="1" fill="#FFFF00"/><rect x="24" y="20" width="1" height="1" fill="#FFFF00"/><rect x="10" y="21" width="1" height="1" fill="#FFFF00"/><rect x="11" y="21" width="1" height="1" fill="#FFFF00"/><rect x="12" y="21" width="1" height="1" fill="#FFFF00"/><rect x="22" y="21" width="1" height="1" fill="#FFFF00"/><rect x="23" y="21" width="1" height="1" fill="#FFFF00"/><rect x="24" y="21" width="1" height="1" fill="#FFFF00"/><rect x="10" y="22" width="1" height="1" fill="#FFFF00"/><rect x="11" y="22" width="1" height="1" fill="#FFFF00"/><rect x="12" y="22" width="1" height="1" fill="#FFFF00"/><rect x="19" y="22" width="1" height="1" fill="#FFFF00"/><rect x="20" y="22" width="1" height="1" fill="#FFFF00"/><rect x="21" y="22" width="1" height="1" fill="#FFFF00"/><rect x="9" y="23" width="1" height="1" fill="#FFFF00"/><rect x="10" y="23" width="1" height="1" fill="#FFFF00"/><rect x="11" y="23" width="1" height="1" fill="#FFFF00"/><rect x="19" y="23" width="1" height="1" fill="#FFFF00"/><rect x="20" y="23" width="1" height="1" fill="#FFFF00"/><rect x="21" y="23" width="1" height="1" fill="#FFFF00"/><rect x="9" y="24" width="1" height="1" fill="#FFFF00"/><rect x="10" y="24" width="1" height="1" fill="#FFFF00"/><rect x="11" y="24" width="1" height="1" fill="#FFFF00"/><rect x="19" y="24" width="1" height="1" fill="#FFFF00"/><rect x="20" y="24" width="1" height="1" fill="#FFFF00"/><rect x="21" y="24" width="1" height="1" fill="#FFFF00"/><rect x="9" y="25" width="1" height="1" fill="#FFFF00"/><rect x="10" y="25" width="1" height="1" fill="#FFFF00"/><rect x="11" y="25" width="1" height="1" fill="#FFFF00"/></svg>
+      </div>
+      <div class="header-logo-text">
+        Design → Dev
+        <span>Handover</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="sync-indicator" class="sync-indicator"><span class="sync-dot offline"></span>Offline</div>
+      <!-- View-only badge — visible only in VIEWER_MODE via CSS -->
+      <div class="viewer-badge" title="You have view-only access — editing is disabled">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        View Only
+      </div>
+      <!-- Dark/light toggle -->
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle colour theme">
+        <svg class="icon-moon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        <svg class="icon-sun"  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      </button>
+      <!-- Global settings — token management, visible in both library and project view -->
+      <button id="global-settings-btn" class="theme-toggle" onclick="openGlobalSettings()" title="Settings" aria-label="App settings">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <!-- Per-project GitHub sync — project view only -->
+      <button class="hdr-btn hdr-btn-edit-only" onclick="openSettings()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        Sync
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════ -->
+<main class="main">
+  <!-- Project meta pills — sit above the page tabs -->
+  <div class="header-meta">
+    <div class="header-pill" onclick="openProjectSettings()" title="Click to edit project details">
+      <span class="header-pill-label">Project</span>
+      <span class="header-pill-value" id="hdr-project">Enter Project Name</span>
+      <span class="header-pill-edit"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></span>
+    </div>
+    <div class="header-pill" onclick="openProjectSettings()" title="Click to edit project details">
+      <span class="header-pill-label">Base Theme</span>
+      <span class="header-pill-value" id="hdr-theme">Enter Base Theme Name</span>
+      <span class="header-pill-edit"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></span>
+    </div>
+    <div class="header-meta-actions">
+      <button id="export-csv-btn" class="hdr-btn hdr-btn-edit-only" onclick="exportToClickUp(this)" title="Export checklist as ClickUp-importable CSV">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-a" x1="0" y1="15.049" x2="54.845" y2="15.049" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-b" x1="1.195" y1="53.166" x2="53.745" y2="53.166" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
+        Export CSV
+      </button>
+      <a id="share-link-btn" href="#" class="hdr-btn mint hdr-btn-edit-only" style="display:none" onclick="copyShareLink(event)">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        Share Link
+      </a>
+    </div>
+  </div>
+  <div id="app"></div>
+</main>
+
+<script>
+// ─── Status config ─────────────────────────────────────────────
+const STATUS_CONFIG = {
+  existing: { label:"Existing Section",   desc:"Use as-is from theme",                       cls:"existing", dotCls:"dot-existing" },
+  modified: { label:"Needs New Settings", desc:"Existing section + new customiser settings",  cls:"modified", dotCls:"dot-modified" },
+  bespoke:  { label:"Bespoke Section",    desc:"Custom build required",                      cls:"bespoke",  dotCls:"dot-bespoke"  }
+};
+const EFFORT = ["Low","Medium","High"];
+
+// ─── Project metadata ──────────────────────────────────────────
+let projectMeta = {
+  title: 'Enter Project Name',
+  theme: 'Enter Base Theme Name',
+};
+function saveProjectMeta() {
+  saveCurrentProject();
+}
+function applyProjectMeta() {
+  const titleEl = document.getElementById('hdr-project');
+  const themeEl = document.getElementById('hdr-theme');
+  if (titleEl) titleEl.textContent = projectMeta.title || 'Untitled Project';
+  if (themeEl) themeEl.textContent = projectMeta.theme || 'Theme (TBC)';
+  document.title = `${projectMeta.title || 'Design → Dev'} · Kubix`;
+}
+
+// ─── Project settings modal ────────────────────────────────────
+function openProjectSettings() {
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Project Details</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">Edit the project information shown in the header. Per-page Loom and Figma links can be set using the edit button in the stats bar.</p>
+    <div class="modal-field">
+      <label>Project Title</label>
+      <input type="text" id="ps-title" value="${esc(projectMeta.title)}" placeholder="e.g. Ruffingtons Redesign">
+    </div>
+    <div class="modal-field">
+      <label>Base Shopify Theme Name</label>
+      <input type="text" id="ps-theme" value="${esc(projectMeta.theme)}" placeholder="e.g. Dawn, Impulse, Hyper…">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveProjectDetails()">Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('ps-title')?.focus(), 50);
+}
+function saveProjectDetails() {
+  projectMeta.title = document.getElementById('ps-title')?.value.trim() || projectMeta.title;
+  projectMeta.theme = document.getElementById('ps-theme')?.value.trim() || projectMeta.theme;
+  saveProjectMeta(); applyProjectMeta(); render(); scheduleSave();
+  document.querySelector('.overlay')?.remove();
+}
+
+// ─── Theme toggle ──────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('colour_theme', next);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('colour_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ─── Viewer mode ────────────────────────────────────────────────
+// Activated when the app is opened via a ?gist= shared URL.
+// In viewer mode the checklist is read-only: no editing, no sync controls.
+const VIEWER_MODE = !!new URLSearchParams(location.search).get('gist');
+
+// ─── Multi-project state ────────────────────────────────────────
+let projects = [];
+let activeProjectId = '';  // '' = library view
+
+function generateId() {
+  return 'kbx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+}
+function loadProjects() {
+  try { return JSON.parse(localStorage.getItem('kbx_projects') || '[]'); } catch(e) { return []; }
+}
+function saveProjects() {
+  localStorage.setItem('kbx_projects', JSON.stringify(projects));
+}
+function getActiveProject() {
+  return projects.find(p => p.id === activeProjectId);
+}
+function defaultPages() {
+  return {
+    homepage:   { loomUrl: '', figmaUrl: '', sections: [] },
+    collection: { loomUrl: '', figmaUrl: '', sections: [] },
+    product:    { loomUrl: '', figmaUrl: '', sections: [] }
+  };
+}
+function timeAgo(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+function saveCurrentProject() {
+  const proj = getActiveProject();
+  if (!proj) return;
+  proj.title      = projectMeta.title;
+  proj.theme      = projectMeta.theme;
+  proj.pages      = JSON.parse(JSON.stringify(pages));
+  proj.gistId     = gist.gistId;
+  proj.activePage = activePage;
+  proj.updatedAt  = Date.now();
+  saveProjects();
+}
+
+// ─── Project management ────────────────────────────────────────
+function openProject(id) {
+  const proj = projects.find(p => p.id === id);
+  if (!proj) return;
+  activeProjectId   = id;
+  projectMeta.title = proj.title;
+  projectMeta.theme = proj.theme;
+  pages = proj.pages ? JSON.parse(JSON.stringify(proj.pages)) : defaultPages();
+  // Ensure all page keys exist
+  Object.keys(PAGE_DEFS).forEach(k => {
+    if (!pages[k]) pages[k] = { loomUrl: '', figmaUrl: '', sections: [] };
+  });
+  activePage  = proj.activePage || 'homepage';
+  gist.gistId = proj.gistId || '';
+  history.pushState({}, '', '?project=' + id);
+  document.body.className = 'proj-view';
+  applyProjectMeta();
+  render();
+  if (gist.gistId) { startPolling(); setSyncState(gist.token ? 'saved' : 'offline'); }
+  else setSyncState('offline');
+}
+
+function closeProject() {
+  saveCurrentProject();
+  clearInterval(pollTimer);
+  clearTimeout(saveTimer);
+  activeProjectId = '';
+  gist.gistId = '';
+  history.pushState({}, '', location.pathname);
+  renderLibrary();
+}
+
+function newProject() {
+  const proj = {
+    id:         generateId(),
+    title:      'Enter Project Name',
+    theme:      'Enter Base Theme Name',
+    gistId:     '',
+    pubUrl:     '',
+    activePage: 'homepage',
+    createdAt:  Date.now(),
+    updatedAt:  Date.now(),
+    pages:      defaultPages()
+  };
+  projects.push(proj);
+  saveProjects();
+  openProject(proj.id);
+}
+
+function deleteProject(id) {
+  const proj = projects.find(p => p.id === id);
+  const name = proj ? proj.title : 'this project';
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  projects = projects.filter(p => p.id !== id);
+  saveProjects();
+  renderLibrary();
+}
+
+function migrateV1() {
+  if (localStorage.getItem('kbx_projects')) return; // already migrated
+  const title = localStorage.getItem('proj_title');
+  if (!title) return; // nothing to migrate
+  const proj = {
+    id:         generateId(),
+    title:      title || 'Enter Project Name',
+    theme:      localStorage.getItem('proj_theme')  || 'Enter Base Theme Name',
+    gistId:     localStorage.getItem('gist_id')     || '',
+    pubUrl:     localStorage.getItem('pub_url')      || '',
+    activePage: localStorage.getItem('active_page') || 'homepage',
+    createdAt:  Date.now(),
+    updatedAt:  Date.now(),
+    pages: (() => {
+      try { return JSON.parse(localStorage.getItem('pages_data')) || defaultPages(); } catch(e) { return defaultPages(); }
+    })()
+  };
+  projects.push(proj);
+  saveProjects();
+  ['proj_title','proj_theme','gist_id','pub_url','active_page','pages_data'].forEach(k => localStorage.removeItem(k));
+}
+
+function renderLibrary() {
+  clearInterval(pollTimer);
+  clearTimeout(saveTimer);
+  document.body.className = 'lib-view';
+  let cards = '';
+  projects.forEach(p => {
+    const total  = Object.values(p.pages || {}).reduce((n, pg) => n + (pg.sections?.length || 0), 0);
+    const synced = p.gistId
+      ? `<span class="lib-card-tag" style="color:var(--kbx-mint);border-color:rgba(148,247,161,0.3);">✓ Synced</span>`
+      : `<span class="lib-card-tag">Local only</span>`;
+    cards += `
+    <div class="lib-card" onclick="openProject('${p.id}')">
+      <div class="lib-card-title">${esc(p.title)}</div>
+      <div class="lib-card-theme">${esc(p.theme)}</div>
+      <div class="lib-card-meta">
+        <span class="lib-card-tag">${total} section${total !== 1 ? 's' : ''}</span>
+        ${synced}
+      </div>
+      <div class="lib-card-date">${timeAgo(p.updatedAt)}</div>
+      <button class="lib-card-delete" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Delete project"><svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="5" y="0" width="4" height="1" fill="#FFFF00"/><rect x="1" y="1" width="12" height="2" fill="#FFFF00"/><rect x="2" y="3" width="1" height="8" fill="#FFFF00"/><rect x="11" y="3" width="1" height="8" fill="#FFFF00"/><rect x="2" y="11" width="10" height="1" fill="#FFFF00"/><rect x="5" y="3" width="1" height="8" fill="#FFFF00"/><rect x="8" y="3" width="1" height="8" fill="#FFFF00"/></svg></button>
+    </div>`;
+  });
+  const empty = projects.length === 0
+    ? `<div class="lib-empty"><strong>No handovers yet</strong>Click <em>+ New Handover</em> to create your first project.</div>`
+    : '';
+  document.getElementById('app').innerHTML = `
+  <div class="lib-header">
+    <h2 class="lib-title">Your Handovers</h2>
+    <button class="hdr-btn green" onclick="newProject()">+ New Handover</button>
+  </div>
+  <div class="lib-grid">
+    ${cards}
+    ${empty}
+  </div>`;
+}
+
+// ─── Page definitions & default sections ───────────────────────
+const PAGE_DEFS = {
+  homepage: {
+    label: 'Homepage',
+    icon:  'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+    sections: [
+      { id:1,  name:"Scrolling Announcement Bar",              status:"existing", effort:"Low",    figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8719", collapsed:false, notes:"Standard theme announcement bar. Use existing section as-is. Shows rolling messages e.g. 'Next Day Delivery Available'." },
+      { id:2,  name:"Header / Navigation",                     status:"existing", effort:"Low",    figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8717", collapsed:true,  notes:"Standard theme header with Ruffingtons logo, Shop dropdown, Our Story, News, Stockists, Contact. Search, account and cart icons. Use existing theme header section." },
+      { id:3,  name:"Hero / Main Slider",                      status:"bespoke",  effort:"High",   figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8338", collapsed:false, notes:"Custom hero section with two key bespoke elements:\n\n1. ROTATING STAMP: The 'Made For Dogs / Made In Britain' rotating stamp is custom. Ability to add custom text with icon upload. Hyper theme has this feature — if possible to replicate, great. If not, an animated GIF can be used. The ability to place this stamp anywhere on the block would also be needed.\n\n2. VIDEO BACKGROUND: Client would like to add video here at some point. This should be part of the theme options.\n\nThe hero also includes a carousel/slider with different treat images and a 'SHOP TREATS' CTA button." },
+      { id:4,  name:"Best Sellers (Collection Slider)",        status:"modified", effort:"Medium", figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8350", collapsed:true,  notes:"Collection Slider — split layout with featured product image on the left (e.g. 'Canine Cupcakes' with SHOP NOW link) and a text list of best sellers on the right. Uses existing collection slider section but may need carousel dot navigation and the split-view layout configured via customiser." },
+      { id:5,  name:"Our Favourites (Product Grid)",           status:"modified", effort:"Medium", figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8426", collapsed:true,  notes:"Product grid section showing 4 products with 'Shop All' link.\n\nCustom element needed: Feefo review stars — styling in whatever way is possible with Feefo integration. The star ratings need to display beneath each product title alongside the review count." },
+      { id:6,  name:"People Are Talking (Testimonials)",       status:"bespoke",  effort:"High",   figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8437", collapsed:true,  notes:"Custom testimonials carousel. Each card: customer name, 5-star rating, testimonial quote, customer photo, and linked product. Carousel with left/right navigation arrows.\n\nBespoke section — no direct equivalent in the base theme. Needs to support multiple testimonial cards in a horizontal scrolling carousel." },
+      { id:7,  name:"Trade CTA Block",                         status:"modified", effort:"Medium", figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8574", collapsed:true,  notes:"'A Treat For Your Four-Legged Guests' — trade program signup section with REGISTER / LOGIN button.\n\nBackground image upload for the decorative swirl pattern, then colour scheme for the content block (Black). Needs adding to the customiser so the client can update the background pattern and content block colour." },
+      { id:8,  name:"Making Lifelong Memories (Instagram CTA)",status:"existing", effort:"Low",    figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8582", collapsed:true,  notes:"Simple text section with 'SHARE THE LOVE' subheading, 'Making Lifelong Memories' heading, and @RUFFINGSTONSUK Instagram handle link. Can use an existing rich text or custom content theme section. No custom development needed." },
+      { id:9,  name:"Scrolling Image Gallery (Social Feed)",   status:"modified", effort:"Medium", figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8596", collapsed:true,  notes:"Scrolling horizontal gallery of lifestyle/product images in varied sizes (alternating large and small). The brand gold colour will need to be added behind the social images as a background.\n\nMay be achievable via a customiser colour setting on an existing image gallery section, or may need a bespoke section if the staggered layout isn't available in the theme." },
+      { id:10, name:"Footer",                                  status:"modified", effort:"Low",    figmaLink:"https://www.figma.com/design/c9CHAkvaabMvEHJBiA19NA/2026-Projects-%7C-Ruffingtons?node-id=3233-8716", collapsed:true,  notes:"Standard theme footer with Ruffingtons branding, address, phone, link columns, social icons (Facebook, Instagram, TikTok), and payment icons.\n\nFeefo Service Rating badge needs integrating into the footer layout." }
+    ]
+  },
+  collection: {
+    label: 'Collection Page',
+    icon:  'M4 6h16M4 10h16M4 14h16M4 18h7',
+    sections: [
+      { id:1, name:"Collection Hero / Banner",          status:"modified", effort:"Medium", figmaLink:"", collapsed:true, notes:"Top banner for the collection page. Typically includes the collection title, background image or colour, and optionally a description.\n\nNeeds customiser settings for: background image upload, overlay colour and opacity, heading/description text, and text colour. Check the design for any decorative elements or unique layout." },
+      { id:2, name:"Filter & Sort Bar",                 status:"modified", effort:"Medium", figmaLink:"", collapsed:true, notes:"Horizontal filter/sort bar below the collection banner. Check what filtering options the theme provides out of the box (by tag, price, availability, colour, etc.).\n\nReview the design for any custom filter UI — pill selectors, colour swatches, expandable panels. If the design requires filter types not native to the theme, additional development will be needed." },
+      { id:3, name:"Product Card Grid",                 status:"existing", effort:"Low",    figmaLink:"", collapsed:true, notes:"Main product grid. Use the existing theme product card layout. Check the design for number of columns (desktop/tablet/mobile), card spacing, and image aspect ratio.\n\nNote: Feefo star ratings should display beneath each product title on collection pages if they are used here — check with the designer." },
+      { id:4, name:"Product Card Hover State",          status:"modified", effort:"Low",    figmaLink:"", collapsed:true, notes:"Review the design for any hover effects on product cards (e.g. secondary image swap, quick-add button appearing, gradient overlay).\n\nIf the theme supports the required hover style natively, configure via customiser. Custom hover behaviour will need development." },
+      { id:5, name:"Pagination / Load More",            status:"existing", effort:"Low",    figmaLink:"", collapsed:true, notes:"Pagination or infinite scroll / load more button at the bottom of the product grid. Use existing theme option. Confirm the style matches the design — numbered pagination vs. load more button vs. infinite scroll." },
+      { id:6, name:"Collection Description (SEO Text)", status:"modified", effort:"Low",    figmaLink:"", collapsed:true, notes:"SEO-friendly text block below the product grid. Check if the theme supports a rich text block tied to the collection description metafield, or a customiser text block.\n\nMay need a 'read more' expand/collapse if the text is long, to avoid pushing products too far down the page." }
+    ]
+  },
+  product: {
+    label: 'Product Page',
+    icon:  'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z',
+    sections: [
+      { id:1, name:"Product Image Gallery",                   status:"bespoke",  effort:"High",   figmaLink:"", collapsed:true, notes:"Main product image gallery. Review the design for layout — e.g. large main image with thumbnail strip, zoom on hover, video support, 360° view.\n\nIf the design includes a custom gallery style (e.g. stacked scrolling, full-bleed imagery, custom zoom modal) this will need bespoke development. Otherwise configure via theme customiser." },
+      { id:2, name:"Product Title, Price & Badges",           status:"existing", effort:"Low",    figmaLink:"", collapsed:true, notes:"Product title, price, and any labels/badges (e.g. 'Best Seller', 'New', 'Limited Edition'). Use existing theme layout.\n\nCheck the design for dynamic badge styling — if badges are driven by product tags or metafields, this may need new settings or logic added." },
+      { id:3, name:"Variant Selector (Size / Flavour etc.)",  status:"modified", effort:"Medium", figmaLink:"", collapsed:true, notes:"Product variants — size, flavour, quantity pack, etc. Review the design for the variant UI: pill buttons vs. dropdowns vs. image swatches.\n\nThe theme may support pill/button selectors natively. Custom variant UI (e.g. image swatches, descriptive pills with pricing, sold-out state styling) will need development." },
+      { id:4, name:"Quantity Selector & Add to Cart",         status:"modified", effort:"Low",    figmaLink:"", collapsed:true, notes:"Quantity input and Add to Cart / Buy Now buttons. Use existing theme section and configure via customiser.\n\nCheck if the design includes a sticky add-to-cart bar that appears on scroll — this would need development. Gift wrapping or upsell add-on options would also need custom work." },
+      { id:5, name:"Product Description & Tabs",             status:"modified", effort:"Medium", figmaLink:"", collapsed:true, notes:"Product description area, potentially organised into tabs (e.g. Description, Ingredients, Feeding Guide, Nutritional Info).\n\nCheck if the theme supports tabbed content natively. If tabs are bespoke or tab labels/order need to be configurable via metafields, development will be needed." },
+      { id:6, name:"Trust Badges / USP Icons",               status:"modified", effort:"Low",    figmaLink:"", collapsed:true, notes:"Row of USP icons/text (e.g. 'Free UK Delivery', 'Made in Britain', 'Natural Ingredients', 'Vet Approved').\n\nIf the theme has a configurable USP/icon bar section, use it. Otherwise a repeating block with icon upload + text fields will need adding to the customiser." },
+      { id:7, name:"Reviews & Ratings (Feefo)",              status:"bespoke",  effort:"High",   figmaLink:"", collapsed:true, notes:"Product reviews section powered by Feefo. Feefo's product reviews widget needs embedding on the product page template.\n\nReview the design for the layout of individual review cards (star rating, reviewer name, date, verified badge, quote). Custom styling of the Feefo widget will likely be needed to match the design." },
+      { id:8, name:"Related / You May Also Like",            status:"existing", effort:"Low",    figmaLink:"", collapsed:true, notes:"Related products or recommendations section. Use Shopify's native product recommendations API with the existing theme recommendations section.\n\nCheck the design for card layout and number of visible products. Style should be consistent with the product card grid on the collection page." }
+    ]
+  }
+};
+
+// ─── Pages state ───────────────────────────────────────────────
+let activePage   = 'homepage';
+let activeFilter = 'all';
+let pages = defaultPages();
+
+function savePagesData() { saveCurrentProject(); }
+function curPage()       { return pages[activePage]; }
+function curSections()   { return pages[activePage].sections; }
+
+// ─── Switch page tab ───────────────────────────────────────────
+function switchPage(pageId) {
+  activePage = pageId;
+  activeFilter = 'all';
+  saveCurrentProject();
+  render();
+  if (curSections().length === 0) offerPopulate(pageId);
+}
+
+function offerPopulate(pageId) {
+  const def = PAGE_DEFS[pageId];
+  if (!def || !def.sections.length) return;
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">${esc(def.label)} — No Sections Yet</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">This page checklist is empty. Pre-populate it with <strong>${def.sections.length} typical ${esc(def.label)} sections</strong> as a starting point, then add your Figma link and Loom video. You can edit, remove or add sections at any time.</p>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Start blank</button>
+      <button class="modal-btn primary" onclick="populatePage('${pageId}');this.closest('.overlay').remove()">Pre-populate ${esc(def.label)}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function populatePage(pageId) {
+  pages[pageId].sections = JSON.parse(JSON.stringify(PAGE_DEFS[pageId].sections));
+  savePagesData(); render(); scheduleSave();
+}
+
+// ─── Edit page links modal (Loom + Figma per page) ─────────────
+function editPageLinks(pageId) {
+  const pg  = pages[pageId];
+  const def = PAGE_DEFS[pageId];
+  const ov  = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">${esc(def.label)} — Page Links</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">Add the Loom walkthrough video and Figma design link for the <strong>${esc(def.label)}</strong>. These appear in the stats bar so your developer can reference them alongside the checklist.</p>
+    <div class="modal-field">
+      <label>🎬 Loom Video URL — walkthrough for this page</label>
+      <input type="url" id="pl-loom" value="${esc(pg.loomUrl)}" placeholder="https://www.loom.com/share/…">
+    </div>
+    <div class="modal-field">
+      <label>🎨 Figma Design URL — for this page</label>
+      <input type="url" id="pl-figma" value="${esc(pg.figmaUrl)}" placeholder="https://www.figma.com/design/…">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
+      <button class="modal-btn primary" onclick="savePageLinks('${pageId}')">Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('pl-loom')?.focus(), 50);
+}
+
+function savePageLinks(pageId) {
+  pages[pageId].loomUrl  = document.getElementById('pl-loom')?.value.trim()  || '';
+  pages[pageId].figmaUrl = document.getElementById('pl-figma')?.value.trim() || '';
+  savePagesData(); render(); scheduleSave();
+  document.querySelector('.overlay')?.remove();
+}
+
+// ─── GitHub Gist Sync ──────────────────────────────────────────
+let gist = {
+  token:  localStorage.getItem('gist_token') || '',
+  gistId: ''   // loaded per-project via openProject()
+};
+let syncState = 'offline';
+let saveTimer = null;
+let pollTimer = null;
+let lastHash  = '';
+
+function setSyncState(s) {
+  syncState = s;
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const labels = { offline:'Offline', saving:'Saving…', saved:'Synced ✓', error:'Sync error' };
+  el.innerHTML = `<span class="sync-dot ${s}"></span>${labels[s]||s}`;
+  const shareBtn = document.getElementById('share-link-btn');
+  if (shareBtn) shareBtn.style.display = (!VIEWER_MODE && gist.gistId) ? '' : 'none';
+}
+
+function dataForSync() {
+  const pagesData = {};
+  Object.keys(PAGE_DEFS).forEach(k => {
+    pagesData[k] = {
+      loomUrl:  pages[k]?.loomUrl  || '',
+      figmaUrl: pages[k]?.figmaUrl || '',
+      sections: (pages[k]?.sections || []).map(({id,name,status,notes,effort,figmaLink}) =>
+        ({id,name,status,notes,effort,figmaLink}))
+    };
+  });
+  return { projectMeta: { title: projectMeta.title, theme: projectMeta.theme }, pages: pagesData };
+}
+
+function hashOf(d) { return JSON.stringify(d); }
+
+async function saveToGist() {
+  if (!gist.token) return;
+  setSyncState('saving');
+  const payload = dataForSync();
+  try {
+    const isNew = !gist.gistId;
+    const url   = isNew ? 'https://api.github.com/gists' : `https://api.github.com/gists/${gist.gistId}`;
+    const res   = await fetch(url, {
+      method: isNew ? 'POST' : 'PATCH',
+      headers: { 'Authorization': `token ${gist.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+      body: JSON.stringify({
+        description: `${projectMeta.title || 'Design → Dev'} Checklist · Kubix`,
+        public: true,
+        files: { 'checklist-data.json': { content: JSON.stringify(payload, null, 2) } }
+      })
+    });
+    if (!res.ok) throw new Error(`GitHub ${res.status}`);
+    const data = await res.json();
+    if (isNew) {
+      gist.gistId = data.id;
+      const proj = getActiveProject();
+      if (proj) { proj.gistId = data.id; saveProjects(); }
+    }
+    lastHash = hashOf(payload);
+    setSyncState('saved');
+  } catch(e) {
+    console.error('Gist save error:', e);
+    setSyncState('error');
+  }
+}
+
+function scheduleSave() {
+  if (!gist.token) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToGist, 900);
+}
+
+async function loadFromGist(gistIdOverride) {
+  const id = gistIdOverride || gist.gistId || new URLSearchParams(location.search).get('gist');
+  if (!id) return false;
+  try {
+    const headers = { 'Accept': 'application/vnd.github.v3+json' };
+    if (gist.token) headers['Authorization'] = `token ${gist.token}`;
+    const res  = await fetch(`https://api.github.com/gists/${id}`, { headers });
+    if (!res.ok) return false;
+    const raw  = await res.json();
+    const file = raw.files['checklist-data.json'];
+    if (!file) return false;
+    const parsed = JSON.parse(file.content);
+
+    const newHash = hashOf(parsed);
+    if (newHash === lastHash) return true;
+    lastHash = newHash;
+
+    // Restore project metadata
+    if (parsed.projectMeta) {
+      projectMeta.title = parsed.projectMeta.title || projectMeta.title;
+      projectMeta.theme = parsed.projectMeta.theme || projectMeta.theme;
+      saveProjectMeta(); applyProjectMeta();
+    }
+
+    // New multi-page format
+    if (parsed.pages) {
+      Object.keys(parsed.pages).forEach(k => {
+        if (!pages[k]) pages[k] = { loomUrl: '', figmaUrl: '', sections: [] };
+        const pg = parsed.pages[k];
+        pages[k].loomUrl  = pg.loomUrl  || '';
+        pages[k].figmaUrl = pg.figmaUrl || '';
+        if (Array.isArray(pg.sections)) {
+          const colMap = {};
+          (pages[k].sections || []).forEach(s => colMap[s.id] = s.collapsed);
+          pages[k].sections = pg.sections.map((s, idx) => ({ ...s, collapsed: colMap[s.id] ?? (idx > 0) }));
+        }
+      });
+      savePagesData();
+    }
+    // Legacy flat sections (backward compat)
+    else if (parsed.sections && Array.isArray(parsed.sections)) {
+      const colMap = {};
+      (pages.homepage.sections || []).forEach(s => colMap[s.id] = s.collapsed);
+      pages.homepage.sections = parsed.sections.map((s, idx) => ({ ...s, collapsed: colMap[s.id] ?? (idx > 0) }));
+      if (parsed.projectMeta?.loomUrl) pages.homepage.loomUrl = parsed.projectMeta.loomUrl;
+      savePagesData();
+    }
+
+    if (!gist.gistId) {
+      gist.gistId = id;
+      const proj = getActiveProject();
+      if (proj) { proj.gistId = id; saveProjects(); }
+    }
+    render();
+    setSyncState(gist.token ? 'saved' : 'offline');
+    return true;
+  } catch(e) {
+    console.error('Gist load error:', e);
+    return false;
+  }
+}
+
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(loadFromGist, 15000);
+}
+
+// ─── Public URL helper ─────────────────────────────────────────
+function getShareUrl() {
+  if (!gist.gistId) return '';
+  const proj = getActiveProject();
+  const pub  = (proj?.pubUrl || '').trim().replace(/\/$/, '');
+  const base = pub || `${location.origin}${location.pathname}`;
+  return `${base}?gist=${gist.gistId}`;
+}
+function isLocalhost() {
+  return location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.endsWith('.local');
+}
+
+// ─── Global settings modal (GitHub token — shared across all projects) ────
+function openGlobalSettings() {
+  const hasToken = !!gist.token;
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Settings</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">These settings apply to all your checklists.</p>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-sub);margin-bottom:10px;">GitHub Integration</div>
+    <p class="modal-desc" style="margin-bottom:12px;">Your Personal Access Token lets the app create and update GitHub Gists — one per project — so you can share checklists with developers. The token is stored locally on this device and used for all your projects.</p>
+    <details style="margin-bottom:14px;">
+      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get a GitHub token ▾</summary>
+      <ol class="step-list" style="margin-top:10px;">
+        <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Kubix+Checklist" target="_blank" rel="noopener">github.com/settings/tokens</a> → Generate new token (Classic)</li>
+        <li>Under <strong>Scopes</strong>, tick <strong>gist</strong> only — no other permissions needed</li>
+        <li>Click <strong>Generate token</strong>, copy it, and paste it below</li>
+        <li>Save — the same token works for every project you create</li>
+      </ol>
+    </details>
+    <div class="modal-field">
+      <label>Personal Access Token (gist scope only)</label>
+      <input type="password" id="gs-token" value="${esc(gist.token)}" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      ${hasToken ? `<div style="font-size:11px;color:var(--kbx-mint);margin-top:5px;">✓ Token saved — paste a new one here to replace it</div>` : `<div style="font-size:11px;color:var(--text-sub);margin-top:5px;">Paste your token above and click Save.</div>`}
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveGlobalSettings()">Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('gs-token')?.focus(), 50);
+}
+
+function saveGlobalSettings() {
+  const newToken = document.getElementById('gs-token')?.value.trim() || '';
+  gist.token = newToken;
+  localStorage.setItem('gist_token', newToken);
+  document.querySelector('.overlay')?.remove();
+  // Resume or stop syncing based on token + current project state
+  if (gist.token && gist.gistId) { saveToGist().then(() => startPolling()); }
+  else if (gist.token && activeProjectId) { setSyncState('offline'); } // has token, no gist yet
+  else { clearInterval(pollTimer); setSyncState('offline'); }
+}
+
+// ─── Per-project GitHub sync modal ─────────────────────────────
+function openSettings() {
+  const proj    = getActiveProject();
+  const pubUrl  = proj?.pubUrl || '';
+  const shareUrl = getShareUrl();
+  const gistUrl  = gist.gistId ? `https://gist.github.com/${gist.gistId}` : '';
+  const isLocal  = isLocalhost();
+
+  const tokenStatus = gist.token
+    ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(148,247,161,0.08);border:1px solid rgba(148,247,161,0.25);border-radius:8px;padding:9px 12px;margin-bottom:16px;">
+        <span style="font-size:13px;color:var(--kbx-mint);">✓</span>
+        <span style="font-size:12px;color:var(--text-sec);">GitHub token connected</span>
+        <button onclick="this.closest('.overlay').remove();openGlobalSettings()" style="margin-left:auto;font-size:11px;font-weight:600;color:var(--text-sub);background:none;border:none;cursor:pointer;padding:0;font-family:var(--font-body);">Change →</button>
+      </div>`
+    : `<div style="display:flex;align-items:center;gap:8px;background:rgba(200,50,50,0.08);border:1px solid rgba(200,50,50,0.25);border-radius:8px;padding:9px 12px;margin-bottom:16px;">
+        <span style="font-size:13px;">⚠️</span>
+        <span style="font-size:12px;color:var(--text-sec);">No GitHub token — </span>
+        <button onclick="this.closest('.overlay').remove();openGlobalSettings()" style="font-size:12px;font-weight:700;color:var(--kbx-teal);background:none;border:none;cursor:pointer;padding:0;font-family:var(--font-body);">add one in Settings</button>
+      </div>`;
+
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal" style="width:540px;">
+    <div class="modal-head">
+      <div class="modal-title">GitHub Sync</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">Sync this project to a GitHub Gist to get a shareable link for your developer. Each project uses its own Gist.</p>
+
+    ${tokenStatus}
+
+    <div class="modal-field">
+      <label>Gist ID (auto-created on first sync, or paste existing)</label>
+      <input type="text" id="st-gist" value="${esc(gist.gistId)}" placeholder="Leave blank to auto-create">
+    </div>
+    ${gistUrl ? `<div class="modal-field"><label>Gist URL (view raw data)</label><div class="url-box"><a href="${esc(gistUrl)}" target="_blank" rel="noopener">${esc(gistUrl)}</a></div></div>` : ''}
+
+    <div class="modal-divider"></div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-sub);margin-bottom:10px;">Public hosting (so your developer can open the link)</div>
+    ${isLocal && !pubUrl ? `
+    <div style="background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text-mute);line-height:1.6;">
+      ⚠️ <strong style="color:var(--text-sec);">You're on localhost</strong> — your developer won't be able to open a <code>localhost</code> link.
+      Deploy the HTML file to a free host like <a href="https://app.netlify.com/drop" target="_blank" rel="noopener" style="color:var(--kbx-teal);font-weight:600;">Netlify Drop</a> (drag &amp; drop, no account needed), then paste the URL below.
+    </div>` : ''}
+    <details style="margin-bottom:14px;">
+      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to deploy with Netlify Drop (free, 2 minutes) ▾</summary>
+      <ol class="step-list" style="margin-top:10px;">
+        <li>Go to <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a></li>
+        <li>Drag your HTML file onto the page</li>
+        <li>Netlify gives you a public URL like <code>https://amazing-name-123.netlify.app</code></li>
+        <li>Copy that URL and paste it below, then click Save &amp; Sync</li>
+      </ol>
+    </details>
+    <div class="modal-field">
+      <label>🌐 Public App URL — where the app is hosted online</label>
+      <input type="url" id="st-puburl" value="${esc(pubUrl)}" placeholder="https://your-checklist.netlify.app">
+      <div style="font-size:11px;color:var(--text-sub);margin-top:5px;">Leave blank to use this machine's address (localhost — only works on your device).</div>
+    </div>
+
+    ${shareUrl ? `
+    <div class="modal-field">
+      <label>📋 Shareable Developer Link${isLocal && !pubUrl ? ' <span style="color:#C83232;font-weight:400;font-size:10px;">(localhost — set a public URL above to fix)</span>' : ''}</label>
+      <div class="url-copy-row">
+        <input id="share-url-input" type="text" class="url-box" style="font-size:11px;cursor:text;" value="${esc(shareUrl)}" readonly onclick="this.select()" title="Click to select, then copy">
+        <button class="copy-btn" data-url="${esc(shareUrl)}" onclick="copyToClipboard(this.dataset.url, this)">Copy</button>
+      </div>
+    </div>` : ''}
+
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveGistSettings()">${gist.token ? 'Save &amp; Sync' : 'Save'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function saveGistSettings() {
+  gist.gistId = document.getElementById('st-gist')?.value.trim() || '';
+  const pubUrl = document.getElementById('st-puburl')?.value.trim() || '';
+  const proj = getActiveProject();
+  if (proj) { proj.gistId = gist.gistId; proj.pubUrl = pubUrl; saveProjects(); }
+  document.querySelector('.overlay')?.remove();
+  if (gist.token) { saveToGist().then(() => startPolling()); }
+  else { clearInterval(pollTimer); setSyncState('offline'); }
+}
+
+// ─── Clipboard helper (works even when document not focused) ───
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok; }
+  catch(e) { document.body.removeChild(ta); return false; }
+}
+
+function copyToClipboard(text, btn) {
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn && !btn.dataset.origLabel) btn.dataset.origLabel = btn.textContent;
+
+  const succeed = () => {
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.innerHTML = origHTML; delete btn.dataset.origLabel; }, 2000); }
+  };
+  const fail = () => {
+    // Select the nearby input so user can Cmd+C manually
+    const inp = btn?.closest('.url-copy-row')?.querySelector('input') || document.getElementById('share-url-input');
+    if (inp) { inp.focus(); inp.select(); }
+    if (btn) { btn.textContent = '⌘C to copy'; setTimeout(() => { btn.innerHTML = origHTML; delete btn.dataset.origLabel; }, 3000); }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(succeed).catch(() => fallbackCopy(text) ? succeed() : fail());
+  } else {
+    fallbackCopy(text) ? succeed() : fail();
+  }
+}
+
+function copyShareLink(e) {
+  e.preventDefault();
+  if (!gist.gistId) { openSettings(); return; }
+  const url = getShareUrl();
+  const btn = document.getElementById('share-link-btn');
+  copyToClipboard(url, btn);
+}
+
+// ─── ClickUp CSV export ─────────────────────────────────────────
+function exportToClickUp(btn) {
+  const proj = getActiveProject();
+  if (!proj) return;
+
+  const statusTag = { existing: 'Existing Section', modified: 'Needs New Settings', bespoke: 'Bespoke Section' };
+
+  function csvCell(val) {
+    const s = (val == null ? '' : String(val));
+    if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  const rows = [['Task Name', 'Description', 'Priority', 'Tags', 'Parent Task']];
+  const pageOrder = ['homepage', 'collection', 'product'];
+
+  pageOrder.forEach(key => {
+    const pg = proj.pages[key];
+    if (!pg) return;
+    const def = PAGE_DEFS[key];
+    if (!def) return;
+    const sections = pg.sections || [];
+    if (sections.length === 0) return;
+
+    // Parent task row for this page
+    const parentDescParts = [];
+    if (pg.loomUrl)  parentDescParts.push('Loom: '  + pg.loomUrl);
+    if (pg.figmaUrl) parentDescParts.push('Figma: ' + pg.figmaUrl);
+    rows.push([def.label, parentDescParts.join('\n'), '', '', '']);
+
+    // Subtask rows for each section
+    sections.forEach(s => {
+      const descParts = [];
+      if (s.notes)    descParts.push(s.notes);
+      if (s.effort)   descParts.push('Effort: ' + s.effort);
+      if (s.figmaLink) descParts.push('Figma: ' + s.figmaLink);
+      rows.push([
+        s.name,
+        descParts.join('\n\n'),
+        '',
+        statusTag[s.status] || '',
+        def.label
+      ]);
+    });
+  });
+
+  // Build CSV (UTF-8 BOM so Excel opens it correctly)
+  const csv = '\ufeff' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+
+  // Trigger browser download
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = (proj.title || 'checklist').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-clickup-import.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Brief "Downloaded ✓" feedback
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Downloaded ✓';
+    btn.disabled = true;
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2200);
+  }
+}
+
+// ─── Drag & drop ───────────────────────────────────────────────
+let dragId = null;
+function onDragStart(e, id) {
+  dragId = id; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(id));
+  requestAnimationFrame(() => document.querySelector(`.card[data-id="${id}"]`)?.classList.add('dragging'));
+}
+function onDragOver(e, id) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('drag-over'));
+  if (id !== dragId) document.querySelector(`.card[data-id="${id}"]`)?.classList.add('drag-over');
+}
+function onDragLeave(e, id) { document.querySelector(`.card[data-id="${id}"]`)?.classList.remove('drag-over'); }
+function onDrop(e, targetId) {
+  e.preventDefault();
+  document.querySelectorAll('.card').forEach(c => { c.classList.remove('drag-over'); c.classList.remove('dragging'); });
+  if (dragId == null || dragId === targetId) return;
+  const secs = curSections();
+  const si = secs.findIndex(s => s.id === dragId);
+  const ti = secs.findIndex(s => s.id === targetId);
+  if (si < 0 || ti < 0) return;
+  const [m] = secs.splice(si, 1); secs.splice(ti, 0, m);
+  dragId = null; savePagesData(); render(); scheduleSave();
+}
+function onDragEnd() {
+  document.querySelectorAll('.card').forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+  dragId = null;
+}
+
+// ─── Helpers ───────────────────────────────────────────────────
+function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
+function counts() { const c={existing:0,modified:0,bespoke:0}; curSections().forEach(s=>c[s.status]++); return c; }
+
+// ─── Render ────────────────────────────────────────────────────
+function render() {
+  const secs     = curSections();
+  const pg       = curPage();
+  const c        = counts();
+  const total    = secs.length;
+  const high     = secs.filter(s => s.effort === 'High').length;
+  const filtered = activeFilter === 'all' ? secs : secs.filter(s => s.status === activeFilter);
+  const pct = k => total ? (c[k]/total*100).toFixed(1) : 0;
+  const def  = PAGE_DEFS[activePage];
+
+  let html = '';
+
+  /* ── Page tabs ── */
+  html += `<div class="page-tabs">`;
+  Object.entries(PAGE_DEFS).forEach(([k, d]) => {
+    const isActive   = k === activePage;
+    const count      = pages[k]?.sections?.length ?? 0;
+    const hasLoom    = !!pages[k]?.loomUrl;
+    html += `<button class="page-tab${isActive?' active':''}" onclick="switchPage('${k}')">
+      <svg class="page-tab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="${esc(d.icon)}"/>
+      </svg>
+      ${esc(d.label)}
+      ${hasLoom ? '<span class="page-tab-loom-dot" title="Has Loom video"></span>' : ''}
+      <span class="page-tab-count">${count}</span>
+    </button>`;
+  });
+  html += `</div>`;
+
+  /* ── Stats bar ── */
+  html += `<div class="stats-bar">
+    <div class="stat-block" style="flex:2.5;">
+      <div class="progress-label"><span>Section breakdown — ${esc(def.label)}</span><span>${total} total</span></div>
+      <div class="progress-track">
+        <div class="dot-existing" style="width:${pct('existing')}%"></div>
+        <div class="dot-modified" style="width:${pct('modified')}%"></div>
+        <div class="dot-bespoke"  style="width:${pct('bespoke')}%"></div>
+      </div>
+      <div class="page-links-row">
+        ${pg.loomUrl
+          ? `<a href="${esc(pg.loomUrl)}" target="_blank" rel="noopener" class="page-link-btn loom-link"><span class="loom-dot"></span>Watch Loom</a>`
+          : `<span class="page-link-none">No Loom video yet</span>`}
+        ${pg.figmaUrl
+          ? `<a href="${esc(pg.figmaUrl)}" target="_blank" rel="noopener" class="page-link-btn figma-link"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>View Figma</a>`
+          : ''}
+        <button class="page-link-edit" onclick="editPageLinks('${activePage}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          Edit links
+        </button>
+      </div>
+    </div>
+    ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
+    <div class="stat-block">
+      <div class="stat-num">${c[k]}</div>
+      <div class="stat-label"><span class="stat-dot ${v.dotCls}"></span>${v.label}</div>
+    </div>`).join('')}
+    <div class="stat-block">
+      <div class="stat-num">${high}</div>
+      <div class="stat-label">High effort</div>
+    </div>
+  </div>`;
+
+  /* ── Legend ── */
+  html += `<div class="legend">
+    <span class="legend-label">Legend</span>
+    ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
+    <div class="legend-item"><span class="legend-dot ${v.dotCls}"></span><strong>${v.label}</strong> — ${v.desc}</div>`).join('')}
+  </div>`;
+
+  /* ── Toolbar ── */
+  html += `<div class="toolbar">
+    <div class="filter-group">
+      <span class="filter-label">Filter</span>
+      <button class="filter-btn ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">All sections</button>
+      ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
+      <button class="filter-btn ${activeFilter===k?'active-'+k:''}" onclick="setFilter('${k}')">
+        <span class="filter-fdot ${v.dotCls}"></span>${v.label}
+      </button>`).join('')}
+    </div>
+  </div>`;
+
+  /* ── Empty state ── */
+  if (secs.length === 0) {
+    html += VIEWER_MODE
+      ? `<div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">No sections for ${esc(def.label)} yet</div>
+          <p class="empty-state-desc">The designer hasn't added any sections for this page yet. Check back later.</p>
+        </div>`
+      : `<div class="empty-state">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">No sections yet for the ${esc(def.label)}</div>
+          <p class="empty-state-desc">Pre-populate with ${esc(def.sections.length)} typical ${esc(def.label)} sections as a starting point, or build your own from scratch.</p>
+          <div class="empty-state-actions">
+            <button class="modal-btn primary" onclick="populatePage('${activePage}')">Pre-populate ${esc(def.label)}</button>
+            <button class="modal-btn" onclick="addSection()">Add section manually</button>
+          </div>
+        </div>`;
+  }
+
+  /* ── Cards ── */
+  filtered.forEach(s => {
+    const open    = !s.collapsed;
+    const SC      = STATUS_CONFIG[s.status];
+    const realIdx = secs.findIndex(x => x.id === s.id);
+    html += `
+    <div class="card" data-id="${s.id}"${VIEWER_MODE ? '' : ` draggable="true" ondragstart="onDragStart(event,${s.id})" ondragover="onDragOver(event,${s.id})" ondragleave="onDragLeave(event,${s.id})" ondrop="onDrop(event,${s.id})" ondragend="onDragEnd()"`}>
+      <div class="card-head">
+        <div class="drag-handle" title="Drag to reorder">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <circle cx="4" cy="2.5" r="1.4"/><circle cx="10" cy="2.5" r="1.4"/>
+            <circle cx="4" cy="7"   r="1.4"/><circle cx="10" cy="7"   r="1.4"/>
+            <circle cx="4" cy="11.5" r="1.4"/><circle cx="10" cy="11.5" r="1.4"/>
+          </svg>
+        </div>
+        <svg class="chevron ${open?'open':''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" onclick="toggle(${s.id})">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+        <span class="card-num"   onclick="toggle(${s.id})">${String(realIdx+1).padStart(2,'0')}</span>
+        <span class="card-name"  onclick="toggle(${s.id})">${esc(s.name)}</span>
+        <div class="card-badges" onclick="toggle(${s.id})">
+          <span class="badge ${SC.cls}">${SC.label}</span>
+          <span class="effort-badge ${s.effort}">${s.effort} effort</span>
+        </div>
+      </div>
+      ${open ? `
+      <div class="card-body">
+        <div class="card-grid">
+          <div>
+            <div class="field">
+              <div class="field-label">Section Name</div>
+              <input class="input-text" value="${esc(s.name)}"${VIEWER_MODE ? ' readonly' : ` onchange="setField(${s.id},'name',this.value)"`}>
+            </div>
+            <div class="field">
+              <div class="field-label">Section Status</div>
+              <div class="btn-group">
+                ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
+                <button class="btn-opt ${s.status===k?'sel-'+k:''}"${VIEWER_MODE ? ' disabled' : ` onclick="setField(${s.id},'status','${k}');render()"`}>${v.label}</button>`).join('')}
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">Dev Effort</div>
+              <div class="btn-group">
+                ${EFFORT.map(e => `
+                <button class="btn-opt ${s.effort===e?'sel-effort':''}"${VIEWER_MODE ? ' disabled' : ` onclick="setField(${s.id},'effort','${e}');render()"`}>${e}</button>`).join('')}
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">Figma Frame Link</div>
+              <div class="figma-row">
+                <input class="input-text" value="${esc(s.figmaLink||'')}" placeholder="Paste Figma frame URL…"${VIEWER_MODE ? ' readonly' : ` onchange="setField(${s.id},'figmaLink',this.value)"`}>
+                ${s.figmaLink ? `
+                <a class="figma-btn" href="${esc(s.figmaLink)}" target="_blank" rel="noopener">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                  Figma
+                </a>` : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;">
+            <div class="field" style="flex:1;display:flex;flex-direction:column;">
+              <div class="field-label">Notes for Developer</div>
+              <textarea class="input-text" style="flex:1;min-height:200px;"${VIEWER_MODE ? ' readonly' : ` onchange="setField(${s.id},'notes',this.value)"`}>${esc(s.notes||'')}</textarea>
+            </div>
+          </div>
+        </div>
+        ${VIEWER_MODE ? '' : `<div class="card-footer">
+          <button class="remove-btn" onclick="removeSection(${s.id})">Remove section</button>
+        </div>`}
+      </div>` : ''}
+    </div>`;
+  });
+
+  /* ── Add button (editor only) ── */
+  if (!VIEWER_MODE) html += `
+  <button class="add-btn" onclick="addSection()">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+    Add Section to ${esc(def.label)}
+  </button>`;
+
+  /* ── Footer ── */
+  const allTotal = Object.values(pages).reduce((n,p) => n + (p.sections?.length||0), 0);
+  html += `
+  <div class="page-foot">
+    <div class="page-foot-text">
+      ${esc(projectMeta.title)} &middot; Base theme: <strong>${esc(projectMeta.theme)}</strong>
+      &middot; ${allTotal} sections across ${Object.keys(PAGE_DEFS).length} pages
+    </div>
+    <div class="page-foot-brand">Built by <span>Kubix</span></div>
+  </div>`;
+
+  document.getElementById('app').innerHTML = html;
+}
+
+// ─── Mutations ─────────────────────────────────────────────────
+function toggle(id) {
+  const s = curSections().find(s => s.id === id);
+  if (s) s.collapsed = !s.collapsed;
+  render();
+}
+function setField(id, key, val) {
+  const s = curSections().find(s => s.id === id);
+  if (s) s[key] = val;
+  if (key !== 'notes') render();
+  savePagesData(); scheduleSave();
+}
+function setFilter(f) { activeFilter = f; render(); }
+
+function addSection() {
+  const secs  = curSections();
+  const newId = Math.max(0, ...secs.map(s => s.id), 0) + 1;
+  secs.push({ id:newId, name:"New Section", status:"existing", notes:"", effort:"Low", figmaLink:"", collapsed:false });
+  savePagesData(); render(); scheduleSave();
+  requestAnimationFrame(() => document.querySelector(`.card[data-id="${newId}"]`)?.scrollIntoView({ behavior:'smooth', block:'nearest' }));
+}
+
+function removeSection(id) {
+  if (!confirm('Remove this section from the checklist?')) return;
+  pages[activePage].sections = curSections().filter(s => s.id !== id);
+  savePagesData(); render(); scheduleSave();
+}
+
+// ─── Init ──────────────────────────────────────────────────────
+(async function init() {
+  const params = new URLSearchParams(location.search);
+
+  // ── Viewer mode: ?gist=ID — read-only, bypass library entirely ──
+  if (VIEWER_MODE) {
+    document.documentElement.classList.add('viewer-mode');
+    document.body.className = 'proj-view';
+    const urlGist = params.get('gist');
+    if (urlGist) gist.gistId = urlGist;
+    applyProjectMeta();
+    const loaded = await loadFromGist(urlGist);
+    if (!loaded) render();
+    if (gist.gistId) { startPolling(); setSyncState('saved'); }
+    else setSyncState('offline');
+    return;
+  }
+
+  // ── Load projects from localStorage ──
+  projects = loadProjects();
+
+  // ── ?project=ID — reopen a bookmarked project ──
+  const urlProject = params.get('project');
+  if (urlProject) {
+    const proj = projects.find(p => p.id === urlProject);
+    if (proj) { openProject(urlProject); return; }
+  }
+
+  // ── Default: show library (migrate v1 data first if needed) ──
+  migrateV1();
+  projects = loadProjects(); // reload after potential migration
+  renderLibrary();
+})();
+</script>
+</body>
+</html>

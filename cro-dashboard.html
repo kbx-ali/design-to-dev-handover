@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRO Dashboard · Doulton Water Filters · Kubix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;600;700&family=Nunito+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── BRAND TOKENS (theme-invariant) ─────────────────────────── */
+    :root {
+      --kbx-yellow:   #FFFF00;
+      --kbx-yellow-dk:#CCCC00;
+      --kbx-mint:     #94F7A1;
+      --kbx-mint-dk:  #72E880;
+      --kbx-orchid:   #E591E5;
+      --kbx-black:    #28282B;
+      --kbx-teal:     #0D6987;
+      --teal-lt:      #4DB8D4;
+
+      --radius-card: 14px;
+      --transition:  0.22s ease;
+    }
+
+    /* ── DARK THEME (default) ────────────────────────────────────── */
+    :root,
+    [data-theme="dark"] {
+      --bg:            #141416;
+      --bg-card:       #1E1E21;
+      --bg-card-hover: #232326;
+      --bg-input:      #333337;
+      --border:        #2E2E33;
+      --border-lt:     #3E3E44;
+      --text:          #FFFFFF;
+      --text-sec:      #D4D4D8;
+      --text-mute:     #878790;
+      --grid-line:     rgba(255,255,255,0.028);
+      --orb-opacity:   1;
+      --nav-glass:     rgba(20,20,22,0.88);
+
+      /* badges dark */
+      --badge-backlog-bg:   rgba(255,255,0,0.1);
+      --badge-backlog-bd:   rgba(255,255,0,0.25);
+      --badge-backlog-tx:   var(--kbx-yellow);
+      --badge-designing-bg: rgba(229,145,229,0.12);
+      --badge-designing-bd: rgba(229,145,229,0.28);
+      --badge-designing-tx: var(--kbx-orchid);
+      --badge-live-bg:      rgba(148,247,161,0.12);
+      --badge-live-bd:      rgba(148,247,161,0.28);
+      --badge-live-tx:      var(--kbx-mint);
+      --badge-completed-bg: rgba(77,184,212,0.12);
+      --badge-completed-bd: rgba(77,184,212,0.28);
+      --badge-completed-tx: var(--teal-lt);
+
+      /* ice pills dark */
+      --ice-hi-bg: rgba(148,247,161,0.1);
+      --ice-hi-bd: rgba(148,247,161,0.22);
+      --ice-hi-tx: var(--kbx-mint);
+      --ice-md-bg: rgba(255,255,0,0.08);
+      --ice-md-bd: rgba(255,255,0,0.2);
+      --ice-md-tx: var(--kbx-yellow);
+      --ice-lo-bg: rgba(255,255,255,0.04);
+      --ice-lo-bd: var(--border);
+      --ice-lo-tx: var(--text-mute);
+
+      /* filter btn dark */
+      --flt-base-bg:    transparent;
+      --flt-base-tx:    var(--text-mute);
+      --flt-hover-bg:   rgba(255,255,255,0.06);
+      --flt-hover-tx:   #fff;
+      --flt-active-bg:  rgba(255,255,255,0.08);
+      --flt-active-tx:  #fff;
+      --flt-active-bd:  rgba(255,255,255,0.15);
+
+      /* pri item */
+      --pri-bg:      rgba(255,255,255,0.02);
+      --pri-bd:      rgba(255,255,255,0.05);
+      --pri-hover-bg:rgba(255,255,255,0.04);
+      --pri-hover-bd:rgba(255,255,255,0.08);
+
+      /* page tag */
+      --page-tag-bg: rgba(255,255,255,0.06);
+      --page-tag-bd: var(--border);
+      --page-tag-tx: var(--text-mute);
+
+      /* health card */
+      --health-bg: var(--bg-card);
+
+      /* table */
+      --tr-hover: rgba(255,255,255,0.025);
+      --tr-border: rgba(255,255,255,0.04);
+
+      /* theme toggle */
+      --toggle-bg:  rgba(255,255,255,0.08);
+      --toggle-hover-bg: rgba(255,255,255,0.14);
+      --toggle-tx:  var(--text-mute);
+    }
+
+    /* ── LIGHT THEME ─────────────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg:            #F5F5F0;
+      --bg-card:       #FFFFFF;
+      --bg-card-hover: #FAFAF7;
+      --bg-input:      #EEEEE8;
+      --border:        #E2E2DC;
+      --border-lt:     #D4D4CC;
+      --text:          #28282B;
+      --text-sec:      #3C3C40;
+      --text-mute:     #818188;
+      --grid-line:     rgba(0,0,0,0.055);
+      --orb-opacity:   0.55;
+      --nav-glass:     rgba(245,245,240,0.9);
+
+      /* badges light */
+      --badge-backlog-bg:   rgba(160,140,0,0.08);
+      --badge-backlog-bd:   rgba(140,120,0,0.2);
+      --badge-backlog-tx:   #6B6400;
+      --badge-designing-bg: rgba(180,60,180,0.07);
+      --badge-designing-bd: rgba(160,40,160,0.18);
+      --badge-designing-tx: #8E2090;
+      --badge-live-bg:      rgba(30,140,60,0.07);
+      --badge-live-bd:      rgba(30,140,60,0.2);
+      --badge-live-tx:      #1A7A34;
+      --badge-completed-bg: rgba(13,105,135,0.07);
+      --badge-completed-bd: rgba(13,105,135,0.2);
+      --badge-completed-tx: #0D6987;
+
+      /* ice pills light */
+      --ice-hi-bg: rgba(30,140,60,0.07);
+      --ice-hi-bd: rgba(30,140,60,0.18);
+      --ice-hi-tx: #1A7A34;
+      --ice-md-bg: rgba(140,120,0,0.07);
+      --ice-md-bd: rgba(140,120,0,0.18);
+      --ice-md-tx: #6B6400;
+      --ice-lo-bg: rgba(0,0,0,0.03);
+      --ice-lo-bd: var(--border);
+      --ice-lo-tx: var(--text-mute);
+
+      /* filter btn light */
+      --flt-base-bg:    transparent;
+      --flt-base-tx:    var(--text-mute);
+      --flt-hover-bg:   rgba(0,0,0,0.05);
+      --flt-hover-tx:   var(--text);
+      --flt-active-bg:  rgba(0,0,0,0.07);
+      --flt-active-tx:  var(--text);
+      --flt-active-bd:  rgba(0,0,0,0.15);
+
+      /* pri item */
+      --pri-bg:       rgba(0,0,0,0.02);
+      --pri-bd:       rgba(0,0,0,0.06);
+      --pri-hover-bg: rgba(0,0,0,0.04);
+      --pri-hover-bd: rgba(0,0,0,0.1);
+
+      /* page tag */
+      --page-tag-bg: rgba(0,0,0,0.04);
+      --page-tag-bd: var(--border);
+      --page-tag-tx: var(--text-mute);
+
+      /* health card */
+      --health-bg: #FFFFF0;
+
+      /* table */
+      --tr-hover: rgba(0,0,0,0.02);
+      --tr-border: rgba(0,0,0,0.05);
+
+      /* theme toggle */
+      --toggle-bg:  rgba(0,0,0,0.07);
+      --toggle-hover-bg: rgba(0,0,0,0.12);
+      --toggle-tx:  var(--text-mute);
+    }
+
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      font-family: 'Nunito Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* ── GRID TEXTURE ──────────────────────────────────────────── */
+    .grid-bg {
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    /* ── BADGES ────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      border-radius: 99px; border: 1px solid;
+      padding: 3px 9px; font-size: 11px; font-weight: 700;
+      white-space: nowrap; letter-spacing: 0.02em;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .badge-backlog   { background: var(--badge-backlog-bg);   border-color: var(--badge-backlog-bd);   color: var(--badge-backlog-tx);   }
+    .badge-backlog   .badge-dot { background: var(--badge-backlog-tx);   }
+    .badge-designing { background: var(--badge-designing-bg); border-color: var(--badge-designing-bd); color: var(--badge-designing-tx); }
+    .badge-designing .badge-dot { background: var(--badge-designing-tx); }
+    .badge-live      { background: var(--badge-live-bg);      border-color: var(--badge-live-bd);      color: var(--badge-live-tx);      }
+    .badge-live      .badge-dot { background: var(--badge-live-tx);      }
+    .badge-completed { background: var(--badge-completed-bg); border-color: var(--badge-completed-bd); color: var(--badge-completed-tx); }
+    .badge-completed .badge-dot { background: var(--badge-completed-tx); }
+
+    /* ── SECTION LABEL ─────────────────────────────────────────── */
+    .sec-label {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .sec-label-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .lbl-yellow { color: var(--kbx-yellow); } .lbl-yellow .sec-label-dot { background: var(--kbx-yellow); }
+    .lbl-mint   { color: var(--kbx-mint);   } .lbl-mint   .sec-label-dot { background: var(--kbx-mint);   }
+    .lbl-orchid { color: var(--kbx-orchid); } .lbl-orchid .sec-label-dot { background: var(--kbx-orchid); }
+    .lbl-teal   { color: var(--teal-lt);    } .lbl-teal   .sec-label-dot { background: var(--teal-lt);    }
+    .lbl-mute   { color: var(--text-mute);  } .lbl-mute   .sec-label-dot { background: var(--text-mute);  }
+
+    /* light mode: override neon yellows that are unreadable on white */
+    [data-theme="light"] .lbl-yellow { color: #7A7A00; }
+    [data-theme="light"] .lbl-yellow .sec-label-dot { background: #9A9A00; }
+    [data-theme="light"] .lbl-mint   { color: #1A7A34; }
+    [data-theme="light"] .lbl-mint   .sec-label-dot { background: #1A7A34; }
+
+    /* ── HEADER ────────────────────────────────────────────────── */
+    .header {
+      position: relative; overflow: hidden;
+      padding: 36px 44px 40px;
+      border-bottom: 1px solid var(--border);
+      transition: border-color var(--transition);
+    }
+    .header-orbs { position: absolute; inset: 0; pointer-events: none; }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(88px); pointer-events: none;
+      opacity: var(--orb-opacity);
+      transition: opacity var(--transition);
+    }
+    .orb-y  { width: 500px; height: 500px; background: radial-gradient(circle, #FFFF00 0%, transparent 60%); top: -260px; right: -80px;  opacity: calc(0.07 * var(--orb-opacity)); }
+    .orb-o  { width: 360px; height: 360px; background: radial-gradient(circle, #E591E5 0%, transparent 60%); bottom: -200px; left: 18%;  opacity: calc(0.09 * var(--orb-opacity)); }
+    .orb-m  { width: 280px; height: 280px; background: radial-gradient(circle, #94F7A1 0%, transparent 60%); top: -40px; left: -60px;    opacity: calc(0.06 * var(--orb-opacity)); }
+    .header-inner { position: relative; z-index: 1; }
+
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .header-top-right { display: flex; align-items: center; gap: 12px; }
+
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand-k {
+      width: 34px; height: 34px; background: var(--kbx-yellow); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Domine', serif; font-weight: 700; font-size: 15px; color: var(--kbx-black);
+      flex-shrink: 0;
+    }
+    .brand-name { font-family: 'Domine', serif; font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.2; transition: color var(--transition); }
+    .brand-sub  { font-size: 10px; font-weight: 600; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .header-date { font-size: 11px; font-weight: 600; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* ── THEME TOGGLE ───────────────────────────────────────────── */
+    .theme-toggle {
+      display: flex; align-items: center; gap: 0;
+      background: var(--toggle-bg);
+      border-radius: 8px; padding: 3px;
+      border: 1px solid var(--border);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .theme-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 26px; border-radius: 5px;
+      cursor: pointer; border: none; background: transparent;
+      color: var(--toggle-tx); transition: all 0.15s; font-size: 13px;
+    }
+    .theme-btn:hover { color: var(--text); }
+    .theme-btn.active {
+      background: var(--bg-card);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+
+    .header-body { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+    .header-left {}
+    .header-client { font-size: 12px; font-weight: 700; color: var(--kbx-mint); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+    [data-theme="light"] .header-client { color: #1A7A34; }
+    .header-h1 {
+      font-family: 'Domine', serif; font-size: 34px; font-weight: 700;
+      color: var(--text); line-height: 1.1; letter-spacing: -0.01em;
+      transition: color var(--transition);
+    }
+    .header-desc { font-size: 13px; color: var(--text-mute); margin-top: 8px; }
+
+    .health-card {
+      background: var(--health-bg); border: 1px solid var(--border);
+      border-radius: 13px; padding: 16px 22px; max-width: 380px; flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .health-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute); margin-bottom: 8px; }
+    .health-body  { font-size: 12.5px; color: var(--text-sec); line-height: 1.65; }
+    .health-body strong { color: var(--kbx-yellow); font-weight: 700; }
+    [data-theme="light"] .health-body strong { color: #7A7A00; }
+
+    /* ── MAIN ──────────────────────────────────────────────────── */
+    .main { padding: 0 44px 64px; }
+
+    /* ── KPI ROW ───────────────────────────────────────────────── */
+    .kpi-row {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+      padding: 28px 0 24px;
+    }
+    .kpi-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-card); padding: 20px 22px 18px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .kpi-card:hover { background: var(--bg-card-hover); border-color: var(--border-lt); }
+    .kpi-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--kpi-accent);
+    }
+    .kpi-emoji  { font-size: 17px; margin-bottom: 12px; display: block; }
+    .kpi-value  {
+      font-family: 'Domine', serif; font-size: 38px; font-weight: 700;
+      line-height: 1; color: var(--kpi-accent, var(--text)); margin-bottom: 5px;
+      letter-spacing: -0.02em;
+    }
+    .kpi-value.dim { color: var(--text-mute); }
+    .kpi-title  { font-size: 10px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.1em; }
+    .kpi-sub    { font-size: 11px; color: var(--text-mute); margin-top: 5px; }
+
+    /* light mode: neon yellow kpi accent → readable yellow */
+    [data-theme="light"] .kpi-card[style*="--kpi-accent: var(--kbx-yellow)"] .kpi-value { color: #7A7A00; }
+
+    /* ── GRID SECTION ──────────────────────────────────────────── */
+    .grid-section {
+      display: grid; grid-template-columns: 1fr 360px; gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    /* ── PANEL ─────────────────────────────────────────────────── */
+    .panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-card); overflow: hidden;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .panel-hd {
+      padding: 16px 22px 13px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      transition: border-color var(--transition);
+    }
+    .panel-title { font-family: 'Domine', serif; font-size: 15px; font-weight: 700; color: var(--text); transition: color var(--transition); }
+    .panel-note  { font-size: 11px; color: var(--text-mute); font-weight: 600; }
+    .panel-body  { padding: 16px 22px 20px; }
+
+    /* ── PRIORITY LIST ─────────────────────────────────────────── */
+    .priority-list { display: flex; flex-direction: column; gap: 9px; }
+    .pri-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 14px; border-radius: 10px;
+      border: 1px solid var(--pri-bd);
+      background: var(--pri-bg);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pri-item:hover { background: var(--pri-hover-bg); border-color: var(--pri-hover-bd); }
+    .pri-rank {
+      font-family: 'Domine', serif; font-size: 17px; font-weight: 700;
+      width: 20px; text-align: center; flex-shrink: 0; color: var(--text-mute);
+    }
+    .pri-rank.r1 { color: var(--kbx-yellow); }
+    [data-theme="light"] .pri-rank.r1 { color: #7A7A00; }
+    .pri-rank.r2 { color: #C0C0C8; }
+    [data-theme="light"] .pri-rank.r2 { color: #888890; }
+    .pri-rank.r3 { color: #A07850; }
+    .pri-info { flex: 1; min-width: 0; }
+    .pri-id   { font-size: 10px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+    .pri-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color var(--transition); }
+    .pri-page { font-size: 11px; color: var(--text-mute); margin-top: 1px; }
+    .pri-ice-wrap { text-align: right; flex-shrink: 0; }
+    .pri-ice  { font-family: 'Domine', serif; font-size: 22px; font-weight: 700; color: var(--kbx-mint); line-height: 1; }
+    [data-theme="light"] .pri-ice { color: #1A7A34; }
+    .pri-ice-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-mute); }
+
+    /* ── SIDE PANELS ───────────────────────────────────────────── */
+    .side-stack { display: flex; flex-direction: column; gap: 14px; }
+
+    /* bar list */
+    .bar-list { display: flex; flex-direction: column; gap: 11px; }
+    .bar-item  {}
+    .bar-row   { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+    .bar-page  { font-size: 12.5px; font-weight: 600; color: var(--text-sec); }
+    .bar-count { font-size: 12px; font-weight: 700; color: var(--text-mute); }
+    .bar-track { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+    /* status counts */
+    .status-list { display: flex; flex-direction: column; gap: 10px; }
+    .status-row  { display: flex; align-items: center; justify-content: space-between; }
+    .status-left { display: flex; align-items: center; gap: 8px; }
+    .status-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-name { font-size: 13px; font-weight: 600; color: var(--text-sec); }
+    .status-num  {
+      font-family: 'Domine', serif; font-size: 24px; font-weight: 700; line-height: 1;
+    }
+
+    /* ── TEST TABLE ────────────────────────────────────────────── */
+    .table-section { margin-top: 0; }
+
+    .filter-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 22px 11px; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      transition: border-color var(--transition);
+    }
+    .flt-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em; cursor: pointer;
+      border: 1px solid var(--border); background: var(--flt-base-bg);
+      color: var(--flt-base-tx); transition: all 0.15s; font-family: inherit;
+    }
+    .flt-btn:hover        { background: var(--flt-hover-bg); color: var(--flt-hover-tx); border-color: var(--border-lt); }
+    .flt-btn.f-active     { background: var(--flt-active-bg); color: var(--flt-active-tx); border-color: var(--flt-active-bd); }
+    .flt-btn.f-all        { background: var(--kbx-yellow); color: var(--kbx-black); border-color: var(--kbx-yellow); }
+    .flt-btn.f-all:hover  { background: var(--kbx-yellow-dk); border-color: var(--kbx-yellow-dk); }
+    .flt-spacer { flex: 1; }
+    .flt-note   { font-size: 11px; color: var(--text-mute); }
+    .flt-count  { font-size: 11px; font-weight: 700; color: var(--text-mute); background: var(--flt-active-bg); border-radius: 5px; padding: 2px 7px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 9px 14px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.09em;
+      color: var(--text-mute); text-align: left;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+      transition: border-color var(--transition);
+    }
+    thead th.r { text-align: right; }
+    tbody tr {
+      border-bottom: 1px solid var(--tr-border);
+      transition: background 0.1s;
+    }
+    tbody tr:hover { background: var(--tr-hover); }
+    tbody tr:last-child { border-bottom: none; }
+    td { padding: 12px 14px; font-size: 13px; color: var(--text-sec); vertical-align: middle; }
+    td.r { text-align: right; }
+
+    .td-id   { font-size: 10.5px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    .td-hyp  { font-weight: 600; color: var(--text); max-width: 260px; }
+    .td-dim  { font-size: 11.5px; color: var(--text-mute); }
+
+    .page-tag {
+      display: inline-flex; align-items: center;
+      background: var(--page-tag-bg); border: 1px solid var(--page-tag-bd);
+      border-radius: 5px; padding: 2px 8px;
+      font-size: 11px; font-weight: 600; color: var(--page-tag-tx); white-space: nowrap;
+    }
+
+    /* ICE score pill */
+    .ice-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 7px; padding: 4px 10px; min-width: 44px;
+      font-family: 'Domine', serif; font-size: 14px; font-weight: 700;
+      border: 1px solid var(--ice-lo-bd); background: var(--ice-lo-bg);
+      color: var(--ice-lo-tx);
+    }
+    .ice-pill.hi { background: var(--ice-hi-bg); border-color: var(--ice-hi-bd); color: var(--ice-hi-tx); }
+    .ice-pill.md { background: var(--ice-md-bg); border-color: var(--ice-md-bd); color: var(--ice-md-tx); }
+
+    /* I/C/E mini scores */
+    .ice-parts { display: flex; justify-content: flex-end; gap: 3px; }
+    .ice-p     { font-size: 10px; font-weight: 700; color: var(--text-mute); background: var(--flt-base-bg); padding: 2px 5px; border-radius: 4px; }
+
+    /* ── EMPTY STATE ───────────────────────────────────────────── */
+    .empty-row td {
+      text-align: center; padding: 40px; color: var(--text-mute);
+      font-size: 13px; font-style: italic;
+    }
+
+    /* ── FOOTER ────────────────────────────────────────────────── */
+    .dash-footer {
+      padding: 18px 44px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      transition: border-color var(--transition);
+    }
+    .footer-l { font-size: 11px; font-weight: 700; color: var(--text-sec); }
+    .footer-l span { color: var(--kbx-yellow); }
+    [data-theme="light"] .footer-l span { color: #7A7A00; }
+    .footer-r { font-size: 11px; color: var(--text-mute); }
+
+    /* ── THEME TRANSITION ──────────────────────────────────────── */
+    *, *::before, *::after {
+      transition:
+        background-color var(--transition),
+        border-color var(--transition),
+        color var(--transition);
+    }
+    /* exclude things that shouldn't transition */
+    .orb, .bar-fill, .kpi-value { transition: none; }
+  </style>
+</head>
+<body class="grid-bg">
+
+  <!-- ── HEADER ─────────────────────────────────────────────── -->
+  <header class="header grid-bg">
+    <div class="header-orbs">
+      <div class="orb orb-y"></div>
+      <div class="orb orb-o"></div>
+      <div class="orb orb-m"></div>
+    </div>
+    <div class="header-inner">
+      <div class="header-top">
+        <a class="brand" href="#">
+          <div class="brand-k">K</div>
+          <div>
+            <div class="brand-name">Kubix</div>
+            <div class="brand-sub">Growth Studio</div>
+          </div>
+        </a>
+        <div class="header-top-right">
+          <div class="header-date">Last updated: 17 March 2026</div>
+
+          <!-- Theme toggle -->
+          <div class="theme-toggle" role="group" aria-label="Theme">
+            <button class="theme-btn" id="btn-dark"  onclick="setTheme('dark')"  title="Dark mode">
+              <!-- moon icon -->
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            </button>
+            <button class="theme-btn" id="btn-light" onclick="setTheme('light')" title="Light mode">
+              <!-- sun icon -->
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1"  x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="header-body">
+        <div class="header-left">
+          <div class="header-client">Doulton Water Filters</div>
+          <h1 class="header-h1">CRO Testing Dashboard</h1>
+          <p class="header-desc">ICE-scored test backlog &nbsp;·&nbsp; Shopify conversion optimisation</p>
+        </div>
+        <div class="health-card">
+          <div class="health-label">Overall Health</div>
+          <div class="health-body">
+            Backlog is robust with <strong>17 strategic ideas</strong>.
+            High-impact tests (Score 8+) represent <strong>41% of the roadmap</strong>.
+            Two tests currently in <strong>design phase</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── MAIN ───────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi-card" style="--kpi-accent: var(--kbx-yellow)">
+        <span class="kpi-emoji">📂</span>
+        <div class="kpi-value">17</div>
+        <div class="kpi-title">Total Ideas</div>
+        <div class="kpi-sub">Backlog size</div>
+      </div>
+      <div class="kpi-card" style="--kpi-accent: var(--kbx-mint)">
+        <span class="kpi-emoji">🟢</span>
+        <div class="kpi-value dim">0</div>
+        <div class="kpi-title">Active Tests</div>
+        <div class="kpi-sub">Currently live</div>
+      </div>
+      <div class="kpi-card" style="--kpi-accent: var(--kbx-orchid)">
+        <span class="kpi-emoji">🔥</span>
+        <div class="kpi-value">7</div>
+        <div class="kpi-title">High Impact</div>
+        <div class="kpi-sub">Score 8+ = 41%</div>
+      </div>
+      <div class="kpi-card" style="--kpi-accent: var(--teal-lt)">
+        <span class="kpi-emoji">⚖️</span>
+        <div class="kpi-value">7.1</div>
+        <div class="kpi-title">Avg ICE Score</div>
+        <div class="kpi-sub">Portfolio health</div>
+      </div>
+      <div class="kpi-card" style="--kpi-accent: var(--border-lt)">
+        <span class="kpi-emoji">💡</span>
+        <div class="kpi-value dim">0</div>
+        <div class="kpi-title">Learnings</div>
+        <div class="kpi-sub">Total insights</div>
+      </div>
+    </div>
+
+    <!-- PRIORITY + SIDE -->
+    <div class="grid-section">
+
+      <!-- TOP 5 PRIORITY -->
+      <div class="panel">
+        <div class="panel-hd">
+          <div class="sec-label lbl-yellow"><div class="sec-label-dot"></div>Top Priority Roadmap</div>
+          <div class="panel-note">Ranked by ICE Score</div>
+        </div>
+        <div class="panel-body">
+          <div class="priority-list">
+            <div class="pri-item">
+              <div class="pri-rank r1">1</div>
+              <div class="pri-info">
+                <div class="pri-id">DT-10 · PDP</div>
+                <div class="pri-name">5-Year Warranty Trust Signal</div>
+                <div class="pri-page">Trust Strip · CVR</div>
+              </div>
+              <div class="pri-ice-wrap">
+                <div class="pri-ice">9.0</div>
+                <div class="pri-ice-lbl">ICE</div>
+              </div>
+            </div>
+            <div class="pri-item">
+              <div class="pri-rank r2">2</div>
+              <div class="pri-info">
+                <div class="pri-id">DT-07 · Global</div>
+                <div class="pri-name">Improve Navigation Prominence</div>
+                <div class="pri-page">Navigation · CTR to PDP</div>
+              </div>
+              <div class="pri-ice-wrap">
+                <div class="pri-ice">8.0</div>
+                <div class="pri-ice-lbl">ICE</div>
+              </div>
+            </div>
+            <div class="pri-item">
+              <div class="pri-rank r3">3</div>
+              <div class="pri-info">
+                <div class="pri-id">DT-01 · Homepage</div>
+                <div class="pri-name">Scientific Proof vs. Lifestyle Hero</div>
+                <div class="pri-page">Hero Section · CVR</div>
+              </div>
+              <div class="pri-ice-wrap">
+                <div class="pri-ice">7.7</div>
+                <div class="pri-ice-lbl">ICE</div>
+              </div>
+            </div>
+            <div class="pri-item">
+              <div class="pri-rank">4</div>
+              <div class="pri-info">
+                <div class="pri-id">DT-02 · Homepage</div>
+                <div class="pri-name">Problem-First "Chlorine" Headline</div>
+                <div class="pri-page">Hero Copy · CTR to PDP</div>
+              </div>
+              <div class="pri-ice-wrap">
+                <div class="pri-ice">7.7</div>
+                <div class="pri-ice-lbl">ICE</div>
+              </div>
+            </div>
+            <div class="pri-item">
+              <div class="pri-rank">5</div>
+              <div class="pri-info">
+                <div class="pri-id">DT-11 · Collection</div>
+                <div class="pri-name">Star Ratings on Collection Cards</div>
+                <div class="pri-page">Product Cards · Engagement</div>
+              </div>
+              <div class="pri-ice-wrap">
+                <div class="pri-ice">7.7</div>
+                <div class="pri-ice-lbl">ICE</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE: BY PAGE + BY STATUS -->
+      <div class="side-stack">
+
+        <div class="panel">
+          <div class="panel-hd">
+            <div class="panel-title">By Page</div>
+            <div class="panel-note">17 ideas</div>
+          </div>
+          <div class="panel-body">
+            <div class="bar-list">
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">Homepage</span><span class="bar-count">6</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:100%; background: var(--kbx-yellow)"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">Global</span><span class="bar-count">3</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:50%; background: var(--kbx-orchid)"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">PDP</span><span class="bar-count">3</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:50%; background: var(--kbx-mint)"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">Collection</span><span class="bar-count">2</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:33%; background: var(--teal-lt)"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">Cart</span><span class="bar-count">1</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:16%; background: var(--text-mute)"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">Checkout</span><span class="bar-count">1</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:16%; background: var(--text-mute)"></div></div>
+              </div>
+              <div class="bar-item">
+                <div class="bar-row"><span class="bar-page">Other</span><span class="bar-count">1</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:16%; background: var(--border-lt)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <div class="panel-title">By Status</div>
+            <div class="panel-note">2 in progress</div>
+          </div>
+          <div class="panel-body">
+            <div class="status-list">
+              <div class="status-row">
+                <div class="status-left">
+                  <div class="status-dot" style="background: var(--badge-backlog-tx)"></div>
+                  <span class="status-name">Backlog</span>
+                </div>
+                <span class="status-num" style="color: var(--badge-backlog-tx)">15</span>
+              </div>
+              <div class="status-row">
+                <div class="status-left">
+                  <div class="status-dot" style="background: var(--badge-designing-tx)"></div>
+                  <span class="status-name">Designing</span>
+                </div>
+                <span class="status-num" style="color: var(--badge-designing-tx)">2</span>
+              </div>
+              <div class="status-row">
+                <div class="status-left">
+                  <div class="status-dot" style="background: var(--badge-live-tx)"></div>
+                  <span class="status-name">Live</span>
+                </div>
+                <span class="status-num" style="color: var(--text-mute)">0</span>
+              </div>
+              <div class="status-row">
+                <div class="status-left">
+                  <div class="status-dot" style="background: var(--badge-completed-tx)"></div>
+                  <span class="status-name">Completed</span>
+                </div>
+                <span class="status-num" style="color: var(--text-mute)">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FULL ROADMAP TABLE -->
+    <div class="panel table-section">
+      <div class="panel-hd">
+        <div class="sec-label lbl-teal"><div class="sec-label-dot"></div>Full Testing Roadmap</div>
+        <div class="panel-note" id="table-count">17 tests · sorted by ICE score</div>
+      </div>
+      <div class="filter-bar">
+        <button class="flt-btn f-all" data-filter="all"       onclick="applyFilter(this)">All</button>
+        <button class="flt-btn"       data-filter="Backlog"   onclick="applyFilter(this)">Backlog</button>
+        <button class="flt-btn"       data-filter="Designing" onclick="applyFilter(this)">Designing</button>
+        <button class="flt-btn"       data-filter="Live"      onclick="applyFilter(this)">Live</button>
+        <button class="flt-btn"       data-filter="Completed" onclick="applyFilter(this)">Completed</button>
+        <div class="flt-spacer"></div>
+        <span class="flt-note">I · C · E = Impact / Confidence / Ease</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Hypothesis</th>
+              <th>Page</th>
+              <th>Section</th>
+              <th>Metrics</th>
+              <th class="r">I</th>
+              <th class="r">C</th>
+              <th class="r">E</th>
+              <th class="r">ICE</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="test-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="dash-footer">
+    <div class="footer-l">Kubix <span>✦</span> CRO Dashboard</div>
+    <div class="footer-r">Doulton Water Filters · March 2026</div>
+  </footer>
+
+  <script>
+    /* ── THEME SYSTEM ─────────────────────────────────────────── */
+    const THEME_KEY = 'kbx_cro_theme';
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem(THEME_KEY, theme);
+      document.getElementById('btn-dark').classList.toggle('active',  theme === 'dark');
+      document.getElementById('btn-light').classList.toggle('active', theme === 'light');
+    }
+
+    // Init from localStorage or system preference
+    (function() {
+      const saved = localStorage.getItem(THEME_KEY);
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(saved || (prefersDark ? 'dark' : 'light'));
+    })();
+
+    /* ── TEST DATA ────────────────────────────────────────────── */
+    const TESTS = [
+      { id:'DT-10', page:'PDP',        section:'Trust Strip',      hyp:'5-Year Warranty Trust Signal',              metrics:'CVR',                     i:8, c:9, e:10, ice:9.0, status:'Backlog'   },
+      { id:'DT-07', page:'Global',     section:'Navigation',       hyp:'Improve Navigation Prominence',             metrics:'CTR to PDP / Collection', i:7, c:8, e:9,  ice:8.0, status:'Backlog'   },
+      { id:'DT-01', page:'Homepage',   section:'Hero',             hyp:'Scientific Proof vs. Lifestyle Hero',       metrics:'CVR',                     i:8, c:7, e:8,  ice:7.7, status:'Designing'  },
+      { id:'DT-02', page:'Homepage',   section:'Hero Copy',        hyp:'Problem-First "Chlorine" Headline',         metrics:'CTR to PDP',              i:7, c:6, e:10, ice:7.7, status:'Designing'  },
+      { id:'DT-11', page:'Collection', section:'Product Cards',    hyp:'Star Ratings on Collection Cards',          metrics:'Engagement / CVR',        i:6, c:8, e:9,  ice:7.7, status:'Backlog'   },
+      { id:'DT-14', page:'Homepage',   section:'Hero',             hyp:'Trustpilot Widget Relocation',              metrics:'Hero CTA CTR',            i:6, c:7, e:10, ice:7.7, status:'Backlog'   },
+      { id:'DT-16', page:'Checkout',   section:'Trust Signals',    hyp:'Checkout Extensibility Trust Blocks',       metrics:'CVR',                     i:8, c:7, e:8,  ice:7.7, status:'Backlog'   },
+      { id:'DT-05', page:'Global',     section:'Sitewide',         hyp:'Risk Reversal: "90-Day Taste Challenge"',   metrics:'CVR',                     i:8, c:7, e:6,  ice:7.0, status:'Backlog'   },
+      { id:'DT-15', page:'Collection', section:'Filtering',        hyp:'Quick-Filter Installation Tabs',            metrics:'Product Discovery',       i:7, c:8, e:6,  ice:7.0, status:'Backlog'   },
+      { id:'DT-03', page:'Homepage',   section:'Mid-page',         hyp:'Comparison Table: Doulton vs. Competitors', metrics:'CVR / Trust',             i:8, c:8, e:4,  ice:6.7, status:'Backlog'   },
+      { id:'DT-06', page:'Homepage',   section:'Above Fold',       hyp:'Exposed Quick Links (Mobile Only)',         metrics:'CVR / Product Discovery', i:7, c:8, e:5,  ice:6.7, status:'Backlog'   },
+      { id:'DT-09', page:'Global',     section:'Navigation',       hyp:'Menu Navigation Revamp',                    metrics:'CTR / CVR',               i:7, c:8, e:5,  ice:6.7, status:'Backlog'   },
+      { id:'DT-12', page:'PDP',        section:'Product Cards',    hyp:'Direct ATC for Simple Products',            metrics:'CVR / Speed to Purchase', i:5, c:7, e:8,  ice:6.7, status:'Backlog'   },
+      { id:'DT-13', page:'Cart',       section:'Upsell',           hyp:'Contextual Subscription Nudge',             metrics:'LTV / Subscribe & Save',  i:9, c:7, e:4,  ice:6.7, status:'Backlog'   },
+      { id:'DT-17', page:'Other',      section:'Post-Purchase',    hyp:'Post-Purchase Subscription Offer',          metrics:'LTV / Subscribe & Save',  i:7, c:6, e:7,  ice:6.7, status:'Backlog'   },
+      { id:'DT-08', page:'PDP',        section:'Variants',         hyp:'Bestselling / Best Value Tag',              metrics:'CVR / AOV',               i:8, c:7, e:4,  ice:6.3, status:'Backlog'   },
+      { id:'DT-04', page:'Homepage',   section:'Interactive',      hyp:'Floating "What\'s in your water?" Tool',    metrics:'Engagement',              i:6, c:7, e:3,  ice:5.3, status:'Backlog'   },
+    ];
+
+    let activeFilter = 'all';
+
+    function iceCls(s) {
+      if (s >= 8)   return 'hi';
+      if (s >= 6.5) return 'md';
+      return 'lo';
+    }
+
+    function statusBadge(s) {
+      const map = { Backlog:'backlog', Designing:'designing', Live:'live', Completed:'completed' };
+      return `<span class="badge badge-${map[s]||'backlog'}"><span class="badge-dot"></span>${s}</span>`;
+    }
+
+    function renderTable(filter) {
+      const rows = filter === 'all' ? TESTS : TESTS.filter(t => t.status === filter);
+      const tbody = document.getElementById('test-tbody');
+      const count = document.getElementById('table-count');
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="10">No tests with status "${filter}"</td></tr>`;
+        count.textContent = '0 tests';
+        return;
+      }
+
+      count.textContent = `${rows.length} test${rows.length !== 1 ? 's' : ''} · sorted by ICE score`;
+
+      tbody.innerHTML = rows.map(t => `
+        <tr data-status="${t.status}">
+          <td class="td-id">${t.id}</td>
+          <td class="td-hyp">${t.hyp}</td>
+          <td><span class="page-tag">${t.page}</span></td>
+          <td class="td-dim">${t.section}</td>
+          <td class="td-dim">${t.metrics}</td>
+          <td class="r" style="font-size:12px;font-weight:700;color:var(--text-mute)">${t.i}</td>
+          <td class="r" style="font-size:12px;font-weight:700;color:var(--text-mute)">${t.c}</td>
+          <td class="r" style="font-size:12px;font-weight:700;color:var(--text-mute)">${t.e}</td>
+          <td class="r"><span class="ice-pill ${iceCls(t.ice)}">${t.ice.toFixed(1)}</span></td>
+          <td>${statusBadge(t.status)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function applyFilter(btn) {
+      const filter = btn.dataset.filter;
+      activeFilter = filter;
+
+      document.querySelectorAll('.flt-btn').forEach(b => {
+        b.classList.remove('f-all', 'f-active');
+      });
+
+      if (filter === 'all') btn.classList.add('f-all');
+      else btn.classList.add('f-active');
+
+      renderTable(filter);
+    }
+
+    renderTable('all');
+  </script>
+
+</body>
+</html>

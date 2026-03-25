@@ -1,0 +1,17 @@
+{
+  "name": "Kubix Component Library",
+  "id": "kubix-component-library",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.github.com",
+      "https://raw.githubusercontent.com",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+      "https://cdnjs.cloudflare.com"
+    ]
+  }
+}

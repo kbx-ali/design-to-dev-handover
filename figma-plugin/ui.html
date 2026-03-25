@@ -340,6 +340,18 @@ html, body {
 #pull-btn.pulling .icon-pull      { display: none; }
 #pull-btn.pulling .icon-pull-spin { display: block; animation: kbx-spin 0.7s linear infinite; }
 
+/* ── Update strip ────────────────────────────────────────── */
+#update-strip {
+  display: none; align-items: center; justify-content: space-between;
+  padding: 6px 14px; background: var(--kbx-yellow); color: var(--kbx-black);
+  font-size: 11px; font-weight: 700; font-family: var(--font-body);
+  flex-shrink: 0; cursor: pointer; gap: 6px;
+  border-bottom: 1px solid var(--kbx-yellow-dk); transition: background 0.15s;
+  line-height: 1;
+}
+#update-strip:hover { background: var(--kbx-yellow-dk); }
+#update-strip.show { display: flex; }
+
 /* ── Welcome screen ──────────────────────────────────────── */
 #screen-welcome .content {
   align-items: center; justify-content: center; text-align: center; gap: 20px;
@@ -461,6 +473,11 @@ html, body {
       </div>
     </div>
 
+    <button id="update-strip" title="Download latest version">
+      <span id="update-strip-text">↑ Update available</span>
+      <span style="opacity:0.55; font-weight:600;">Download →</span>
+    </button>
+
     <div class="content">
       <div class="field">
         <label>Project Name</label>
@@ -566,6 +583,11 @@ html, body {
           <button class="btn-secondary" id="reset-cancel-btn" style="display:none">Cancel</button>
         </div>
       </div>
+
+      <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:4px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:10px; color:var(--text-sub); font-family:var(--font-body);">Plugin version <strong id="settings-version" style="color:var(--text-mute);"></strong></span>
+        <button id="settings-update-btn" style="display:none; font-size:10px; font-weight:700; font-family:var(--font-body); background:var(--kbx-yellow); color:var(--kbx-black); border:none; border-radius:5px; padding:3px 9px; cursor:pointer; line-height:1.6;">↑ Update available</button>
+      </div>
     </div>
 
     <div class="footer">
@@ -644,7 +666,11 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
-const DEFAULT_URL = 'https://kbx-ali.github.io/design-to-dev-handover/design-to-dev-handover-v3-figma.html';
+const DEFAULT_URL    = 'https://kbx-ali.github.io/design-to-dev-handover/design-to-dev-handover-v3-figma.html';
+const LANDING_URL    = 'https://kbx-ali.github.io/design-to-dev-handover/landing.html';
+const PLUGIN_VERSION = 'v1.0.0';
+const VERSION_CACHE_KEY = 'kbx_version_check'; // localStorage — survives sessions
+const VERSION_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
 
 // ── State ─────────────────────────────────────────────────────
 let state = {
@@ -713,6 +739,69 @@ function updateOpenBtn() {
   } else {
     btn.classList.remove('dirty');
     label.textContent = 'Open in Handover';
+  }
+}
+
+// ── Version check ─────────────────────────────────────────────
+function isNewerVersion(latest, current) {
+  const parse = v => v.replace(/^v/i, '').split('.').map(Number);
+  const [lMaj, lMin, lPat] = parse(latest);
+  const [cMaj, cMin, cPat] = parse(current);
+  if (lMaj !== cMaj) return lMaj > cMaj;
+  if (lMin !== cMin) return lMin > cMin;
+  return lPat > cPat;
+}
+
+function showUpdateAvailable(latestVersion) {
+  // Header strip
+  const strip = document.getElementById('update-strip');
+  const text  = document.getElementById('update-strip-text');
+  if (strip) {
+    if (text) text.textContent = `↑ ${latestVersion} available`;
+    strip.classList.add('show');
+  }
+  // Settings button
+  const settingsBtn = document.getElementById('settings-update-btn');
+  if (settingsBtn) {
+    settingsBtn.style.display = '';
+    settingsBtn.textContent   = `↑ ${latestVersion} available`;
+  }
+}
+
+async function checkForUpdate() {
+  // Populate version label in settings regardless of update status
+  const verEl = document.getElementById('settings-version');
+  if (verEl) verEl.textContent = PLUGIN_VERSION;
+
+  try {
+    // Check localStorage cache — avoid hitting the API more than once per 24h
+    const cached = localStorage.getItem(VERSION_CACHE_KEY);
+    if (cached) {
+      const { tag, ts } = JSON.parse(cached);
+      if (Date.now() - ts < VERSION_CACHE_TTL) {
+        if (tag && isNewerVersion(tag, PLUGIN_VERSION)) showUpdateAvailable(tag);
+        return;
+      }
+    }
+
+    const headers = { 'Accept': 'application/vnd.github.v3+json' };
+    if (state.githubToken) headers['Authorization'] = `token ${state.githubToken}`;
+    const res = await fetch(
+      'https://api.github.com/repos/kbx-ali/design-to-dev-handover/releases/latest',
+      { headers }
+    );
+    if (!res.ok) return; // fail silently — non-critical
+
+    const data = await res.json();
+    const tag  = data.tag_name;
+    if (!tag) return;
+
+    // Cache for 24 hours so we don't spam the API on every plugin open
+    localStorage.setItem(VERSION_CACHE_KEY, JSON.stringify({ tag, ts: Date.now() }));
+
+    if (isNewerVersion(tag, PLUGIN_VERSION)) showUpdateAvailable(tag);
+  } catch (e) {
+    console.warn('[VersionCheck] Failed silently:', e);
   }
 }
 
@@ -1259,6 +1348,9 @@ function _maybeCheckFileContext() {
 }
 
 function checkFileContext() {
+  // Run version check now that all storage (inc. githubToken) is loaded
+  checkForUpdate();
+
   // Case 1: Brand new install — never exported, no cached file key
   if (!state.hasExported && !state.cachedFileKey) {
     showScreen('screen-welcome');
@@ -1315,6 +1407,14 @@ document.getElementById('welcome-open-btn').addEventListener('click', () => {
 // Welcome screen — skip (already configured)
 document.getElementById('welcome-skip-btn').addEventListener('click', () => {
   showScreen('screen-main');
+});
+
+// ── Update strip + settings update button click ───────────────
+document.getElementById('update-strip').addEventListener('click', () => {
+  post({ type: 'open-url', url: LANDING_URL });
+});
+document.getElementById('settings-update-btn').addEventListener('click', () => {
+  post({ type: 'open-url', url: LANDING_URL });
 });
 
 // ── Initialise: load stored values ────────────────────────────

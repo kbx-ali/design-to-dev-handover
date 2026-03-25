@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubix Component Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Domine:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --kbx-black:    #28282B;
+  --kbx-yellow:   #FFFF00;
+  --kbx-yellow-dk:#CCCC00;
+  --kbx-mint:     #94F7A1;
+  --kbx-teal:     #0D6987;
+  --kbx-teal-dim: rgba(13,105,135,0.18);
+  --kbx-orchid:   #E591E5;
+
+  --bg:        #141416;
+  --bg-hdr:    #28282B;
+  --bg-card:   #1E1E21;
+  --bg-card-hv:#242428;
+  --bg-input:  #333337;
+  --border:    #3E3E42;
+  --border-sub:rgba(255,255,255,0.07);
+
+  --grid-line: rgba(255,255,255,0.025);
+
+  --text:     #FFFFFF;
+  --text-sec: #D4D4D8;
+  --text-mute:#A0A0A6;
+  --text-sub: #6E6E74;
+
+  --radius-card: 10px;
+  --radius:       8px;
+  --radius-sm:    6px;
+  --shadow-card:  0 1px 4px rgba(0,0,0,0.5);
+  --shadow-hover: 0 4px 16px rgba(0,0,0,0.7);
+
+  --font-heading: 'Domine', Georgia, serif;
+  --font-body:    'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 20px 20px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Root & screens ── */
+#root { display: flex; flex-direction: column; height: 100vh; }
+.screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ── Header ── */
+.hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; background: var(--bg-hdr);
+  border-bottom: 1px solid var(--border-sub); flex-shrink: 0;
+}
+.hdr-logo { display: flex; align-items: center; gap: 9px; }
+.hdr-logo svg { flex-shrink: 0; }
+.hdr-logo-text .title {
+  font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: #fff;
+  line-height: 1.2;
+}
+.hdr-logo-text .subtitle {
+  font-size: 10px; color: rgba(255,255,255,0.28);
+  text-transform: uppercase; letter-spacing: 0.09em;
+}
+.hdr-actions { display: flex; gap: 5px; }
+
+/* ── Buttons ── */
+.icon-btn {
+  width: 28px; height: 28px; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.05); color: var(--text-mute); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.icon-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.1); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 0 14px; height: 34px; border-radius: var(--radius-sm); font-family: var(--font-body);
+  font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--kbx-yellow); color: var(--kbx-black); }
+.btn-primary:hover { background: var(--kbx-yellow-dk); }
+.btn-primary:disabled { background: #3E3E42; color: var(--text-sub); cursor: not-allowed; }
+.btn-ghost {
+  background: rgba(255,255,255,0.05); color: var(--text-sec);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.22); color: var(--text); }
+.btn-danger { background: rgba(220,53,69,0.15); color: #ff6b7a; border: 1px solid rgba(220,53,69,0.3); }
+.btn-danger:hover { background: rgba(220,53,69,0.25); }
+.btn-full { width: 100%; }
+
+/* ── Inputs & forms ── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; font-weight: 700; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.07em; }
+input[type="text"], input[type="password"], select, textarea {
+  width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text); font-family: var(--font-body);
+  font-size: 12px; padding: 8px 10px; outline: none;
+  transition: border-color 0.15s;
+}
+input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+  border-color: rgba(255,255,255,0.35);
+}
+select { appearance: none; cursor: pointer; }
+textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+.input-hint { font-size: 10px; color: var(--text-sub); }
+
+/* ── Tabs ── */
+.tab-bar {
+  display: flex; background: var(--bg-hdr);
+  border-bottom: 1px solid var(--border-sub); flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1; padding: 9px 0; background: transparent; border: none;
+  color: var(--text-mute); font-family: var(--font-body); font-size: 12px; font-weight: 700;
+  cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn.active { color: var(--kbx-yellow); border-bottom-color: var(--kbx-yellow); }
+.tab-btn:hover:not(.active) { color: var(--text-sec); }
+
+.tab-panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.tab-panel.active { display: flex; }
+
+/* ── Scrollable content ── */
+.content { flex: 1; overflow-y: auto; padding: 12px 14px; }
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-track { background: transparent; }
+.content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+/* ── Search bar ── */
+.search-wrap {
+  padding: 10px 14px 0; flex-shrink: 0;
+}
+.search-inner {
+  position: relative;
+}
+.search-inner svg {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text-sub); pointer-events: none;
+}
+.search-input {
+  padding-left: 32px !important;
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* ── Category pills ── */
+.categories {
+  display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto;
+  padding: 8px 14px 0; flex-shrink: 0;
+  scrollbar-width: none;
+}
+.categories::-webkit-scrollbar { display: none; }
+.cat-pill {
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  cursor: pointer; border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+  color: var(--text-mute); white-space: nowrap; transition: all 0.15s;
+}
+.cat-pill:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.cat-pill.active { background: rgba(255,255,0,0.12); border-color: rgba(255,255,0,0.4); color: var(--kbx-yellow); }
+
+/* ── Component grid ── */
+.component-grid {
+  display: grid; grid-template-columns: 1fr; gap: 8px;
+  padding: 10px 14px; flex: 1; overflow-y: auto; align-content: start;
+}
+.component-grid::-webkit-scrollbar { width: 4px; }
+.component-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.comp-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-card); padding: 12px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.comp-card:hover { background: var(--bg-card-hv); border-color: rgba(255,255,255,0.18); box-shadow: var(--shadow-hover); }
+.comp-card.selected { border-color: var(--kbx-yellow); background: rgba(255,255,0,0.05); box-shadow: 0 0 0 1px rgba(255,255,0,0.2); }
+.comp-card.selected .comp-delete-btn { background: rgba(20,20,22,0.9); }
+
+.comp-thumb {
+  width: 100%; border-radius: 6px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+  min-height: 40px;
+}
+.comp-thumb img { width: 100%; height: auto; display: block; }
+.comp-thumb-placeholder {
+  font-size: 22px; opacity: 0.25;
+}
+.comp-thumb { position: relative; }
+.comp-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.thumb-dots {
+  display: flex; gap: 3px;
+}
+.thumb-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+  font-size: 9px; font-weight: 700; color: var(--text-sub);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.thumb-dot.active {
+  background: rgba(255,255,0,0.15); border-color: rgba(255,255,0,0.4); color: var(--kbx-yellow);
+}
+
+.comp-card { position: relative; }
+
+/* Delete button — appears on hover */
+.comp-delete-btn {
+  position: absolute; top: 7px; right: 7px;
+  width: 22px; height: 22px; border-radius: 5px;
+  background: rgba(20,20,22,0.85); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s;
+  z-index: 2;
+}
+.comp-card:hover .comp-delete-btn { opacity: 1; }
+.comp-delete-btn:hover { background: rgba(220,53,69,0.25); border-color: rgba(220,53,69,0.4); color: #ff6b7a; }
+
+/* Confirm-delete overlay */
+.comp-confirm-overlay {
+  position: absolute; inset: 0; border-radius: var(--radius-card);
+  background: rgba(20,20,22,0.93); border: 1px solid rgba(220,53,69,0.4);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 12px; z-index: 3;
+}
+.comp-confirm-overlay.active { display: flex; }
+.comp-confirm-text { font-size: 11px; color: var(--text-sec); text-align: center; font-weight: 700; }
+.comp-confirm-text span { display: block; font-size: 10px; font-weight: 400; color: var(--text-sub); margin-top: 2px; }
+.comp-confirm-actions { display: flex; gap: 6px; }
+
+.comp-info {}
+.comp-name { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 3px; }
+.comp-variant { font-size: 11px; color: var(--text-mute); }
+
+.comp-cat-chip {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700;
+  width: fit-content; margin-top: auto;
+}
+
+/* Category colours */
+.cat-navigation  { background: rgba(13,105,135,0.2);  color: #5BB8D4; border: 1px solid rgba(13,105,135,0.4); }
+.cat-product     { background: rgba(229,145,229,0.15); color: var(--kbx-orchid); border: 1px solid rgba(229,145,229,0.3); }
+.cat-content     { background: rgba(148,247,161,0.12); color: var(--kbx-mint); border: 1px solid rgba(148,247,161,0.3); }
+.cat-collection  { background: rgba(255,255,0,0.1);   color: var(--kbx-yellow); border: 1px solid rgba(255,255,0,0.25); }
+.cat-footer      { background: rgba(255,255,255,0.06); color: var(--text-mute); border: 1px solid var(--border); }
+.cat-promotion   { background: rgba(255,160,50,0.15); color: #FFB347; border: 1px solid rgba(255,160,50,0.3); }
+.cat-other       { background: rgba(255,255,255,0.06); color: var(--text-mute); border: 1px solid var(--border); }
+
+/* ── Theme import drop zone ── */
+#theme-dropzone.drag-over { border-color: var(--kbx-orchid); background: rgba(229,145,229,0.06); }
+
+/* ── Insert bar ── */
+.insert-bar {
+  padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+  background: rgba(20,20,22,0.88);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+.insert-label { flex: 1; font-size: 11px; color: var(--text-sub); }
+.insert-label.has-selection { color: var(--text-sec); }
+.insert-label strong { color: var(--text); display: block; }
+
+/* ── Thumbnail loading progress bar ── */
+.thumb-progress {
+  height: 10px; flex-shrink: 0; position: relative;
+  background: rgba(20,20,22,0.88);
+  overflow: hidden; display: none;
+}
+.thumb-progress.active { display: block; }
+.thumb-progress-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: var(--kbx-orchid);
+  transition: width 0.3s ease;
+  min-width: 2%;
+}
+.thumb-progress-label {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  font-size: 7px; font-weight: 700; color: var(--kbx-black);
+  z-index: 1; line-height: 1;
+}
+
+/* ── Empty/loading states ── */
+.state-message {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 40px 20px; text-align: center; color: var(--text-mute);
+  flex: 1;
+}
+.state-message svg { opacity: 0.3; }
+.state-message p { font-size: 12px; max-width: 200px; line-height: 1.6; }
+.state-message .state-title { font-size: 14px; font-weight: 700; color: var(--text-sec); }
+
+/* Loading spinner */
+.spinner {
+  width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: var(--kbx-yellow); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Setup screen ── */
+.setup-body { flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 14px; }
+.setup-intro { font-size: 12px; color: var(--text-mute); line-height: 1.7; }
+.setup-section-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-sub); margin-bottom: 8px;
+}
+.setup-group { display: flex; flex-direction: column; gap: 10px; }
+.setup-divider { border: none; border-top: 1px solid var(--border-sub); }
+
+/* ── Publish tab ── */
+.publish-body { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+
+.selection-status {
+  padding: 10px 12px; border-radius: var(--radius);
+  display: flex; align-items: flex-start; gap: 9px;
+}
+.selection-status.empty { background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+.selection-status.ready { background: rgba(148,247,161,0.07); border: 1px solid rgba(148,247,161,0.25); }
+.sel-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
+}
+.sel-dot.empty { background: var(--text-sub); }
+.sel-dot.ready { background: var(--kbx-mint); }
+.sel-text { font-size: 12px; color: var(--text-mute); line-height: 1.5; }
+.sel-text strong { color: var(--text); display: block; margin-bottom: 2px; }
+
+.publish-form { display: flex; flex-direction: column; gap: 10px; }
+.publish-progress {
+  padding: 10px 12px; border-radius: var(--radius);
+  background: rgba(255,255,0,0.06); border: 1px solid rgba(255,255,0,0.2);
+  font-size: 12px; color: var(--kbx-yellow); display: none; gap: 8px; align-items: center;
+}
+.publish-progress.active { display: flex; }
+.publish-success {
+  padding: 10px 12px; border-radius: var(--radius);
+  background: rgba(148,247,161,0.08); border: 1px solid rgba(148,247,161,0.3);
+  font-size: 12px; color: var(--kbx-mint); display: none; gap: 8px; align-items: center;
+}
+.publish-success.active { display: flex; }
+
+/* ── Settings panel (slide-in overlay) ── */
+.settings-overlay {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 100;
+}
+.settings-overlay.active { display: block; }
+.settings-panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 100%;
+  background: var(--bg); display: flex; flex-direction: column;
+  transform: translateX(100%); transition: transform 0.2s ease;
+}
+.settings-overlay.active .settings-panel { transform: translateX(0); }
+.settings-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 14px; background: var(--bg-hdr); border-bottom: 1px solid var(--border-sub);
+  flex-shrink: 0;
+}
+.settings-title { font-family: var(--font-heading); font-size: 13px; font-weight: 700; }
+.settings-body { flex: 1; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; }
+.settings-section { display: flex; flex-direction: column; gap: 10px; }
+.settings-section-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-sub);
+}
+.settings-footer { padding: 12px 14px; border-top: 1px solid var(--border-sub); flex-shrink: 0; }
+
+/* ── Toast notifications ── */
+.toast-wrap {
+  position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  pointer-events: none;
+}
+.toast {
+  padding: 7px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  white-space: nowrap; opacity: 0; transform: translateY(6px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--kbx-mint); color: var(--kbx-black); }
+.toast.error   { background: #ff6b7a; color: #fff; }
+.toast.info    { background: var(--bg-hdr); color: var(--text); border: 1px solid var(--border); }
+
+/* ── Loading screen ── */
+#screen-loading {
+  align-items: center; justify-content: center; gap: 14px;
+}
+#screen-loading .load-text { font-size: 12px; color: var(--text-mute); }
+
+/* ── Setup screen header ── */
+#screen-setup .screen-hdr-logo {
+  display: flex; align-items: center; gap: 9px; padding: 14px 16px;
+  border-bottom: 1px solid var(--border-sub); flex-shrink: 0;
+  background: var(--bg-hdr);
+}
+
+/* ── Misc ── */
+.row { display: flex; gap: 8px; }
+.row .field { flex: 1; }
+hr.divider { border: none; border-top: 1px solid var(--border-sub); }
+.text-muted { font-size: 11px; color: var(--text-sub); }
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- LOADING SCREEN                                         -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="screen active" id="screen-loading">
+    <div class="spinner"></div>
+    <p class="load-text">Loading…</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SETUP SCREEN                                           -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-setup">
+    <div class="screen-hdr-logo">
+      <!-- Kubix "K" mark -->
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="7" fill="#FFFF00"/>
+        <path d="M8 7h3.5v5.5l5-5.5H21l-6 6.5 6.5 7H16l-4.5-5.5V21H8V7Z" fill="#28282B"/>
+      </svg>
+      <div class="hdr-logo-text">
+        <div class="title">Kubix Component Library</div>
+        <div class="subtitle">First-time Setup</div>
+      </div>
+    </div>
+
+    <div class="setup-body">
+      <p class="setup-intro">Connect to your private GitHub repo to start using the component library. You'll need a Personal Access Token with <strong>Contents</strong> read/write scope.</p>
+
+      <div class="setup-section-title">GitHub Access</div>
+      <div class="setup-group">
+        <div class="field">
+          <label>Personal Access Token</label>
+          <input type="password" id="setup-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          <span class="input-hint">Classic token with repo → contents scope</span>
+        </div>
+      </div>
+
+      <hr class="setup-divider">
+      <div class="setup-section-title">Repository</div>
+      <div class="setup-group">
+        <div class="row">
+          <div class="field">
+            <label>Owner</label>
+            <input type="text" id="setup-owner" placeholder="kbx-ali">
+          </div>
+          <div class="field">
+            <label>Repo Name</label>
+            <input type="text" id="setup-repo" placeholder="kubix-components">
+          </div>
+        </div>
+        <p class="text-muted">The private GitHub repo where component JSON files are stored.</p>
+      </div>
+
+      <hr class="setup-divider">
+
+      <button class="btn btn-primary btn-full" id="setup-save-btn">Connect Library</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- MAIN APP SCREEN                                        -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-app">
+
+    <!-- Header -->
+    <div class="hdr">
+      <div class="hdr-logo">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+          <rect width="28" height="28" rx="7" fill="#FFFF00"/>
+          <path d="M8 7h3.5v5.5l5-5.5H21l-6 6.5 6.5 7H16l-4.5-5.5V21H8V7Z" fill="#28282B"/>
+        </svg>
+        <div class="hdr-logo-text">
+          <div class="title">KBX Component Library</div>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <button class="icon-btn" id="refresh-btn" title="Refresh library">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M13.5 8a5.5 5.5 0 1 1-1-3.18"/>
+            <polyline points="14 2 14 6 10 6" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="settings-btn" title="Settings">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="8" r="2.2"/>
+            <path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="library">Library</button>
+      <button class="tab-btn" data-tab="publish">Publish</button>
+      <button class="tab-btn" data-tab="theme">Theme</button>
+    </div>
+
+    <!-- ── LIBRARY TAB ── -->
+    <div class="tab-panel active" id="panel-library">
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <div class="search-inner">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="6.5" cy="6.5" r="4.5"/><path d="m10 10 3.5 3.5"/>
+          </svg>
+          <input type="text" class="search-input" id="search-input" placeholder="Search components…">
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="categories" id="categories-bar">
+        <button class="cat-pill active" data-cat="all">All</button>
+        <button class="cat-pill" data-cat="navigation">Navigation</button>
+        <button class="cat-pill" data-cat="product">Product</button>
+        <button class="cat-pill" data-cat="content">Content</button>
+        <button class="cat-pill" data-cat="collection">Collection</button>
+        <button class="cat-pill" data-cat="footer">Footer</button>
+        <button class="cat-pill" data-cat="promotion">Promotion</button>
+      </div>
+
+      <!-- Component grid -->
+      <div class="component-grid" id="component-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Thumbnail loading progress -->
+      <div class="thumb-progress" id="thumb-progress">
+        <div class="thumb-progress-fill" id="thumb-progress-fill"></div>
+        <span class="thumb-progress-label" id="thumb-progress-label">0%</span>
+      </div>
+
+      <!-- Insert bar -->
+      <div class="insert-bar">
+        <div class="insert-label" id="insert-label">Select a component above</div>
+        <button class="btn btn-primary" id="insert-btn" disabled>Insert</button>
+      </div>
+    </div>
+
+    <!-- ── PUBLISH TAB ── -->
+    <div class="tab-panel" id="panel-publish">
+      <div class="publish-body">
+
+        <!-- Figma selection status -->
+        <div class="selection-status empty" id="sel-status">
+          <div class="sel-dot empty" id="sel-dot"></div>
+          <div class="sel-text">
+            <strong id="sel-status-title">Nothing selected</strong>
+            <span id="sel-status-body">Select a frame or component on the canvas to publish it.</span>
+          </div>
+        </div>
+
+        <!-- Progress / success banners -->
+        <div class="publish-progress" id="pub-progress">
+          <div class="spinner" style="width:14px;height:14px;border-width:2px"></div>
+          <span id="pub-progress-text">Serialising…</span>
+        </div>
+        <div class="publish-success" id="pub-success">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 8 6.5 11.5 13 5"/>
+          </svg>
+          <span id="pub-success-text">Published successfully!</span>
+        </div>
+
+        <!-- Publish form -->
+        <div class="publish-form">
+          <div class="field">
+            <label>Category</label>
+            <select id="pub-category">
+              <option value="navigation">Navigation</option>
+              <option value="product">Product</option>
+              <option value="content">Content</option>
+              <option value="collection">Collection</option>
+              <option value="footer">Footer</option>
+              <option value="promotion">Promotion</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Component Name</label>
+              <input type="text" id="pub-name" placeholder="Header">
+            </div>
+            <div class="field">
+              <label>Variant</label>
+              <input type="text" id="pub-variant" placeholder="Logo Left">
+            </div>
+          </div>
+          <div class="field">
+            <label>Description <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <textarea id="pub-description" rows="2" placeholder="Brief description for the library…"></textarea>
+          </div>
+
+          <button class="btn btn-primary btn-full" id="publish-btn" disabled>
+            Publish to Library
+          </button>
+          <p class="text-muted" style="text-align:center">
+            Select a frame or component in Figma, fill in the details, then publish.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── THEME IMPORT TAB ── -->
+    <div class="tab-panel" id="panel-theme">
+      <div class="theme-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;flex:1">
+
+        <div style="text-align:center;padding:8px 0 0">
+          <div style="font-size:22px;margin-bottom:4px">🎨</div>
+          <h3 style="font-family:var(--font-heading);font-size:15px;margin-bottom:4px">Import Shopify Theme</h3>
+          <p class="text-muted" style="font-size:11px;line-height:1.4">Upload a theme .zip to generate<br>Figma variables and section scaffolds</p>
+        </div>
+
+        <!-- Drop zone -->
+        <div id="theme-dropzone" style="border:2px dashed var(--border);border-radius:var(--radius-card);padding:28px 16px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s">
+          <div style="font-size:28px;margin-bottom:6px;opacity:0.5">📦</div>
+          <p style="font-size:12px;color:var(--text-sec);margin-bottom:8px">Drag &amp; drop a Shopify theme .zip<br>or click to browse</p>
+          <input type="file" id="theme-file-input" accept=".zip" style="display:none">
+          <div id="theme-file-name" style="font-size:11px;color:var(--kbx-yellow);display:none;margin-top:6px"></div>
+        </div>
+
+        <!-- Import button -->
+        <button class="btn btn-primary btn-full" id="theme-import-btn" disabled style="background:var(--kbx-orchid);color:#000;font-weight:700">
+          Import Theme
+        </button>
+
+        <!-- Progress -->
+        <div id="theme-progress" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div class="spinner" style="width:14px;height:14px;border-width:2px"></div>
+            <span id="theme-progress-text" style="font-size:12px;color:var(--text-sec)">Parsing theme…</span>
+          </div>
+          <div style="background:var(--bg-input);border-radius:4px;height:6px;overflow:hidden">
+            <div id="theme-progress-bar" style="height:100%;background:var(--kbx-orchid);width:0%;transition:width 0.3s"></div>
+          </div>
+        </div>
+
+        <!-- Results (shown after import) -->
+        <div id="theme-results" style="display:none">
+          <div class="publish-success" style="display:flex">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 8 6.5 11.5 13 5"/>
+            </svg>
+            <span id="theme-results-text">Theme imported!</span>
+          </div>
+          <div id="theme-results-details" style="font-size:11px;color:var(--text-mute);margin-top:8px;line-height:1.6"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Settings overlay -->
+    <div class="settings-overlay" id="settings-overlay">
+      <div class="settings-panel">
+        <div class="settings-hdr">
+          <span class="settings-title">Settings</span>
+          <button class="icon-btn" id="settings-close-btn">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/>
+            </svg>
+          </button>
+        </div>
+        <div class="settings-body">
+          <div class="settings-section">
+            <div class="settings-section-label">GitHub Access</div>
+            <div class="field">
+              <label>Personal Access Token</label>
+              <input type="password" id="cfg-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+              <span class="input-hint">Classic token · Contents read/write scope</span>
+            </div>
+          </div>
+          <hr class="divider">
+          <div class="settings-section">
+            <div class="settings-section-label">Repository</div>
+            <div class="row">
+              <div class="field">
+                <label>Owner</label>
+                <input type="text" id="cfg-owner" placeholder="kbx-ali">
+              </div>
+              <div class="field">
+                <label>Repo Name</label>
+                <input type="text" id="cfg-repo" placeholder="kubix-components">
+              </div>
+            </div>
+          </div>
+          <hr class="divider">
+          <div class="settings-section">
+            <div class="settings-section-label">Cache</div>
+            <button class="btn btn-ghost btn-full" id="clear-cache-btn">Clear manifest cache</button>
+            <p class="text-muted">Force a fresh fetch next time the plugin opens.</p>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn btn-primary btn-full" id="settings-save-btn">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screen-app -->
+
+  <!-- Toast container -->
+  <div class="toast-wrap" id="toast-wrap"></div>
+
+</div><!-- /root -->
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+const state = {
+  config: { githubToken: '', repoOwner: '', repoName: '' },
+  manifest:    null,
+  components:  [],
+  filtered:    [],
+  selected:    null,       // selected component entry
+  activeTab:   'library',
+  activeCategory: 'all',
+  searchQuery: '',
+  selectionInfo: null,     // from Figma canvas
+  publishNodeData:    null,
+  publishThumbData:   null,
+  isPublishing:       false,
+  isFetchingManifest: false,
+  isInserting:        false,
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+
+// ─── Storage (promise-based, routed through code.js) ─────────────────────────
+const _storageCallbacks = {};
+
+function storageGet(key) {
+  return new Promise(resolve => {
+    _storageCallbacks[key] = resolve;
+    parent.postMessage({ pluginMessage: { type: 'get-storage', key } }, '*');
+  });
+}
+function storageSet(key, value) {
+  parent.postMessage({ pluginMessage: { type: 'set-storage', key, value } }, '*');
+}
+function storageDel(key) {
+  parent.postMessage({ pluginMessage: { type: 'del-storage', key } }, '*');
+}
+
+// ─── GitHub API (private repo via Contents API) ───────────────────────────────
+async function ghGet(path) {
+  const { githubToken, repoOwner, repoName } = state.config;
+  const res = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+    { headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' } }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`GitHub ${res.status}: ${err.message || res.statusText}`);
+  }
+  const json = await res.json();
+  return {
+    data: JSON.parse(decodeURIComponent(escape(atob(json.content.replace(/\n/g, ''))))),
+    sha:  json.sha,
+  };
+}
+
+async function ghPutJSON(path, data, message, sha) {
+  const { githubToken, repoOwner, repoName } = state.config;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  const body = { message, content };
+  if (sha) body.sha = sha;
+  const res = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+    {
+      method:  'PUT',
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Content-Type':  'application/json',
+        'Accept':        'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`GitHub ${res.status}: ${err.message || res.statusText}`);
+  }
+  return await res.json();
+}
+
+async function ghPutBinary(path, base64, message, sha) {
+  const { githubToken, repoOwner, repoName } = state.config;
+  const body = { message, content: base64 };
+  if (sha) body.sha = sha;
+  const res = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+    {
+      method:  'PUT',
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Content-Type':  'application/json',
+        'Accept':        'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`GitHub ${res.status}: ${err.message || res.statusText}`);
+  }
+  return await res.json();
+}
+
+// Get file SHA only (for updating existing files)
+async function ghGetSHA(path) {
+  const { githubToken, repoOwner, repoName } = state.config;
+  const res = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+    { headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' } }
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.sha || null;
+}
+
+// ─── Thumbnail loader (private repo — must fetch via API) ────────────────────
+const _thumbCache = {}; // path → data URL
+
+async function loadThumbnail(path) {
+  if (_thumbCache[path]) return _thumbCache[path];
+  try {
+    const { githubToken, repoOwner, repoName } = state.config;
+    console.log('[KBX] loadThumbnail fetching:', path);
+    const res = await fetch(
+      `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+      { headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (!res.ok) {
+      console.warn('[KBX] loadThumbnail failed:', res.status, path);
+      return null;
+    }
+    const json = await res.json();
+    // GitHub wraps base64 in newlines every 60 chars — strip ALL whitespace to be safe
+    const clean = (json.content || '').replace(/\s/g, '');
+    if (!clean) { console.warn('[KBX] loadThumbnail empty content:', path); return null; }
+    const dataUrl = `data:image/png;base64,${clean}`;
+    _thumbCache[path] = dataUrl;
+    console.log('[KBX] loadThumbnail ok:', path);
+    return dataUrl;
+  } catch (e) {
+    console.error('[KBX] loadThumbnail error:', path, e);
+    return null;
+  }
+}
+
+// ─── Manifest ─────────────────────────────────────────────────────────────────
+async function fetchManifest(force = false) {
+  if (state.isFetchingManifest) return;
+  state.isFetchingManifest = true;
+
+  // Check cache
+  if (!force) {
+    const cached = await storageGet('manifestCache');
+    if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      state.manifest   = cached.data;
+      state.components = cached.data.components || [];
+      state.isFetchingManifest = false;
+      applyFilter();
+      showScreen('app');
+      return;
+    }
+  }
+
+  try {
+    const { data } = await ghGet('manifest.json');
+    state.manifest   = data;
+    state.components = data.components || [];
+    storageSet('manifestCache', { data, timestamp: Date.now() });
+    state.isFetchingManifest = false;
+    applyFilter();
+    showScreen('app');
+  } catch (e) {
+    state.isFetchingManifest = false;
+    showScreen('app');
+    showToast('Could not load library: ' + e.message, 'error');
+    renderEmptyGrid('Could not load the component library. Check your settings.');
+  }
+}
+
+// ─── Screens & tabs ───────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+function showTab(name) {
+  state.activeTab = name;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + name);
+  });
+}
+
+// ─── Toasts ───────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info', duration = 2800) {
+  const wrap  = document.getElementById('toast-wrap');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  wrap.appendChild(toast);
+  requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 250);
+  }, duration);
+}
+
+// ─── Category colour helper ───────────────────────────────────────────────────
+function catClass(category) {
+  return 'cat-' + (category || 'other').toLowerCase().replace(/\s+/g, '-');
+}
+
+// ─── Filter & render grid ─────────────────────────────────────────────────────
+function applyFilter() {
+  const q   = state.searchQuery.toLowerCase();
+  const cat = state.activeCategory;
+
+  state.filtered = state.components.filter(c => {
+    const matchCat  = cat === 'all' || (c.category || '').toLowerCase() === cat;
+    const matchText = !q || [c.name, c.variant, c.category, ...(c.tags || [])]
+      .join(' ').toLowerCase().includes(q);
+    return matchCat && matchText;
+  });
+
+  renderGrid();
+}
+
+function renderGrid() {
+  const grid = document.getElementById('component-grid');
+
+  if (state.isFetchingManifest) {
+    grid.innerHTML = `<div class="state-message" style="grid-column:1/-1">
+      <div class="spinner"></div><p>Loading library…</p></div>`;
+    return;
+  }
+
+  if (!state.filtered.length) {
+    renderEmptyGrid(state.components.length === 0
+      ? 'No components in the library yet. Use the Publish tab to add some.'
+      : 'No components match your search.');
+    return;
+  }
+
+  grid.innerHTML = state.filtered.map(c => {
+    const emoji = categoryEmoji(c.category);
+    return `
+      <div class="comp-card" data-id="${c.id}" title="${c.description || ''}">
+
+        <!-- Delete button (hover) -->
+        <button class="comp-delete-btn" data-delete-id="${c.id}" title="Remove from library">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+          </svg>
+        </button>
+
+        <!-- Confirm-delete overlay -->
+        <div class="comp-confirm-overlay" data-confirm-id="${c.id}">
+          <div class="comp-confirm-text">
+            Remove from library?
+            <span>${c.name} · ${c.variant}</span>
+          </div>
+          <div class="comp-confirm-actions">
+            <button class="btn btn-ghost" style="height:26px;font-size:11px;padding:0 10px" data-cancel-id="${c.id}">Cancel</button>
+            <button class="btn btn-danger" style="height:26px;font-size:11px;padding:0 10px" data-confirm-delete-id="${c.id}">Remove</button>
+          </div>
+        </div>
+
+        <div class="comp-thumb">
+          <span class="comp-thumb-placeholder">${emoji}</span>
+        </div>
+        <div class="comp-info">
+          <div class="comp-name">${c.name}</div>
+          <div class="comp-variant">${c.isComponentSet ? (c.variantCount || '?') + ' variants' : c.variant}</div>
+        </div>
+        <div class="comp-footer">
+          <span class="comp-cat-chip ${catClass(c.category)}">${c.category || 'Other'}</span>
+          <span class="thumb-dots-slot" data-dots-id="${c.id}"></span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Re-apply selection highlight
+  if (state.selected) {
+    const el = grid.querySelector(`[data-id="${state.selected.id}"]`);
+    if (el) el.classList.add('selected');
+  }
+
+  // Click handlers
+  grid.querySelectorAll('.comp-card').forEach(card => {
+    card.addEventListener('click', e => {
+      // Don't select if clicking the delete button or confirm overlay
+      if (e.target.closest('.comp-delete-btn') || e.target.closest('.comp-confirm-overlay')) return;
+      selectComponent(card.dataset.id);
+    });
+  });
+
+  // Delete button — show confirm overlay
+  grid.querySelectorAll('.comp-delete-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id = btn.dataset.deleteId;
+      const overlay = grid.querySelector(`[data-confirm-id="${id}"]`);
+      if (overlay) overlay.classList.add('active');
+    });
+  });
+
+  // Cancel delete
+  grid.querySelectorAll('[data-cancel-id]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const overlay = grid.querySelector(`[data-confirm-id="${btn.dataset.cancelId}"]`);
+      if (overlay) overlay.classList.remove('active');
+    });
+  });
+
+  // Confirm delete
+  grid.querySelectorAll('[data-confirm-delete-id]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteComponent(btn.dataset.confirmDeleteId);
+    });
+  });
+
+  // Lazy-load thumbnails with progress bar
+  var thumbsToLoad = state.filtered.filter(c => c.thumbnailFile);
+  var thumbsTotal  = thumbsToLoad.length;
+  var thumbsLoaded = 0;
+  var progressBar  = document.getElementById('thumb-progress');
+  var progressFill = document.getElementById('thumb-progress-fill');
+  var progressLbl  = document.getElementById('thumb-progress-label');
+
+  if (thumbsTotal > 0) {
+    progressBar.classList.add('active');
+    progressFill.style.width = '0%';
+    progressLbl.textContent  = '0%';
+  } else {
+    progressBar.classList.remove('active');
+  }
+
+  function updateThumbProgress() {
+    thumbsLoaded++;
+    var pct = Math.round((thumbsLoaded / thumbsTotal) * 100);
+    progressFill.style.width = pct + '%';
+    progressLbl.textContent  = pct + '%';
+    if (thumbsLoaded >= thumbsTotal) {
+      setTimeout(function() { progressBar.classList.remove('active'); }, 600);
+    }
+  }
+
+  state.filtered.forEach(async c => {
+    if (!c.thumbnailFile) return;
+    const card = grid.querySelector('[data-id="' + c.id + '"]');
+    if (!card) return;
+    const thumb = card.querySelector('.comp-thumb');
+    if (!thumb) return;
+
+    // Load all variant thumbnails (or just the single one)
+    var allPaths = (c.variantThumbnailFiles && c.variantThumbnailFiles.length > 0)
+      ? c.variantThumbnailFiles
+      : [c.thumbnailFile];
+
+    var loadedUrls = [];
+    for (var i = 0; i < allPaths.length; i++) {
+      var url = await loadThumbnail(allPaths[i]);
+      if (url) loadedUrls.push(url);
+    }
+    updateThumbProgress();
+    if (loadedUrls.length === 0) return;
+    if (!grid.querySelector('[data-id="' + c.id + '"]')) return; // card removed during fetch
+
+    // Show first variant
+    thumb.innerHTML = '<img src="' + loadedUrls[0] + '" alt="' + c.name + '">';
+
+    // Hover cycling for multiple variant thumbnails
+    if (loadedUrls.length > 1) {
+      var cycleIdx = 0;
+      var cycleTimer = null;
+      var img = thumb.querySelector('img');
+
+      // Add numbered dot indicators to the footer slot (next to category chip)
+      var dotsSlot = card.querySelector('[data-dots-id="' + c.id + '"]');
+      if (dotsSlot) {
+        var dots = document.createElement('div');
+        dots.className = 'thumb-dots';
+        for (var d = 0; d < loadedUrls.length; d++) {
+          var dot = document.createElement('span');
+          dot.className = 'thumb-dot' + (d === 0 ? ' active' : '');
+          dot.textContent = (d + 1);
+          dots.appendChild(dot);
+        }
+        dotsSlot.appendChild(dots);
+
+        card.addEventListener('mouseenter', function() {
+          cycleTimer = setInterval(function() {
+            cycleIdx = (cycleIdx + 1) % loadedUrls.length;
+            img.src = loadedUrls[cycleIdx];
+            var allDots = dots.querySelectorAll('.thumb-dot');
+            for (var di = 0; di < allDots.length; di++) {
+              allDots[di].className = 'thumb-dot' + (di === cycleIdx ? ' active' : '');
+            }
+          }, 1200);
+        });
+        card.addEventListener('mouseleave', function() {
+          clearInterval(cycleTimer);
+          cycleIdx = 0;
+          img.src = loadedUrls[0];
+          var allDots = dots.querySelectorAll('.thumb-dot');
+          for (var di = 0; di < allDots.length; di++) {
+            allDots[di].className = 'thumb-dot' + (di === 0 ? ' active' : '');
+          }
+        });
+      }
+    }
+  });
+}
+
+function renderEmptyGrid(msg) {
+  document.getElementById('component-grid').innerHTML =
+    `<div class="state-message" style="grid-column:1/-1">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 12h6M9 15h4"/>
+      </svg>
+      <p>${msg}</p>
+    </div>`;
+}
+
+function categoryEmoji(cat) {
+  const map = {
+    navigation: '🧭', product: '🛒', content: '📝',
+    collection: '🗂', footer: '📄', promotion: '📣',
+  };
+  return map[(cat || '').toLowerCase()] || '🧩';
+}
+
+// ─── Select component ─────────────────────────────────────────────────────────
+function selectComponent(id) {
+  state.selected = state.filtered.find(c => c.id === id) || null;
+
+  document.querySelectorAll('.comp-card').forEach(c =>
+    c.classList.toggle('selected', c.dataset.id === id)
+  );
+
+  const label  = document.getElementById('insert-label');
+  const btn    = document.getElementById('insert-btn');
+
+  if (state.selected) {
+    label.classList.add('has-selection');
+    label.innerHTML = state.selected.isComponentSet
+      ? `<strong>${state.selected.name}</strong>${(state.selected.variantCount || '?') + ' variants'}`
+      : `<strong>${state.selected.name}</strong>${state.selected.variant}`;
+    btn.disabled = false;
+  } else {
+    label.classList.remove('has-selection');
+    label.textContent = 'Select a component above';
+    btn.disabled = true;
+  }
+}
+
+// ─── GitHub delete file ───────────────────────────────────────────────────────
+async function ghDelete(path, message) {
+  const { githubToken, repoOwner, repoName } = state.config;
+  // Need SHA first
+  const res = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+    { headers: { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' } }
+  );
+  if (res.status === 404) return; // already gone
+  if (!res.ok) throw new Error(`GitHub ${res.status}`);
+  const { sha } = await res.json();
+
+  const del = await fetch(
+    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+    {
+      method:  'DELETE',
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Content-Type':  'application/json',
+        'Accept':        'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify({ message, sha }),
+    }
+  );
+  if (!del.ok) {
+    const err = await del.json().catch(() => ({}));
+    throw new Error(`GitHub ${del.status}: ${err.message || del.statusText}`);
+  }
+}
+
+// ─── Delete component from library ───────────────────────────────────────────
+async function deleteComponent(id) {
+  const component = state.components.find(c => c.id === id);
+  if (!component) return;
+
+  // Deselect if this was selected
+  if (state.selected && state.selected.id === id) {
+    state.selected = null;
+    document.getElementById('insert-label').textContent = 'Select a component above';
+    document.getElementById('insert-label').classList.remove('has-selection');
+    document.getElementById('insert-btn').disabled = true;
+  }
+
+  // Optimistic UI — remove from grid immediately
+  state.components  = state.components.filter(c => c.id !== id);
+  state.filtered    = state.filtered.filter(c => c.id !== id);
+  renderGrid();
+  showToast('Removing from library…', 'info', 2000);
+
+  try {
+    // 1. Delete component JSON file
+    await ghDelete(component.file, `Remove: ${component.name} / ${component.variant}`);
+
+    // 2. Delete thumbnail if it exists
+    const thumbPath = `thumbnails/${id}.png`;
+    await ghDelete(thumbPath, `Remove thumbnail: ${id}`).catch(() => {}); // non-fatal
+
+    // 3. Update manifest
+    const { data: manifest, sha: manifestSHA } = await ghGet('manifest.json');
+    manifest.components = (manifest.components || []).filter(c => c.id !== id);
+    await ghPutJSON('manifest.json', manifest, `Remove from manifest: ${component.name} / ${component.variant}`, manifestSHA);
+
+    // 4. Update local cache
+    storageSet('manifestCache', { data: manifest, timestamp: Date.now() });
+    state.manifest = manifest;
+
+    showToast(`${component.name} / ${component.variant} removed`, 'success');
+  } catch (e) {
+    // Rollback — re-fetch manifest to restore correct state
+    showToast('Delete failed: ' + e.message, 'error');
+    fetchManifest(true);
+  }
+}
+
+// ─── Insert component ─────────────────────────────────────────────────────────
+async function insertSelected() {
+  if (!state.selected || state.isInserting) return;
+  state.isInserting = true;
+
+  const btn = document.getElementById('insert-btn');
+  btn.disabled = true;
+  btn.textContent = 'Inserting…';
+
+  try {
+    const { data: componentData } = await ghGet(state.selected.file);
+    parent.postMessage({
+      pluginMessage: { type: 'reconstruct-and-insert', componentData }
+    }, '*');
+    // Success/error response handled in onmessage
+  } catch (e) {
+    showToast('Failed to fetch component: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Insert';
+    state.isInserting = false;
+  }
+}
+
+// ─── Publish flow ─────────────────────────────────────────────────────────────
+function updateSelectionStatus(info) {
+  state.selectionInfo = info;
+  var status = document.getElementById('sel-status');
+  var dot    = document.getElementById('sel-dot');
+  var title  = document.getElementById('sel-status-title');
+  var body   = document.getElementById('sel-status-body');
+  var pubBtn = document.getElementById('publish-btn');
+  var variantField = document.getElementById('pub-variant');
+  var variantLabel = variantField ? variantField.closest('.field') : null;
+
+  if (info && info.hasSelection) {
+    var isSet = info.nodeType === 'COMPONENT_SET';
+    status.className = 'selection-status ready';
+    dot.className    = 'sel-dot ready';
+    title.textContent = info.nodeName;
+    body.textContent  = isSet
+      ? 'COMPONENT_SET · ' + info.variantCount + ' variants · ' + info.width + ' × ' + info.height
+      : info.nodeType + ' · ' + info.width + ' × ' + info.height;
+    pubBtn.disabled = false;
+
+    // Hide variant field for component sets (variants come from the set itself)
+    if (variantLabel) variantLabel.style.display = isSet ? 'none' : '';
+    if (isSet && variantField) variantField.value = '';
+  } else {
+    status.className = 'selection-status empty';
+    dot.className    = 'sel-dot empty';
+    title.textContent = 'Nothing selected';
+    body.textContent  = 'Select a frame or component on the canvas to publish it.';
+    pubBtn.disabled = true;
+    if (variantLabel) variantLabel.style.display = '';
+  }
+}
+
+function setPubProgress(msg) {
+  const el = document.getElementById('pub-progress');
+  document.getElementById('pub-progress-text').textContent = msg;
+  el.classList.add('active');
+  document.getElementById('pub-success').classList.remove('active');
+}
+function setPubSuccess(msg) {
+  document.getElementById('pub-progress').classList.remove('active');
+  const el = document.getElementById('pub-success');
+  document.getElementById('pub-success-text').textContent = msg;
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 4000);
+}
+function clearPubStatus() {
+  document.getElementById('pub-progress').classList.remove('active');
+  document.getElementById('pub-success').classList.remove('active');
+}
+
+async function doPublish() {
+  if (state.isPublishing) return;
+
+  var name     = document.getElementById('pub-name').value.trim();
+  var variant  = document.getElementById('pub-variant').value.trim();
+  var category = document.getElementById('pub-category').value;
+  var desc     = document.getElementById('pub-description').value.trim();
+  var isSet    = state.selectionInfo && state.selectionInfo.nodeType === 'COMPONENT_SET';
+
+  if (!name || (!variant && !isSet)) {
+    showToast(isSet ? 'Enter a component name' : 'Enter a component name and variant', 'error'); return;
+  }
+  if (!state.selectionInfo || !state.selectionInfo.hasSelection) {
+    showToast('Select a component in Figma first', 'error'); return;
+  }
+
+  state.isPublishing = true;
+  document.getElementById('publish-btn').disabled = true;
+  clearPubStatus();
+
+  try {
+    // 1. Serialise + export thumbnail (combined in one message — avoids round-trip issues)
+    setPubProgress('Serialising node tree…');
+    await new Promise((resolve, reject) => {
+      window._serialiseResolve = resolve;
+      window._serialiseReject  = reject;
+      parent.postMessage({ pluginMessage: { type: 'serialise-selection' } }, '*');
+    });
+
+    // Thumbnail comes back alongside the serialised data (set by 'serialised' handler)
+    const thumbBase64 = state.publishThumbData || null;
+    console.log('[KBX] doPublish: thumbBase64 =', thumbBase64 ? 'string(' + thumbBase64.length + ')' : 'NULL');
+
+    // 3. Build component JSON
+    var id, file;
+    if (isSet) {
+      id   = (category + '-' + name).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      file = 'components/' + category + '/' + name.toLowerCase().replace(/\s+/g, '-') + '.json';
+    } else {
+      id   = (category + '-' + name + '-' + variant).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      file = 'components/' + category + '/' + name.toLowerCase().replace(/\s+/g, '-') + '-' + variant.toLowerCase().replace(/\s+/g, '-') + '.json';
+    }
+    var thumbnailFile = 'thumbnails/' + id + '.png';
+
+    var componentJSON = {
+      id: id, name: name, category: category,
+      description: desc,
+      width:  state.publishNodeData.width,
+      height: state.publishNodeData.height,
+      nodes:  state.publishNodeData,
+    };
+    if (isSet) {
+      componentJSON.isComponentSet = true;
+    } else {
+      componentJSON.variant = variant;
+    }
+
+    // 4. Commit component JSON
+    setPubProgress('Uploading component…');
+    const existingSHA = await ghGetSHA(file);
+    await ghPutJSON(file, componentJSON, isSet ? `Add ${name} (component set)` : `Add ${name} / ${variant}`, existingSHA);
+
+    // 5. Commit thumbnails — per-variant for component sets, single otherwise
+    var variantThumbFiles = [];
+    if (isSet && state.publishVariantThumbs && state.publishVariantThumbs.length > 0) {
+      setPubProgress('Uploading variant thumbnails…');
+      for (var ti = 0; ti < state.publishVariantThumbs.length; ti++) {
+        var vThumb = state.publishVariantThumbs[ti];
+        if (!vThumb) continue;
+        var vThumbFile = 'thumbnails/' + id + '-v' + ti + '.png';
+        var vSHA = await ghGetSHA(vThumbFile);
+        await ghPutBinary(vThumbFile, vThumb, 'Thumbnail: ' + name + ' variant ' + ti, vSHA);
+        variantThumbFiles.push(vThumbFile);
+      }
+    } else if (thumbBase64) {
+      setPubProgress('Uploading thumbnail…');
+      var thumbSHA = await ghGetSHA(thumbnailFile);
+      await ghPutBinary(thumbnailFile, thumbBase64, isSet ? 'Thumbnail: ' + name : 'Thumbnail: ' + name + ' / ' + variant, thumbSHA);
+    } else {
+      setPubProgress('Skipping thumbnail (export unavailable)…');
+    }
+
+    // 6. Update manifest
+    setPubProgress('Updating manifest…');
+    let { data: manifest, sha: manifestSHA } = await ghGet('manifest.json');
+
+    // Remove old entry with same id if it exists (update flow)
+    manifest.components = (manifest.components || []).filter(c => c.id !== id);
+
+    var entry = {
+      id: id, name: name, category: category,
+      description: desc,
+      tags:        [category],
+      file:        file,
+      thumbnailFile: (variantThumbFiles.length > 0) ? variantThumbFiles[0] : (thumbBase64 ? thumbnailFile : null),
+      variantThumbnailFiles: variantThumbFiles.length > 0 ? variantThumbFiles : null,
+      publishedAt:  new Date().toISOString().split('T')[0],
+      publishedBy:  'Kubix Team',
+    };
+    if (isSet) {
+      entry.isComponentSet = true;
+      entry.variantCount = state.selectionInfo.variantCount || 0;
+    } else {
+      entry.variant = variant;
+    }
+    manifest.components.push(entry);
+
+    await ghPutJSON('manifest.json', manifest, isSet ? `Update manifest: add ${name} (set)` : `Update manifest: add ${name} / ${variant}`, manifestSHA);
+
+    // 7. Bust local cache
+    storageSet('manifestCache', { data: manifest, timestamp: Date.now() });
+    state.manifest   = manifest;
+    state.components = manifest.components;
+    applyFilter();
+
+    state.publishNodeData = null;
+    state.publishThumbData = null;
+    state.publishVariantThumbs = null;
+    var pubLabel = isSet ? name + ' (set)' : name + ' / ' + variant;
+    setPubSuccess(pubLabel + ' published!');
+    showToast(pubLabel + ' added to library', 'success');
+
+  } catch (e) {
+    clearPubStatus();
+    showToast('Publish failed: ' + e.message, 'error');
+    console.error('[Kubix] Publish error:', e);
+  } finally {
+    state.isPublishing = false;
+    document.getElementById('publish-btn').disabled = !state.selectionInfo?.hasSelection;
+  }
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+function openSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  overlay.classList.add('active');
+  document.getElementById('cfg-token').value = state.config.githubToken || '';
+  document.getElementById('cfg-owner').value = state.config.repoOwner   || '';
+  document.getElementById('cfg-repo').value  = state.config.repoName    || '';
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('active');
+}
+async function saveSettings() {
+  const token = document.getElementById('cfg-token').value.trim();
+  const owner = document.getElementById('cfg-owner').value.trim();
+  const repo  = document.getElementById('cfg-repo').value.trim();
+  if (!token || !owner || !repo) { showToast('Fill in all fields', 'error'); return; }
+
+  state.config.githubToken = token;
+  state.config.repoOwner   = owner;
+  state.config.repoName    = repo;
+  storageSet('githubToken', token);
+  storageSet('repoOwner',   owner);
+  storageSet('repoName',    repo);
+
+  closeSettings();
+  showToast('Settings saved', 'success');
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', e => {
+  state.searchQuery = e.target.value;
+  applyFilter();
+});
+
+document.getElementById('categories-bar').addEventListener('click', e => {
+  const pill = e.target.closest('.cat-pill');
+  if (!pill) return;
+  state.activeCategory = pill.dataset.cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p === pill));
+  applyFilter();
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => showTab(btn.dataset.tab));
+});
+
+document.getElementById('insert-btn').addEventListener('click', insertSelected);
+document.getElementById('publish-btn').addEventListener('click', doPublish);
+
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  showToast('Refreshing library…', 'info', 1500);
+  fetchManifest(true);
+});
+
+document.getElementById('settings-btn').addEventListener('click', openSettings);
+document.getElementById('settings-close-btn').addEventListener('click', closeSettings);
+document.getElementById('settings-save-btn').addEventListener('click', saveSettings);
+
+document.getElementById('clear-cache-btn').addEventListener('click', () => {
+  storageDel('manifestCache');
+  showToast('Cache cleared', 'success');
+});
+
+document.getElementById('settings-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+});
+
+// Setup screen
+document.getElementById('setup-save-btn').addEventListener('click', async () => {
+  const token = document.getElementById('setup-token').value.trim();
+  const owner = document.getElementById('setup-owner').value.trim();
+  const repo  = document.getElementById('setup-repo').value.trim();
+  if (!token || !owner || !repo) { showToast('Fill in all fields', 'error'); return; }
+
+  state.config.githubToken = token;
+  state.config.repoOwner   = owner;
+  state.config.repoName    = repo;
+  storageSet('githubToken', token);
+  storageSet('repoOwner',   owner);
+  storageSet('repoName',    repo);
+
+  showScreen('loading');
+  fetchManifest(true);
+});
+
+// ─── Plugin message handler ───────────────────────────────────────────────────
+window.onmessage = event => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  switch (msg.type) {
+
+    case 'init': {
+      const d = msg.data || {};
+      state.config.githubToken = d.githubToken || '';
+      state.config.repoOwner   = d.repoOwner   || '';
+      state.config.repoName    = d.repoName    || '';
+
+      // Handle storage-value callbacks that may be waiting
+      if (msg.selectionInfo) updateSelectionStatus(msg.selectionInfo);
+
+      if (!state.config.githubToken || !state.config.repoOwner || !state.config.repoName) {
+        showScreen('setup');
+      } else {
+        // Use cached manifest if available
+        const cached = d.manifestCache;
+        if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
+          state.manifest   = cached.data;
+          state.components = cached.data.components || [];
+          applyFilter();
+          showScreen('app');
+        } else {
+          fetchManifest();
+        }
+      }
+      break;
+    }
+
+    case 'storage-value': {
+      if (_storageCallbacks[msg.key]) {
+        _storageCallbacks[msg.key](msg.value);
+        delete _storageCallbacks[msg.key];
+      }
+      break;
+    }
+
+    case 'selection-info':
+      updateSelectionStatus(msg.data);
+      break;
+
+    case 'serialise-progress':
+      setPubProgress(msg.message);
+      break;
+
+    case 'serialised':
+      state.publishNodeData  = msg.data;
+      state.publishThumbData = msg.thumbnail || null;
+      state.publishVariantThumbs = msg.variantThumbnails || null;
+      console.log('[KBX] Serialised received. Thumbnail:', msg.thumbnail ? 'yes' : 'none',
+        'Variant thumbs:', msg.variantThumbnails ? msg.variantThumbnails.length : 'none');
+      if (window._serialiseResolve) {
+        window._serialiseResolve(msg.data);
+        window._serialiseResolve = null;
+        window._serialiseReject  = null;
+      }
+      break;
+
+    case 'serialise-error':
+      if (window._serialiseReject) {
+        window._serialiseReject(new Error(msg.message));
+        window._serialiseResolve = null;
+        window._serialiseReject  = null;
+      }
+      showToast('Serialise failed: ' + msg.message, 'error');
+      break;
+
+    case 'thumbnail-data':
+      console.log('[KBX] Received thumbnail-data, length:', msg.data ? msg.data.length : 'null');
+      state.publishThumbData = msg.data;
+      if (window._thumbResolve) {
+        window._thumbResolve(msg.data);
+        window._thumbResolve = null;
+        window._thumbReject  = null;
+      }
+      break;
+
+    case 'thumbnail-error':
+      console.warn('[KBX] Received thumbnail-error:', msg.message);
+      // Non-fatal — publish can proceed without thumbnail
+      if (window._thumbResolve) {
+        window._thumbResolve(null);
+        window._thumbResolve = null;
+        window._thumbReject  = null;
+      }
+      break;
+
+    case 'insert-success': {
+      const btn = document.getElementById('insert-btn');
+      btn.disabled = false;
+      btn.textContent = 'Insert';
+      state.isInserting = false;
+      const msg2 = msg.tokensCreated
+        ? `${msg.componentName} inserted · 🎨 Theme Tokens created`
+        : `${msg.componentName} inserted`;
+      showToast(msg2, 'success', 3500);
+      break;
+    }
+
+    case 'insert-error': {
+      const btn = document.getElementById('insert-btn');
+      btn.disabled = false;
+      btn.textContent = 'Insert';
+      state.isInserting = false;
+      showToast('Insert failed: ' + msg.message, 'error');
+      break;
+    }
+
+    case 'theme-import-progress': {
+      var pbar = document.getElementById('theme-progress-bar');
+      var ptxt = document.getElementById('theme-progress-text');
+      if (pbar) pbar.style.width = msg.percent + '%';
+      if (ptxt) ptxt.textContent = msg.message || 'Processing…';
+      break;
+    }
+
+    case 'theme-import-done': {
+      document.getElementById('theme-progress').style.display = 'none';
+      document.getElementById('theme-results').style.display = 'block';
+      document.getElementById('theme-results-text').textContent = msg.themeName + ' imported!';
+      var details = '';
+      if (msg.variablesCreated) details += '✓ ' + msg.variablesCreated + ' variables created<br>';
+      if (msg.colorSchemes) details += '✓ ' + msg.colorSchemes + ' colour schemes<br>';
+      if (msg.sectionsCreated) details += '✓ ' + msg.sectionsCreated + ' section scaffolds<br>';
+      if (msg.typographyTokens) details += '✓ ' + msg.typographyTokens + ' typography tokens<br>';
+      document.getElementById('theme-results-details').innerHTML = details;
+      document.getElementById('theme-import-btn').disabled = false;
+      document.getElementById('theme-import-btn').textContent = 'Import Theme';
+      showToast(msg.themeName + ' imported successfully', 'success', 4000);
+      break;
+    }
+
+    case 'theme-import-error': {
+      document.getElementById('theme-progress').style.display = 'none';
+      document.getElementById('theme-import-btn').disabled = false;
+      document.getElementById('theme-import-btn').textContent = 'Import Theme';
+      showToast('Import failed: ' + msg.message, 'error');
+      break;
+    }
+  }
+};
+
+// ─── Theme Import ─────────────────────────────────────────────────────────────
+
+var _themeFile = null;
+
+// Drop zone
+var dropzone = document.getElementById('theme-dropzone');
+var fileInput = document.getElementById('theme-file-input');
+
+if (dropzone) {
+  dropzone.addEventListener('click', function() { fileInput.click(); });
+
+  dropzone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropzone.classList.add('drag-over');
+  });
+  dropzone.addEventListener('dragleave', function() {
+    dropzone.classList.remove('drag-over');
+  });
+  dropzone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) handleThemeFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', function() {
+    if (fileInput.files.length) handleThemeFile(fileInput.files[0]);
+  });
+}
+
+function handleThemeFile(file) {
+  if (!file.name.endsWith('.zip')) {
+    showToast('Please select a .zip file', 'error');
+    return;
+  }
+  _themeFile = file;
+  var nameEl = document.getElementById('theme-file-name');
+  nameEl.textContent = '📦 ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB)';
+  nameEl.style.display = 'block';
+  document.getElementById('theme-import-btn').disabled = false;
+  document.getElementById('theme-results').style.display = 'none';
+}
+
+document.getElementById('theme-import-btn').addEventListener('click', async function() {
+  if (!_themeFile) return;
+
+  this.disabled = true;
+  this.textContent = 'Importing…';
+  document.getElementById('theme-progress').style.display = 'block';
+  document.getElementById('theme-results').style.display = 'none';
+
+  try {
+    var themeData = await parseShopifyThemeZip(_themeFile);
+    console.log('[KBX] Theme parsed:', themeData.themeName, '—', themeData.sections.length, 'sections,', Object.keys(themeData.colorSchemes).length, 'colour schemes');
+
+    // Send to Figma plugin sandbox for variable/component creation
+    parent.postMessage({ pluginMessage: { type: 'import-theme', data: themeData } }, '*');
+
+  } catch (e) {
+    console.error('[KBX] Theme parse error:', e);
+    document.getElementById('theme-progress').style.display = 'none';
+    this.disabled = false;
+    this.textContent = 'Import Theme';
+    showToast('Parse failed: ' + e.message, 'error');
+  }
+});
+
+async function parseShopifyThemeZip(file) {
+  var zip = await JSZip.loadAsync(file);
+
+  // 1. Parse settings_data.json for colour schemes, typography, layout
+  var settingsData = {};
+  var settingsFile = zip.file(/config\/settings_data\.json$/i)[0];
+  if (settingsFile) {
+    settingsData = JSON.parse(await settingsFile.async('text'));
+  }
+  var current = settingsData.current || {};
+
+  // Extract colour schemes
+  var colorSchemes = current.color_schemes || {};
+
+  // Extract typography
+  var typography = {};
+  for (var key in current) {
+    if (key.indexOf('type_') === 0 || key.indexOf('font') !== -1) {
+      typography[key] = current[key];
+    }
+  }
+
+  // Extract layout/button settings
+  var layout = {};
+  var layoutKeys = ['page_width', 'badge_corner_radius', 'primary_button_border_width',
+    'button_border_radius_primary', 'secondary_button_border_width', 'button_border_radius_secondary',
+    'input_border_width', 'inputs_border_radius', 'popover_border_radius',
+    'product_corner_radius', 'card_corner_radius',
+    'variant_swatch_width', 'variant_swatch_radius', 'variant_button_radius'];
+  for (var lk = 0; lk < layoutKeys.length; lk++) {
+    if (current[layoutKeys[lk]] !== undefined) layout[layoutKeys[lk]] = current[layoutKeys[lk]];
+  }
+
+  // 2. Parse section schemas
+  var sections = [];
+  var sectionFiles = zip.file(/sections\/[^/]+\.liquid$/i);
+
+  for (var si = 0; si < sectionFiles.length; si++) {
+    var sFile = sectionFiles[si];
+    var sName = sFile.name.replace(/^.*\//, '').replace('.liquid', '');
+    if (sName.startsWith('_') || sName.startsWith('main-') || sName.startsWith('predictive-') || sName === 'section-rendering-product-card') continue;
+
+    var content = await sFile.async('text');
+    var schemaMatch = content.match(/\{%[-\s]*schema\s*[-]?%\}\s*([\s\S]*?)\s*\{%[-\s]*endschema\s*[-]?%\}/);
+    if (!schemaMatch) continue;
+
+    try {
+      var schema = JSON.parse(schemaMatch[1]);
+      var settings = schema.settings || [];
+      var blocks = schema.blocks || [];
+
+      // Extract select settings (these become variant properties)
+      var selectSettings = [];
+      for (var ss = 0; ss < settings.length; ss++) {
+        var s = settings[ss];
+        if (s.type === 'select' && s.options && s.id) {
+          selectSettings.push({
+            id: s.id,
+            label: s.label || s.id,
+            options: s.options.map(function(o) { return o.value; }),
+            defaultValue: s.default || s.options[0].value
+          });
+        }
+      }
+
+      // Extract checkbox settings (boolean toggles)
+      var checkboxSettings = [];
+      for (var cs = 0; cs < settings.length; cs++) {
+        var c = settings[cs];
+        if (c.type === 'checkbox' && c.id) {
+          checkboxSettings.push({
+            id: c.id,
+            label: c.label || c.id,
+            defaultValue: c.default !== undefined ? c.default : false
+          });
+        }
+      }
+
+      // Extract range settings
+      var rangeSettings = [];
+      for (var rs = 0; rs < settings.length; rs++) {
+        var r = settings[rs];
+        if (r.type === 'range' && r.id) {
+          rangeSettings.push({
+            id: r.id,
+            label: r.label || r.id,
+            min: r.min, max: r.max, step: r.step, unit: r.unit,
+            defaultValue: r.default
+          });
+        }
+      }
+
+      // Extract accepted block types
+      var blockTypes = [];
+      for (var bt = 0; bt < blocks.length; bt++) {
+        blockTypes.push(blocks[bt].type || '?');
+      }
+
+      sections.push({
+        name: sName,
+        schemaName: schema.name || sName,
+        tag: schema.tag || 'section',
+        selectSettings: selectSettings,
+        checkboxSettings: checkboxSettings,
+        rangeSettings: rangeSettings,
+        blockTypes: blockTypes,
+        presets: schema.presets || []
+      });
+
+    } catch (parseErr) {
+      console.warn('[KBX] Failed to parse schema for', sName, parseErr);
+    }
+  }
+
+  // Sort sections by type — navigation first, then content, then utility
+  var navSections = ['header', 'header-announcements', 'footer'];
+  sections.sort(function(a, b) {
+    var aNav = navSections.indexOf(a.name) !== -1 ? 0 : 1;
+    var bNav = navSections.indexOf(b.name) !== -1 ? 0 : 1;
+    if (aNav !== bNav) return aNav - bNav;
+    return a.name.localeCompare(b.name);
+  });
+
+  // Derive theme name from file name or settings
+  var themeName = file.name.replace(/^theme_export__/, '').replace(/__.*$/, '').replace(/-/g, ' ');
+  // Try to get a cleaner name from the zip
+  var themeInfo = zip.file(/config\/settings_schema\.json$/i)[0];
+  if (themeInfo) {
+    try {
+      var schemaArr = JSON.parse(await themeInfo.async('text'));
+      if (schemaArr[0] && schemaArr[0].theme_name) themeName = schemaArr[0].theme_name;
+    } catch (_) {}
+  }
+
+  return {
+    themeName: themeName,
+    colorSchemes: colorSchemes,
+    typography: typography,
+    layout: layout,
+    sections: sections
+  };
+}
+</script>
+</body>
+</html>

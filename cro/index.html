@@ -121,7 +121,7 @@
     #screen-dashboard.active { display: flex !important; flex-direction: column; }
     #view-projects { flex: 1; }
     #view-detail   { flex: 1; }
-    #screen-login.active, #screen-config.active, #screen-client.active { display: flex !important; }
+    #screen-config.active, #screen-client.active { display: flex !important; }
     #screen-client { flex-direction: column; }
 
     /* ── GLOBAL HEADER ─────────────────────────────────────── */
@@ -310,16 +310,29 @@
     .table-wrap { padding:0 44px 64px; }
 
     /* ── LOGIN SCREEN ──────────────────────────────────────── */
-    #screen-login { display:flex;flex-direction:column;min-height:100vh; }
-    .login-card { background:var(--bg-card);border:1px solid var(--border);border-radius:2px;padding:48px 44px;max-width:420px;width:100%;text-align:center; }
-    .login-k { width:56px;height:56px;display:flex;align-items:center;justify-content:center;color:var(--accent-text);margin:0 auto 20px; }
+    #screen-login { position:relative;overflow:hidden;min-height:100vh;background:var(--bg); }
+    #login-canvas { position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none; }
+    .login-theme-float { position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:10; }
+    .login-theme-float .theme-toggle { background:rgba(20,20,22,0.88);border:1px solid var(--border);border-radius:99px;padding:4px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px); }
+    [data-theme="light"] .login-theme-float .theme-toggle { background:rgba(245,245,240,0.88); }
+    .login-center { position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:60px 20px; }
+    .login-card { background:rgba(26,26,28,0.92);border:1px solid var(--border);border-radius:2px;padding:48px 44px;max-width:420px;width:100%;text-align:center;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px); }
+    [data-theme="light"] .login-card { background:rgba(255,255,255,0.94); }
+    .login-k { display:flex;align-items:center;justify-content:center;gap:10px;color:var(--accent-text);margin:0 auto 24px; }
     .login-h1 { font-family:'Domine',serif;font-size:26px;font-weight:400;color:var(--text);margin-bottom:8px; }
-    .login-sub { font-size:13px;color:var(--text-mute);line-height:1.65;margin-bottom:32px; }
-    .btn-google { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card-hover);font-family:inherit;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.15s;margin-bottom:16px; }
-    .btn-google:hover { border-color:var(--border-lt);transform:translateY(-1px); }
+    .login-sub { font-size:13px;color:var(--text-mute);line-height:1.65;margin-bottom:28px; }
+    .btn-google { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.04);font-family:inherit;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:border-color 0.15s,transform 0.15s,opacity 0.15s;margin-bottom:16px;position:relative;isolation:isolate; }
+    [data-theme="light"] .btn-google { background:var(--bg-card-hover); }
+    .btn-google:hover { border-color:transparent;transform:translateY(-1px); }
     .btn-google svg { flex-shrink:0; }
+    /* Animated Google gradient border — ring only via mask-composite */
+    @property --gg-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
+    .btn-google::before { content:'';position:absolute;inset:0;border-radius:10px;padding:1px;--gg-angle:0deg;background:conic-gradient(from var(--gg-angle),#4285F4 0%,#34A853 25%,#FBBC05 50%,#EA4335 75%,#4285F4 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;opacity:0;z-index:0;transition:opacity 0.3s; }
+    .btn-google:hover::before { opacity:1;animation:gg-border-spin 2s linear infinite; }
+    @keyframes gg-border-spin { to { --gg-angle:360deg; } }
     .login-footer { font-size:11px;color:var(--text-mute);margin-top:24px;padding-top:20px;border-top:1px solid var(--border); }
-    .login-err { font-size:12px;color:#FF6B6B;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:2px;padding:10px 14px;margin-bottom:16px;display:none; }
+    .login-err { font-size:12px;color:#FF6B6B;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:2px;padding:10px 14px;margin-bottom:16px;display:none;line-height:1.5; }
+    .login-err a { color:var(--accent-text) !important; }
 
     /* ── CONFIG MISSING SCREEN ─────────────────────────────── */
     #screen-config { display:flex;flex-direction:column;min-height:100vh; }
@@ -629,24 +642,29 @@
 <!-- SCREEN: LOGIN                                               -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div id="screen-login" class="screen">
-  <div class="g-header grid-bg">
-    <div class="g-header-orbs"><div class="orb orb-y"></div><div class="orb orb-o"></div><div class="orb orb-m"></div></div>
-    <div class="g-header-inner">
-      <div class="brand"><svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 2 24 24"><path fill="currentColor" d="M14 6h8v8h-2v-4h-2V8h-4zm2 6v-2h2v2zm-2 2v-2h2v2zm-2 0h2v2h-2zm-2-2h2v2h-2zm-2 0v-2h2v2zm-2 2v-2h2v2zm-2 2v-2h2v2zm0 0v2H2v-2z"/></svg><div class="brand-wordmark-wrap"><svg class="kubix-wordmark" width="94" height="23" viewBox="0 0 141 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.4541 31.1907L14.9187 15.8965L25.451 2.51405C25.9525 1.87679 25.5764 0.857178 24.6987 0.857178H19.0564C18.8056 0.857178 18.3041 1.11208 18.1787 1.36699L8.14802 14.1122V2.00424C8.14802 1.36698 7.64649 0.857178 7.01957 0.857178H1.75345C1.12653 0.857178 0.625 1.36698 0.625 2.00424V31.828C0.625 32.4652 1.12653 32.975 1.75345 32.975H7.01957C7.52111 32.975 8.02264 32.4652 8.02264 31.828V18.1906L18.4295 32.3378C18.5549 32.5927 19.0564 32.8476 19.3072 32.8476H25.7017C26.5794 32.8476 26.9556 31.828 26.4541 31.1907Z" fill="currentColor"/><path d="M30.3438 1.74934C30.3438 1.23953 30.7198 0.857178 31.2214 0.857178H36.7383C37.2398 0.857178 37.6159 1.23953 37.6159 1.74934V20.3573C37.6159 23.5436 39.9983 26.0926 43.1329 26.0926C46.3929 26.0926 48.7752 23.5436 48.7752 20.3573V1.74934C48.7752 1.23953 49.1513 0.857178 49.6529 0.857178H55.1698C55.6713 0.857178 56.0475 1.23953 56.0475 1.74934V20.7397C56.0475 27.7495 50.2798 33.4848 43.1329 33.4848C35.9861 33.4848 30.3438 27.7495 30.3438 20.7397V1.74934Z" fill="currentColor"/><path d="M63.3164 1.74934C63.3164 1.23953 63.6925 0.857178 64.1941 0.857178H74.7263C79.9924 0.857178 84.3809 4.55328 84.3809 9.39645C84.3809 12.9651 81.2463 15.5141 79.1147 16.6612C81.497 17.6808 85.1332 19.9749 85.1332 24.1809C85.1332 29.2789 80.6194 32.975 75.3532 32.975H64.1941C63.6925 32.975 63.3164 32.5927 63.3164 32.0829V1.74934ZM73.8486 13.8573C75.604 13.8573 76.9832 12.3278 76.9832 10.5435C76.9832 8.75919 75.4786 7.48467 73.8486 7.48467H70.3379V13.8573H73.8486ZM74.4756 26.475C76.2309 26.475 77.7355 24.9456 77.7355 23.1612C77.7355 21.3769 75.8548 19.9749 73.974 19.9749H70.3379V26.475H74.4756Z" fill="currentColor"/><path d="M90.9023 1.74934C90.9023 1.23953 91.2785 0.857178 91.78 0.857178H97.1715C97.6731 0.857178 98.0492 1.23953 98.0492 1.74934V32.0829C98.0492 32.5927 97.6731 32.975 97.1715 32.975H91.78C91.2785 32.975 90.9023 32.5927 90.9023 32.0829V1.74934Z" fill="currentColor"/><path d="M112.469 16.5338L103.316 2.1317C102.939 1.49444 103.316 0.857178 104.068 0.857178H110.713C111.089 0.857178 111.34 1.11208 111.466 1.23953L116.606 9.7788L121.872 1.23953C121.998 1.11208 122.249 0.857178 122.625 0.857178H129.27C130.022 0.857178 130.398 1.49444 130.022 2.1317L120.869 16.5338L130.398 31.7005C130.775 32.3378 130.398 32.975 129.646 32.975H123.377C123.126 32.975 122.75 32.8476 122.625 32.5927L116.732 23.2887H116.606L110.839 32.5927C110.713 32.7201 110.462 32.975 110.086 32.975H103.817C103.065 32.975 102.689 32.3378 103.065 31.7005L112.469 16.5338Z" fill="currentColor"/><path d="M135.577 32.9793H139.779C140.245 32.9793 140.626 32.5921 140.626 32.119V27.5915C140.626 27.1183 140.245 26.7312 139.779 26.7312H135.577C135.112 26.7312 134.73 27.1183 134.73 27.5915V32.119C134.73 32.5921 135.101 32.9793 135.577 32.9793Z" fill="currentColor"/></svg><div class="brand-sub">CRO Planner</div></div></div>
-      <div class="theme-toggle">
-        <button class="theme-btn" id="lgn-btn-dark"  onclick="setTheme('dark')"  title="Dark mode">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </button>
-        <button class="theme-btn" id="lgn-btn-light" onclick="setTheme('light')" title="Light mode">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-      </div>
+  <canvas id="login-canvas"></canvas>
+
+  <!-- Floating theme toggle -->
+  <div class="login-theme-float">
+    <div class="theme-toggle">
+      <button class="theme-btn" id="lgn-btn-dark"  onclick="setTheme('dark')"  title="Dark mode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="theme-btn" id="lgn-btn-light" onclick="setTheme('light')" title="Light mode">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
     </div>
   </div>
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:60px 20px;">
+
+  <div class="login-center">
     <div class="login-card">
-      <div class="login-k"><svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M14 6h8v8h-2v-4h-2V8h-4zm2 6v-2h2v2zm-2 2v-2h2v2zm-2 0h2v2h-2zm-2-2h2v2h-2zm-2 0v-2h2v2zm-2 2v-2h2v2zm-2 2v-2h2v2zm0 0v2H2v-2z"/></svg><svg class="kubix-wordmark" width="120" height="29" viewBox="0 0 141 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.4541 31.1907L14.9187 15.8965L25.451 2.51405C25.9525 1.87679 25.5764 0.857178 24.6987 0.857178H19.0564C18.8056 0.857178 18.3041 1.11208 18.1787 1.36699L8.14802 14.1122V2.00424C8.14802 1.36698 7.64649 0.857178 7.01957 0.857178H1.75345C1.12653 0.857178 0.625 1.36698 0.625 2.00424V31.828C0.625 32.4652 1.12653 32.975 1.75345 32.975H7.01957C7.52111 32.975 8.02264 32.4652 8.02264 31.828V18.1906L18.4295 32.3378C18.5549 32.5927 19.0564 32.8476 19.3072 32.8476H25.7017C26.5794 32.8476 26.9556 31.828 26.4541 31.1907Z" fill="currentColor"/><path d="M30.3438 1.74934C30.3438 1.23953 30.7198 0.857178 31.2214 0.857178H36.7383C37.2398 0.857178 37.6159 1.23953 37.6159 1.74934V20.3573C37.6159 23.5436 39.9983 26.0926 43.1329 26.0926C46.3929 26.0926 48.7752 23.5436 48.7752 20.3573V1.74934C48.7752 1.23953 49.1513 0.857178 49.6529 0.857178H55.1698C55.6713 0.857178 56.0475 1.23953 56.0475 1.74934V20.7397C56.0475 27.7495 50.2798 33.4848 43.1329 33.4848C35.9861 33.4848 30.3438 27.7495 30.3438 20.7397V1.74934Z" fill="currentColor"/><path d="M63.3164 1.74934C63.3164 1.23953 63.6925 0.857178 64.1941 0.857178H74.7263C79.9924 0.857178 84.3809 4.55328 84.3809 9.39645C84.3809 12.9651 81.2463 15.5141 79.1147 16.6612C81.497 17.6808 85.1332 19.9749 85.1332 24.1809C85.1332 29.2789 80.6194 32.975 75.3532 32.975H64.1941C63.6925 32.975 63.3164 32.5927 63.3164 32.0829V1.74934ZM73.8486 13.8573C75.604 13.8573 76.9832 12.3278 76.9832 10.5435C76.9832 8.75919 75.4786 7.48467 73.8486 7.48467H70.3379V13.8573H73.8486ZM74.4756 26.475C76.2309 26.475 77.7355 24.9456 77.7355 23.1612C77.7355 21.3769 75.8548 19.9749 73.974 19.9749H70.3379V26.475H74.4756Z" fill="currentColor"/><path d="M90.9023 1.74934C90.9023 1.23953 91.2785 0.857178 91.78 0.857178H97.1715C97.6731 0.857178 98.0492 1.23953 98.0492 1.74934V32.0829C98.0492 32.5927 97.6731 32.975 97.1715 32.975H91.78C91.2785 32.975 90.9023 32.5927 90.9023 32.0829V1.74934Z" fill="currentColor"/><path d="M112.469 16.5338L103.316 2.1317C102.939 1.49444 103.316 0.857178 104.068 0.857178H110.713C111.089 0.857178 111.34 1.11208 111.466 1.23953L116.606 9.7788L121.872 1.23953C121.998 1.11208 122.249 0.857178 122.625 0.857178H129.27C130.022 0.857178 130.398 1.49444 130.022 2.1317L120.869 16.5338L130.398 31.7005C130.775 32.3378 130.398 32.975 129.646 32.975H123.377C123.126 32.975 122.75 32.8476 122.625 32.5927L116.732 23.2887H116.606L110.839 32.5927C110.713 32.7201 110.462 32.975 110.086 32.975H103.817C103.065 32.975 102.689 32.3378 103.065 31.7005L112.469 16.5338Z" fill="currentColor"/><path d="M135.577 32.9793H139.779C140.245 32.9793 140.626 32.5921 140.626 32.119V27.5915C140.626 27.1183 140.245 26.7312 139.779 26.7312H135.577C135.112 26.7312 134.73 27.1183 134.73 27.5915V32.119C134.73 32.5921 135.101 32.9793 135.577 32.9793Z" fill="currentColor"/></svg></div>
-      <h1 class="login-h1">CRO Planner</h1>
+      <div class="brand" style="justify-content:center;margin:0 auto 32px;">
+        <svg class="brand-icon" xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 2 24 24"><path fill="currentColor" d="M14 6h8v8h-2v-4h-2V8h-4zm2 6v-2h2v2zm-2 2v-2h2v2zm-2 0h2v2h-2zm-2-2h2v2h-2zm-2 0v-2h2v2zm-2 2v-2h2v2zm-2 2v-2h2v2zm0 0v2H2v-2z"/></svg>
+        <div class="brand-wordmark-wrap">
+          <svg class="kubix-wordmark" width="94" height="23" viewBox="0 0 141 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26.4541 31.1907L14.9187 15.8965L25.451 2.51405C25.9525 1.87679 25.5764 0.857178 24.6987 0.857178H19.0564C18.8056 0.857178 18.3041 1.11208 18.1787 1.36699L8.14802 14.1122V2.00424C8.14802 1.36698 7.64649 0.857178 7.01957 0.857178H1.75345C1.12653 0.857178 0.625 1.36698 0.625 2.00424V31.828C0.625 32.4652 1.12653 32.975 1.75345 32.975H7.01957C7.52111 32.975 8.02264 32.4652 8.02264 31.828V18.1906L18.4295 32.3378C18.5549 32.5927 19.0564 32.8476 19.3072 32.8476H25.7017C26.5794 32.8476 26.9556 31.828 26.4541 31.1907Z" fill="currentColor"/><path d="M30.3438 1.74934C30.3438 1.23953 30.7198 0.857178 31.2214 0.857178H36.7383C37.2398 0.857178 37.6159 1.23953 37.6159 1.74934V20.3573C37.6159 23.5436 39.9983 26.0926 43.1329 26.0926C46.3929 26.0926 48.7752 23.5436 48.7752 20.3573V1.74934C48.7752 1.23953 49.1513 0.857178 49.6529 0.857178H55.1698C55.6713 0.857178 56.0475 1.23953 56.0475 1.74934V20.7397C56.0475 27.7495 50.2798 33.4848 43.1329 33.4848C35.9861 33.4848 30.3438 27.7495 30.3438 20.7397V1.74934Z" fill="currentColor"/><path d="M63.3164 1.74934C63.3164 1.23953 63.6925 0.857178 64.1941 0.857178H74.7263C79.9924 0.857178 84.3809 4.55328 84.3809 9.39645C84.3809 12.9651 81.2463 15.5141 79.1147 16.6612C81.497 17.6808 85.1332 19.9749 85.1332 24.1809C85.1332 29.2789 80.6194 32.975 75.3532 32.975H64.1941C63.6925 32.975 63.3164 32.5927 63.3164 32.0829V1.74934ZM73.8486 13.8573C75.604 13.8573 76.9832 12.3278 76.9832 10.5435C76.9832 8.75919 75.4786 7.48467 73.8486 7.48467H70.3379V13.8573H73.8486ZM74.4756 26.475C76.2309 26.475 77.7355 24.9456 77.7355 23.1612C77.7355 21.3769 75.8548 19.9749 73.974 19.9749H70.3379V26.475H74.4756Z" fill="currentColor"/><path d="M90.9023 1.74934C90.9023 1.23953 91.2785 0.857178 91.78 0.857178H97.1715C97.6731 0.857178 98.0492 1.23953 98.0492 1.74934V32.0829C98.0492 32.5927 97.6731 32.975 97.1715 32.975H91.78C91.2785 32.975 90.9023 32.5927 90.9023 32.0829V1.74934Z" fill="currentColor"/><path d="M112.469 16.5338L103.316 2.1317C102.939 1.49444 103.316 0.857178 104.068 0.857178H110.713C111.089 0.857178 111.34 1.11208 111.466 1.23953L116.606 9.7788L121.872 1.23953C121.998 1.11208 122.249 0.857178 122.625 0.857178H129.27C130.022 0.857178 130.398 1.49444 130.022 2.1317L120.869 16.5338L130.398 31.7005C130.775 32.3378 130.398 32.975 129.646 32.975H123.377C123.126 32.975 122.75 32.8476 122.625 32.5927L116.732 23.2887H116.606L110.839 32.5927C110.713 32.7201 110.462 32.975 110.086 32.975H103.817C103.065 32.975 102.689 32.3378 103.065 31.7005L112.469 16.5338Z" fill="currentColor"/><path d="M135.577 32.9793H139.779C140.245 32.9793 140.626 32.5921 140.626 32.119V27.5915C140.626 27.1183 140.245 26.7312 139.779 26.7312H135.577C135.112 26.7312 134.73 27.1183 134.73 27.5915V32.119C134.73 32.5921 135.101 32.9793 135.577 32.9793Z" fill="currentColor"/></svg>
+          <div class="brand-sub">CRO Planner</div>
+        </div>
+      </div>
       <p class="login-sub">Sign in with your Kubix Google account to manage client CRO programmes.</p>
       <div class="login-err" id="login-err"></div>
       <button class="btn-google" onclick="signInWithGoogle()">
@@ -1406,13 +1424,103 @@ function setTheme(t) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// LOGIN CANVAS (dot-matrix + ripple intro)
+// ─────────────────────────────────────────────────────────────
+let _loginCanvasRaf = null;
+
+function initLoginCanvas() {
+  const canvas = document.getElementById('login-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const SPACING = 26, R = 2.0, RIPPLE_SECS = 1.6;
+  let dots = [], maxDist = 1;
+
+  function buildDots() {
+    dots = [];
+    const w = canvas.width  = window.innerWidth;
+    const h = canvas.height = window.innerHeight;
+    const cx = w / 2, cy = h / 2;
+    maxDist = Math.sqrt(cx * cx + cy * cy);
+    for (let y = SPACING / 2; y < h + SPACING; y += SPACING) {
+      for (let x = SPACING / 2; x < w + SPACING; x += SPACING) {
+        const dx = x - cx, dy = y - cy;
+        dots.push({
+          x, y,
+          p:  Math.random() * Math.PI * 2,
+          s:  0.7 + Math.random() * 0.6,
+          nd: Math.sqrt(dx*dx + dy*dy) / maxDist
+        });
+      }
+    }
+  }
+  buildDots();
+  const onResize = () => buildDots();
+  window.addEventListener('resize', onResize);
+
+  let startTs = null;
+  function frame(ts) {
+    _loginCanvasRaf = requestAnimationFrame(frame);
+    if (!startTs) startTs = ts;
+    const elapsed = (ts - startTs) / 1000;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const rgb = document.documentElement.getAttribute('data-theme') !== 'light' ? '255,255,0' : '160,140,0';
+    const rippleDone = elapsed > RIPPLE_SECS + 0.6;
+    dots.forEach(d => {
+      let a;
+      if (rippleDone) {
+        a = (Math.sin(d.p + elapsed * d.s) * 0.5 + 0.5) * 0.13;
+      } else {
+        const front = elapsed / RIPPLE_SECS;
+        const delta = front - d.nd;
+        if (delta < 0) {
+          a = 0;
+        } else if (delta < 0.12) {
+          a = (delta / 0.12) * 0.32;
+        } else {
+          const breathA = (Math.sin(d.p + elapsed * d.s) * 0.5 + 0.5) * 0.13;
+          const blend   = Math.min(1, (delta - 0.12) / 0.35);
+          a = 0.32 * (1 - blend) + breathA * blend;
+        }
+      }
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, R, 0, 6.2832);
+      ctx.fillStyle = `rgba(${rgb},${a.toFixed(3)})`;
+      ctx.fill();
+    });
+  }
+  if (_loginCanvasRaf) cancelAnimationFrame(_loginCanvasRaf);
+  _loginCanvasRaf = requestAnimationFrame(frame);
+
+  // Re-trigger ripple on Google button hover
+  const btn = document.querySelector('.btn-google');
+  const onBtnHover = () => { startTs = null; };
+  if (btn) btn.addEventListener('mouseenter', onBtnHover);
+
+  canvas._cleanup = () => {
+    cancelAnimationFrame(_loginCanvasRaf);
+    _loginCanvasRaf = null;
+    window.removeEventListener('resize', onResize);
+    if (btn) btn.removeEventListener('mouseenter', onBtnHover);
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
 // SCREENS
 // ─────────────────────────────────────────────────────────────
 function showScreen(name) {
+  if (name !== 'login') {
+    const c = document.getElementById('login-canvas');
+    if (c && c._cleanup) { c._cleanup(); c._cleanup = null; }
+  }
   ['config','login','dashboard','client'].forEach(s => {
     const el = document.getElementById('screen-' + s);
     if (el) el.classList.toggle('active', s === name);
   });
+  if (name === 'login') {
+    const errEl = document.getElementById('login-err');
+    if (errEl) errEl.style.display = 'none';
+    setTimeout(initLoginCanvas, 40);
+  }
 }
 
 function showView(name) {
@@ -1448,6 +1556,23 @@ document.addEventListener('DOMContentLoaded', () => {
   auth = firebase.auth();
   db   = firebase.firestore();
 
+  // Handle returning redirect sign-in (fallback for environments that block popups)
+  auth.getRedirectResult().then(result => {
+    if (result && result.user) {
+      if (result.credential && result.credential.accessToken) {
+        state.driveAccessToken = result.credential.accessToken;
+      }
+      // onAuthStateChanged will fire and call handleLogin — nothing extra needed
+    }
+  }).catch(err => {
+    console.error('[Redirect auth error]', err.code, err.message);
+    const errEl = document.getElementById('login-err');
+    if (errEl && err.code && err.code !== 'auth/no-auth-event') {
+      errEl.textContent = `Sign-in failed (${err.code}). Please try again.`;
+      errEl.style.display = 'block';
+    }
+  });
+
   // Check for client view
   const params = new URLSearchParams(location.search);
   const clientId = params.get('client');
@@ -1477,32 +1602,60 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────────────────────
+function _authProvider() {
+  const p = new firebase.auth.GoogleAuthProvider();
+  p.addScope('https://www.googleapis.com/auth/drive.file');
+  p.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
+  return p;
+}
+function _authSetBtnLoading(on) {
+  const btn = document.querySelector('.btn-google');
+  if (!btn) return;
+  btn.disabled = on;
+  btn.style.opacity = on ? '0.55' : '';
+  btn.style.pointerEvents = on ? 'none' : '';
+}
+function _authShowErr(html) {
+  const el = document.getElementById('login-err');
+  if (!el) return;
+  el.innerHTML = html;
+  el.style.display = html ? 'block' : 'none';
+}
+
 function signInWithGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.addScope('https://www.googleapis.com/auth/drive.file');
-  provider.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
-  auth.signInWithPopup(provider).then(result => {
-    // Store Google OAuth access token for Drive API uploads
+  _authShowErr('');
+  _authSetBtnLoading(true);
+  auth.signInWithPopup(_authProvider()).then(result => {
     if (result.credential && result.credential.accessToken) {
       state.driveAccessToken = result.credential.accessToken;
-      console.log('[Auth] Drive access token captured');
     }
+    // onAuthStateChanged handles navigation — keep button disabled until redirect
   }).catch(err => {
-    const errEl = document.getElementById('login-err');
     console.error('[Auth error]', err.code, err.message);
-    if (err.code === 'auth/popup-closed-by-user') return;
-    let msg = 'Sign-in failed. Please try again.';
-    if (err.code === 'auth/unauthorized-domain') {
-      msg = 'Domain not authorised. Add this site to Firebase Auth → Authorised domains.';
-    } else if (err.code === 'auth/popup-blocked') {
-      msg = 'Popup blocked — please allow popups for this site and try again.';
-    } else if (err.message && err.message.includes('hd')) {
-      msg = 'Please use your @kubixmedia.co.uk Google account.';
-    } else if (err.code) {
-      msg = `Sign-in failed (${err.code}). Please try again.`;
+    _authSetBtnLoading(false);
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    if (err.code === 'auth/operation-not-supported-in-this-environment' ||
+        err.code === 'auth/popup-blocked') {
+      _authShowErr('Pop-ups are blocked by your browser. <a href="#" onclick="signInViaRedirect();return false;" style="color:var(--accent-text);text-decoration:underline;white-space:nowrap;">Try redirect sign-in →</a>');
+      return;
     }
-    errEl.textContent = msg;
-    errEl.style.display = 'block';
+    if (err.code === 'auth/unauthorized-domain') {
+      _authShowErr('This domain isn\'t authorised in Firebase. Add it under Authentication → Settings → Authorised domains.');
+      return;
+    }
+    _authShowErr(err.message && err.message.includes('hd')
+      ? 'Please use your @kubixmedia.co.uk Google account.'
+      : `Sign-in failed (${err.code || 'unknown'}). Please try again.`);
+  });
+}
+
+function signInViaRedirect() {
+  _authShowErr('');
+  _authSetBtnLoading(true);
+  auth.signInWithRedirect(_authProvider()).catch(err => {
+    console.error('[Redirect auth error]', err.code, err.message);
+    _authSetBtnLoading(false);
+    _authShowErr(`Redirect sign-in failed (${err.code || 'unknown'}). Please try again.`);
   });
 }
 

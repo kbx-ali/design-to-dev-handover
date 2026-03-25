@@ -11,8 +11,21 @@
 .LSOverride
 ._*
 
+# Secrets
+.mcp.json
+
 # Editor
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# AI tooling
+.claude/
+.claude-flow/
+
+# Screenshots / assets
+*.png
+*.jpg
+*.jpeg
+Cursor-Arrow.svg
