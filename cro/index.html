@@ -161,8 +161,8 @@
     .btn-danger:hover { background:rgba(255,80,80,0.15); border-color:rgba(255,80,80,0.4); }
 
     /* ── THEME TOGGLE ──────────────────────────────────────── */
-    .theme-toggle { display:flex;align-items:center;background:var(--toggle-bg);border-radius:2px;padding:3px;border:1px solid var(--border); }
-    .theme-btn { display:flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:5px;cursor:pointer;border:none;background:transparent;color:var(--text-mute);transition:all 0.15s;font-size:13px; }
+    .theme-toggle { display:flex;align-items:center;background:var(--toggle-bg);border-radius:26px;padding:3px;border:1px solid var(--border); }
+    .theme-btn { display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:26px;cursor:pointer;border:none;background:transparent;color:var(--text-mute);transition:all 0.15s;font-size:13px; }
     .theme-btn:hover { color:var(--text); }
     .theme-btn.active { background:var(--bg-card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.15); }
 
@@ -316,8 +316,8 @@
     .login-theme-float .theme-toggle { background:rgba(20,20,22,0.88);border:1px solid var(--border);border-radius:99px;padding:4px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px); }
     [data-theme="light"] .login-theme-float .theme-toggle { background:rgba(245,245,240,0.88); }
     .login-center { position:relative;z-index:1;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:60px 20px; }
-    .login-card { background:rgba(26,26,28,0.92);border:1px solid var(--border);border-radius:2px;padding:48px 44px;max-width:420px;width:100%;text-align:center;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px); }
-    [data-theme="light"] .login-card { background:rgba(255,255,255,0.94); }
+    .login-card { background:rgba(30,30,33,0.48);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:48px 44px;max-width:420px;width:100%;text-align:center;backdrop-filter:blur(40px) saturate(160%);-webkit-backdrop-filter:blur(40px) saturate(160%);box-shadow:0 8px 40px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.07); }
+    [data-theme="light"] .login-card { background:rgba(255,255,255,0.52);border:1px solid rgba(255,255,255,0.7);box-shadow:0 8px 40px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.9); }
     .login-k { display:flex;align-items:center;justify-content:center;gap:10px;color:var(--accent-text);margin:0 auto 24px; }
     .login-h1 { font-family:'Domine',serif;font-size:26px;font-weight:400;color:var(--text);margin-bottom:8px; }
     .login-sub { font-size:13px;color:var(--text-mute);line-height:1.65;margin-bottom:28px; }
@@ -1432,75 +1432,131 @@ function initLoginCanvas() {
   const canvas = document.getElementById('login-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const SPACING = 26, R = 2.0, RIPPLE_SECS = 1.6;
-  let dots = [], maxDist = 1;
+  const SPACING = 22, RIPPLE_SECS = 1.8;
+  let cells = [], w = 0, h = 0, maxDist = 1;
 
-  function buildDots() {
-    dots = [];
-    const w = canvas.width  = window.innerWidth;
-    const h = canvas.height = window.innerHeight;
+  function buildGrid() {
+    cells = [];
+    w = canvas.width  = window.innerWidth;
+    h = canvas.height = window.innerHeight;
     const cx = w / 2, cy = h / 2;
     maxDist = Math.sqrt(cx * cx + cy * cy);
-    for (let y = SPACING / 2; y < h + SPACING; y += SPACING) {
-      for (let x = SPACING / 2; x < w + SPACING; x += SPACING) {
+    // One entry per grid intersection
+    for (let y = 0; y <= h + SPACING; y += SPACING) {
+      for (let x = 0; x <= w + SPACING; x += SPACING) {
         const dx = x - cx, dy = y - cy;
-        dots.push({
+        cells.push({
           x, y,
           p:  Math.random() * Math.PI * 2,
-          s:  0.7 + Math.random() * 0.6,
+          s:  0.5 + Math.random() * 0.5,
           nd: Math.sqrt(dx*dx + dy*dy) / maxDist
         });
       }
     }
   }
-  buildDots();
-  const onResize = () => buildDots();
+  buildGrid();
+  const onResize = () => buildGrid();
   window.addEventListener('resize', onResize);
 
-  let startTs = null;
-  function frame(ts) {
-    _loginCanvasRaf = requestAnimationFrame(frame);
-    if (!startTs) startTs = ts;
-    const elapsed = (ts - startTs) / 1000;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const rgb = document.documentElement.getAttribute('data-theme') !== 'light' ? '255,255,0' : '160,140,0';
-    const rippleDone = elapsed > RIPPLE_SECS + 0.6;
-    dots.forEach(d => {
-      let a;
-      if (rippleDone) {
-        a = (Math.sin(d.p + elapsed * d.s) * 0.5 + 0.5) * 0.13;
-      } else {
-        const front = elapsed / RIPPLE_SECS;
-        const delta = front - d.nd;
-        if (delta < 0) {
-          a = 0;
-        } else if (delta < 0.12) {
-          a = (delta / 0.12) * 0.32;
-        } else {
-          const breathA = (Math.sin(d.p + elapsed * d.s) * 0.5 + 0.5) * 0.13;
-          const blend   = Math.min(1, (delta - 0.12) / 0.35);
-          a = 0.32 * (1 - blend) + breathA * blend;
-        }
-      }
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, R, 0, 6.2832);
-      ctx.fillStyle = `rgba(${rgb},${a.toFixed(3)})`;
-      ctx.fill();
-    });
-  }
-  if (_loginCanvasRaf) cancelAnimationFrame(_loginCanvasRaf);
-  _loginCanvasRaf = requestAnimationFrame(frame);
+  const IDLE_ALPHA = 0.028; // matches --grid-line dark theme base opacity
 
-  // Re-trigger ripple on Google button hover
+  function drawGrid(getAlpha) {
+    ctx.clearRect(0, 0, w, h);
+    ctx.lineWidth = 0.75;
+    const alphaMap = new Map();
+    cells.forEach(c => alphaMap.set(`${c.x},${c.y}`, getAlpha(c)));
+    for (let y = 0; y <= h + SPACING; y += SPACING) {
+      for (let x = 0; x <= w; x += SPACING) {
+        const a = ((alphaMap.get(`${x},${y}`) || 0) + (alphaMap.get(`${x+SPACING},${y}`) || 0)) / 2;
+        if (a < 0.004) continue;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + SPACING, y);
+        ctx.strokeStyle = `rgba(${rgb()},${a.toFixed(3)})`; ctx.stroke();
+      }
+    }
+    for (let x = 0; x <= w + SPACING; x += SPACING) {
+      for (let y = 0; y <= h; y += SPACING) {
+        const a = ((alphaMap.get(`${x},${y}`) || 0) + (alphaMap.get(`${x},${y+SPACING}`) || 0)) / 2;
+        if (a < 0.004) continue;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + SPACING);
+        ctx.strokeStyle = `rgba(${rgb()},${a.toFixed(3)})`; ctx.stroke();
+      }
+    }
+  }
+
+  function rgb() {
+    return document.documentElement.getAttribute('data-theme') !== 'light' ? '255,255,0' : '100,90,0';
+  }
+
+  function drawStatic() {
+    drawGrid(() => IDLE_ALPHA);
+  }
+
+  // Ripple: returns true while still animating, false when done
+  let rippleTs = null;
+  let looping = false;
+
+  function rippleFrame(ts) {
+    if (!rippleTs) rippleTs = ts;
+    const elapsed = (ts - rippleTs) / 1000;
+    const done = elapsed > RIPPLE_SECS + 0.6;
+
+    if (done && looping) {
+      // Loop: restart ripple immediately
+      rippleTs = ts;
+      _loginCanvasRaf = requestAnimationFrame(rippleFrame);
+      return;
+    }
+
+    if (done) {
+      // Page-load ripple finished — draw static and stop RAF
+      cancelAnimationFrame(_loginCanvasRaf);
+      _loginCanvasRaf = null;
+      drawStatic();
+      return;
+    }
+
+    drawGrid(c => {
+      const front = elapsed / RIPPLE_SECS;
+      const delta = front - c.nd;
+      if (delta < 0) return 0;
+      if (delta < 0.1) return (delta / 0.1) * 0.32;
+      const blend = Math.min(1, (delta - 0.1) / 0.4);
+      return 0.32 * (1 - blend) + IDLE_ALPHA * blend;
+    });
+
+    _loginCanvasRaf = requestAnimationFrame(rippleFrame);
+  }
+
+  function startRipple(loop) {
+    looping = loop;
+    rippleTs = null;
+    if (_loginCanvasRaf) cancelAnimationFrame(_loginCanvasRaf);
+    _loginCanvasRaf = requestAnimationFrame(rippleFrame);
+  }
+
+  // Page-load: one ripple then go static
+  startRipple(false);
+
+  // Hover: loop ripple while hovering, restore static on leave
   const btn = document.querySelector('.btn-google');
-  const onBtnHover = () => { startTs = null; };
-  if (btn) btn.addEventListener('mouseenter', onBtnHover);
+  const onBtnEnter = () => startRipple(true);
+  const onBtnLeave = () => {
+    looping = false;
+    // Let the current ripple finish naturally (rippleFrame will draw static)
+  };
+  if (btn) {
+    btn.addEventListener('mouseenter', onBtnEnter);
+    btn.addEventListener('mouseleave', onBtnLeave);
+  }
 
   canvas._cleanup = () => {
     cancelAnimationFrame(_loginCanvasRaf);
     _loginCanvasRaf = null;
     window.removeEventListener('resize', onResize);
-    if (btn) btn.removeEventListener('mouseenter', onBtnHover);
+    if (btn) {
+      btn.removeEventListener('mouseenter', onBtnEnter);
+      btn.removeEventListener('mouseleave', onBtnLeave);
+    }
   };
 }
 
@@ -1625,12 +1681,16 @@ function _authShowErr(html) {
 function signInWithGoogle() {
   _authShowErr('');
   _authSetBtnLoading(true);
+  // Safety net: re-enable button if the popup promise never settles (e.g. popup closed without triggering rejection in some browsers)
+  const _popupGuard = setTimeout(() => _authSetBtnLoading(false), 60000);
   auth.signInWithPopup(_authProvider()).then(result => {
+    clearTimeout(_popupGuard);
     if (result.credential && result.credential.accessToken) {
       state.driveAccessToken = result.credential.accessToken;
     }
     // onAuthStateChanged handles navigation — keep button disabled until redirect
   }).catch(err => {
+    clearTimeout(_popupGuard);
     console.error('[Auth error]', err.code, err.message);
     _authSetBtnLoading(false);
     if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
@@ -1695,6 +1755,8 @@ function doSignOut() {
     state.currentTests = [];
     state.driveAccessToken = null;
     state.driveFolderId = null;
+    _authSetBtnLoading(false);
+    _authShowErr('');
     showScreen('login');
   });
 }
