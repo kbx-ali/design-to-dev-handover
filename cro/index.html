@@ -1948,6 +1948,43 @@ function renderDetail() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// ANIMATE: KPI COUNT-DOWN
+// ─────────────────────────────────────────────────────────────
+function animateCountDown(el, targetStr) {
+  const isFloat = targetStr.includes('.');
+  const target  = parseFloat(targetStr);
+  if (!target || isNaN(target)) return;
+
+  const start    = isFloat ? 10.0 : (target < 50 ? 50 : Math.min(target + 30, 150));
+  const duration = 700;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const current  = start - (start - target) * eased;
+    el.textContent = isFloat ? current.toFixed(1) : Math.round(current);
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = isFloat ? target.toFixed(1) : target;
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function animateCountUp(el, target) {
+  if (!target || isNaN(target)) return;
+  const duration = 500, startTime = performance.now();
+  function tick(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased    = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(eased * target);
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+}
+
+// ─────────────────────────────────────────────────────────────
 // RENDER: KPI CARDS
 // ─────────────────────────────────────────────────────────────
 function renderKPIs(tests, prefix) {
@@ -1979,6 +2016,10 @@ function renderKPIs(tests, prefix) {
       <div class="kpi-title">${k.title}</div>
       <div class="kpi-sub">${k.sub}</div>
     </div>`).join('');
+
+  document.querySelectorAll('#' + prefix + '-kpis .kpi-value:not(.dim)').forEach(el => {
+    animateCountDown(el, el.textContent.trim());
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2034,9 +2075,19 @@ function renderByPage(tests, prefix) {
         <span class="bar-count">${count}</span>
       </div>
       <div class="bar-track">
-        <div class="bar-fill" style="width:${Math.round(count/max*100)}%;background:${colors[i%colors.length]}"></div>
+        <div class="bar-fill" style="width:0%;background:${colors[i%colors.length]}" data-target-w="${Math.round(count/max*100)}"></div>
       </div>
     </div>`).join('');
+
+  const container = document.getElementById(prefix + '-by-page');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      container.querySelectorAll('.bar-fill').forEach((fill, i) => {
+        fill.style.transitionDelay = (i * 80) + 'ms';
+        fill.style.width = fill.dataset.targetW + '%';
+      });
+    });
+  });
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2062,8 +2113,9 @@ function buildDoughnut(counts) {
     const len = (count / total) * circ;
     const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
       stroke="${seg.hex}" stroke-width="${sw}"
-      stroke-dasharray="${len} ${circ - len}"
+      stroke-dasharray="0 ${circ}"
       stroke-dashoffset="${circ * 0.25 - offset}"
+      data-target-len="${len}" data-circ="${circ}"
       stroke-linecap="butt"/>`;
     offset += len;
     return arc;
@@ -2110,6 +2162,30 @@ function renderByStatus(tests, prefix) {
       <div class="doughnut-wrap">${buildDoughnut(counts)}</div>
       <div class="status-list">${list}</div>
     </div>`;
+
+  const container = document.getElementById(prefix + '-by-status');
+  container.querySelectorAll('circle[data-target-len]').forEach((circle, i) => {
+    const targetLen = parseFloat(circle.dataset.targetLen);
+    const circ      = parseFloat(circle.dataset.circ);
+    const delay = i * 80, startTime = performance.now() + delay;
+    function tick(now) {
+      if (now < startTime) { requestAnimationFrame(tick); return; }
+      const progress = Math.min((now - startTime) / 600, 1);
+      const eased    = 1 - Math.pow(1 - progress, 3);
+      const cur      = eased * targetLen;
+      circle.setAttribute('stroke-dasharray', `${cur} ${circ - cur}`);
+      if (progress < 1) requestAnimationFrame(tick);
+      else circle.setAttribute('stroke-dasharray', `${targetLen} ${circ - targetLen}`);
+    }
+    requestAnimationFrame(tick);
+  });
+
+  setTimeout(() => {
+    container.querySelectorAll('.status-num').forEach(el => {
+      const t = parseInt(el.textContent, 10);
+      if (!isNaN(t)) animateCountUp(el, t);
+    });
+  }, 220);
 }
 
 // ─────────────────────────────────────────────────────────────
