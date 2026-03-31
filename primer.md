@@ -23,11 +23,27 @@ Previously required GitHub PAT + Figma PAT + Gist setup per designer. Now uses s
 - One-time migration prompt to move existing `kbx_projects` from localStorage → Firestore
 - Optional Figma PAT kept in localStorage only (for "Populate from Figma" REST API feature)
 
-**Still needed:**
-- Set Firestore security rules in Firebase console:
-  - `handover_projects`: auth required, `@kubixmedia.co.uk` email domain check
-  - `handover_public`: public read, no write from client
-- End-to-end test: sign in → create project → Figma plugin export → share link
+**Firestore rules (all set):**
+- `projects` — public read, Kubix write (CRO app)
+- `handover_projects` — Kubix read/write only
+- `handover_public` — public read, Kubix write
+- `handover_sync` — public read, Kubix write (plugin beacon)
+
+**Deployment:**
+- Live at `kubix-design.netlify.app/handover`
+- Netlify connected to GitHub (`kbx-ali/design-to-dev-handover`) — auto-deploys on push
+- Firebase authorized domain: `kubix-design.netlify.app`
+
+**Sync feature (bidirectional):**
+- Web app writes `handover_sync/{figmaFileKey}` on every save (timestamp, editor name, shareToken)
+- Plugin polls every 60s — shows yellow dot indicator when web app is newer
+- Pull button merges notes/status from `handover_public/{shareToken}` back into plugin frames
+
+**Plugin settings:**
+- App URL updated to `kubix-design.netlify.app/handover`
+- `firestore.googleapis.com` added to manifest `networkAccess`
+
+**No outstanding blockers.**
 
 ### 3. Shopify-to-Figma Pipeline (`shopify-to-figma/`)
 A local Node.js/Express dashboard for uploading Shopify theme ZIPs, previewing all sections via `shopify theme dev`, and building Figma section libraries.
