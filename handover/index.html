@@ -845,6 +845,21 @@
   }
   .chip-remove:hover { color: #F87171; background: rgba(248,113,113,0.1); }
 
+  /* Toast notification */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card); color: var(--text-pri); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 18px; font-size: 13px; font-weight: 600;
+    font-family: var(--font-body); box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    z-index: 9000; opacity: 0; transition: opacity 0.2s, transform 0.2s;
+    display: flex; align-items: center; gap: 8px; max-width: 420px; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--kbx-mint); }
+  .toast.success::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--kbx-mint); flex-shrink: 0; }
+  .toast.error { border-color: #F87171; }
+  .toast.error::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #F87171; flex-shrink: 0; }
+
   /* ─── Google Drive / Assets ─────────────────────────────────── */
   /* General tab Drive field */
   .drive-field-row {
@@ -2294,6 +2309,23 @@ function removeSection(id) {
   savePagesData(); render(); scheduleSave();
 }
 
+// ─── Toast notifications ───────────────────────────────────────
+let _toastTimer;
+function showToast(msg, type = 'info') {
+  let el = document.getElementById('app-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'app-toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  clearTimeout(_toastTimer);
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  requestAnimationFrame(() => el.classList.add('show'));
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
 // ─── Google Drive asset upload (same pattern as CRO app) ───────
 let driveAccessToken = null;
 
@@ -2315,7 +2347,7 @@ async function ensureDriveToken() {
     } catch(e) { /* token expired — fall through */ }
   }
   const provider = new firebase.auth.GoogleAuthProvider();
-  provider.addScope('https://www.googleapis.com/auth/drive.file');
+  provider.addScope('https://www.googleapis.com/auth/drive');
   provider.setCustomParameters({ hd: 'kubixmedia.co.uk' });
   try {
     const result = await auth.signInWithPopup(provider);

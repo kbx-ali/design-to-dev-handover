@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Domine:wght@600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -327,8 +326,9 @@ html, body {
 /* Scrollbar in light mode */
 [data-theme="light"] .content::-webkit-scrollbar-thumb { background: #DDDDD8; }
 
-/* ── Iconify icons ───────────────────────────────────────── */
-iconify-icon { display: inline-block; flex-shrink: 0; }
+/* ── Inline SVG icons ────────────────────────────────────── */
+.pi-icon { display: inline-block; flex-shrink: 0; width: 13px; height: 13px; vertical-align: middle; }
+.pi-icon svg { display: block; width: 100%; height: 100%; }
 
 /* ── Theme toggle icons ──────────────────────────────────── */
 /* Dark mode default: show sun (click → go light) */
@@ -457,16 +457,16 @@ iconify-icon { display: inline-block; flex-shrink: 0; }
       </div>
       <div class="hdr-actions">
         <button class="icon-btn" id="pull-btn" title="Pull updates from web app">
-          <iconify-icon icon="pixelarticons:reload" class="icon-pull" style="font-size:13px"></iconify-icon>
-          <iconify-icon icon="pixelarticons:reload" class="icon-pull-spin" style="font-size:13px"></iconify-icon>
+          <span class="pi-icon icon-pull"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.1L1 10"/></svg></span>
+          <span class="pi-icon icon-pull-spin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.1L1 10"/></svg></span>
           <span class="sync-dot"></span>
         </button>
         <button class="icon-btn theme-toggle-btn" title="Toggle light/dark mode">
-          <iconify-icon icon="pixelarticons:sun"  class="icon-sun"  style="font-size:13px"></iconify-icon>
-          <iconify-icon icon="pixelarticons:moon" class="icon-moon" style="font-size:13px"></iconify-icon>
+          <span class="pi-icon icon-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+          <span class="pi-icon icon-moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
         </button>
         <button class="icon-btn" id="settings-btn" title="Settings">
-          <iconify-icon icon="pixelarticons:settings" style="font-size:13px"></iconify-icon>
+          <span class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
         </button>
       </div>
     </div>
@@ -503,7 +503,7 @@ iconify-icon { display: inline-block; flex-shrink: 0; }
       <div class="divider">
         <span class="divider-label" id="frames-count">Frames</span>
         <button class="refresh-btn" id="refresh-btn">
-          <iconify-icon icon="pixelarticons:reload" style="font-size:11px"></iconify-icon>
+          <span class="pi-icon" style="width:11px;height:11px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-5.1L1 10"/></svg></span>
           Refresh
         </button>
       </div>
@@ -513,7 +513,7 @@ iconify-icon { display: inline-block; flex-shrink: 0; }
 
     <div class="footer">
       <button class="btn-primary" id="open-btn">
-        <iconify-icon icon="pixelarticons:external-link" style="font-size:14px"></iconify-icon>
+        <span class="pi-icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
         <span id="open-btn-label">Open in Handover</span>
       </button>
     </div>
@@ -526,13 +526,13 @@ iconify-icon { display: inline-block; flex-shrink: 0; }
 
     <div class="hdr">
       <button class="back-btn" id="back-btn">
-        <iconify-icon icon="pixelarticons:chevron-left" style="font-size:12px"></iconify-icon>
+        <span class="pi-icon" style="width:12px;height:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
         Back
       </button>
       <span class="settings-title">Settings</span>
       <button class="icon-btn theme-toggle-btn" title="Toggle light/dark mode">
-        <iconify-icon icon="pixelarticons:sun"  class="icon-sun"  style="font-size:13px"></iconify-icon>
-        <iconify-icon icon="pixelarticons:moon" class="icon-moon" style="font-size:13px"></iconify-icon>
+        <span class="pi-icon icon-sun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></span>
+        <span class="pi-icon icon-moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
       </button>
     </div>
 
