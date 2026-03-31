@@ -673,6 +673,7 @@ let state = {
   isDirty:       false,   // true when notes/status changed since last pull or sync
   shareToken:    '',      // share token from web app (for Firestore pull)
   lastSyncTs:    0,       // ms timestamp of last successful pull from web app
+  pluginSyncId:  '',      // unique ID for sync — sent in export, web app writes handover_sync/{id}
 };
 
 // ── Utilities ─────────────────────────────────────────────────
@@ -1001,6 +1002,7 @@ function buildExportData() {
       ? `https://www.figma.com/design/${effectiveFileKey}/${encodeURIComponent(effectivePageName)}`
       : (state.figmaFileUrl || ''),
     activePage:   pageType,
+    pluginSyncId: state.pluginSyncId || '',
     pages
   };
 }
@@ -1012,6 +1014,12 @@ document.getElementById('open-btn').addEventListener('click', () => {
 
   post({ type: 'set-storage', key: 'projectName',  value: state.projectName  });
   post({ type: 'set-storage', key: 'projectTheme', value: state.projectTheme });
+
+  // Ensure a stable sync ID exists for web→plugin communication
+  if (!state.pluginSyncId) {
+    state.pluginSyncId = 'ps_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    post({ type: 'set-storage', key: 'pluginSyncId', value: state.pluginSyncId });
+  }
 
   const data    = buildExportData();
   const json    = JSON.stringify(data);
@@ -1052,7 +1060,7 @@ document.getElementById('back-btn').addEventListener('click', goBack);
 document.getElementById('back-btn-2').addEventListener('click', goBack);
 
 // ── Reset all plugin data ─────────────────────────────────────
-const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl', 'shareToken', 'lastSyncTs'];
+const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl', 'shareToken', 'lastSyncTs', 'pluginSyncId'];
 let _resetConfirming = false;
 
 function resetConfirmClear() {
@@ -1085,6 +1093,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   state.hasExported   = false;
   state.cachedFileKey = '';
   state.manualFigmaUrl = '';
+  state.pluginSyncId = '';
   resetConfirmClear();
   renderFrames();
   showToast('Plugin data cleared — starting fresh.');
@@ -1127,33 +1136,44 @@ function startSyncPolling() {
 }
 
 async function checkForWebAppUpdates() {
+  // Try both the fileKey-based and pluginSyncId-based sync docs
   const fk = state.fileKey || state.cachedFileKey;
-  if (!fk) return;
-  try {
-    const res = await fetch(`${FIRESTORE_BASE}/handover_sync/${fk}`);
-    if (!res.ok) return; // no sync doc yet — not an error
-    const doc = await res.json();
-    if (!doc.fields) return;
+  const syncId = state.pluginSyncId;
+  if (!fk && !syncId) return;
 
-    // Parse Firestore timestamp value
-    const tsVal = doc.fields.updatedAt?.timestampValue;
-    if (!tsVal) return;
-    const ts = new Date(tsVal).getTime();
+  // Check all available sync keys — fileKey first, then pluginSyncId
+  const keysToTry = [];
+  if (fk)     keysToTry.push(fk);
+  if (syncId) keysToTry.push(syncId);
 
-    // Cache the shareToken so we can pull later
-    const shareToken = doc.fields.shareToken?.stringValue || '';
-    if (shareToken && shareToken !== state.shareToken) {
-      state.shareToken = shareToken;
-      post({ type: 'set-storage', key: 'shareToken', value: shareToken });
+  for (const key of keysToTry) {
+    try {
+      const res = await fetch(`${FIRESTORE_BASE}/handover_sync/${key}`);
+      if (!res.ok) continue; // no sync doc for this key — try next
+      const doc = await res.json();
+      if (!doc.fields) continue;
+
+      // Parse Firestore timestamp value
+      const tsVal = doc.fields.updatedAt?.timestampValue;
+      if (!tsVal) continue;
+      const ts = new Date(tsVal).getTime();
+
+      // Cache the shareToken so we can pull later
+      const shareToken = doc.fields.shareToken?.stringValue || '';
+      if (shareToken && shareToken !== state.shareToken) {
+        state.shareToken = shareToken;
+        post({ type: 'set-storage', key: 'shareToken', value: shareToken });
+      }
+
+      // If the web app is newer than our last pull, show indicator
+      if (ts > state.lastSyncTs) {
+        const updatedBy = doc.fields.updatedBy?.stringValue || 'Someone';
+        showSyncIndicator(updatedBy);
+      }
+      return; // success — don't try other keys
+    } catch(e) {
+      // Fail silently — try next key
     }
-
-    // If the web app is newer than our last pull, show indicator
-    if (ts > state.lastSyncTs) {
-      const updatedBy = doc.fields.updatedBy?.stringValue || 'Someone';
-      showSyncIndicator(updatedBy);
-    }
-  } catch(e) {
-    // Fail silently — sync check is non-critical
   }
 }
 
@@ -1284,6 +1304,7 @@ window.onmessage = event => {
     if (key === 'shareToken')    { state.shareToken    = value || ''; }
     if (key === 'lastSyncTs')    { state.lastSyncTs    = Number(value) || 0; }
     if (key === 'cachedFileKey') { state.cachedFileKey   = value || ''; }
+    if (key === 'pluginSyncId') { state.pluginSyncId   = value || ''; }
     if (key === 'manualFigmaUrl') {
       state.manualFigmaUrl = value || '';
       // If no live/cached key yet, seed cachedFileKey from the manual URL
@@ -1307,7 +1328,7 @@ window.onmessage = event => {
 // ── File context detection ────────────────────────────────────
 // We wait for all 8 storage keys AND page-data before deciding which screen
 // to show, to avoid flickering from stale state.
-const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl', 'shareToken', 'lastSyncTs'];
+const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl', 'shareToken', 'lastSyncTs', 'pluginSyncId'];
 let _initStorageCount = 0;
 let _pageDataReady    = false;
 

@@ -1737,15 +1737,20 @@ function scheduleSave() {
     await saveProjectToFirestore(proj);
     // Also update the public viewer doc if a shareToken exists
     if (proj.shareToken) await publishViewerDoc(proj);
-    // Write a lightweight sync beacon so the Figma plugin can detect changes
+    // Write lightweight sync beacon(s) so the Figma plugin can detect changes.
+    // We write by BOTH fileKey and pluginSyncId — the plugin checks whichever it has.
+    const syncPayload = {
+      updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy:   currentUser?.displayName || currentUser?.email || 'A teammate',
+      shareToken:  proj.shareToken || null
+    };
     const fkMatch = proj.generalData?.figmaFileUrl?.match(/figma\.com\/(?:design|file)\/([^\/\?#]+)/);
     const fk = fkMatch ? fkMatch[1] : null;
     if (fk) {
-      db.collection('handover_sync').doc(fk).set({
-        updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-        updatedBy:   currentUser?.displayName || currentUser?.email || 'A teammate',
-        shareToken:  proj.shareToken || null
-      }).catch(() => {}); // fail silently
+      db.collection('handover_sync').doc(fk).set(syncPayload).catch(e => console.warn('[Sync] fk write failed:', e));
+    }
+    if (proj.pluginSyncId) {
+      db.collection('handover_sync').doc(proj.pluginSyncId).set(syncPayload).catch(e => console.warn('[Sync] syncId write failed:', e));
     }
     setSyncState('saved');
   }, 900);
@@ -2849,6 +2854,7 @@ async function handlePluginImport(data) {
     if (data.theme)        existingProj.theme       = data.theme;
     if (data.activePage)   existingProj.activePage  = data.activePage;
     if (data.figmaFileUrl) existingProj.generalData.figmaFileUrl = data.figmaFileUrl;
+    if (data.pluginSyncId) existingProj.pluginSyncId = data.pluginSyncId;
     existingProj.updatedAt = Date.now();
 
     // ── Merge sections for the imported page only ──
@@ -2894,7 +2900,24 @@ async function handlePluginImport(data) {
 
     existingProj.pages[pageKey].sections = mergedSections;
 
+    // Auto-generate share token so sync works immediately
+    if (!existingProj.shareToken) {
+      existingProj.shareToken = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+    }
     await saveProjectToFirestore(existingProj);
+    await publishViewerDoc(existingProj);
+    // Write sync beacon immediately so the plugin can find it
+    const syncPayload = {
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentUser?.displayName || currentUser?.email || 'Plugin import',
+      shareToken: existingProj.shareToken
+    };
+    if (existingProj.pluginSyncId) {
+      db.collection('handover_sync').doc(existingProj.pluginSyncId).set(syncPayload).catch(() => {});
+    }
+    if (incomingFileKey) {
+      db.collection('handover_sync').doc(incomingFileKey).set(syncPayload).catch(() => {});
+    }
     history.replaceState({}, '', '?project=' + existingProj.id);
     openProject(existingProj.id);
     return;
@@ -2907,7 +2930,8 @@ async function handlePluginImport(data) {
     id,
     title:       data.title  || 'Figma Import',
     theme:       data.theme  || '',
-    shareToken:  '',
+    shareToken:    Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6),
+    pluginSyncId:  data.pluginSyncId || '',
     activePage:  data.activePage || 'homepage',
     createdBy:   currentUser?.uid || '',
     createdByName: currentUser?.displayName || currentUser?.email || '',
@@ -2931,6 +2955,19 @@ async function handlePluginImport(data) {
 
   projects.unshift(proj);
   await saveProjectToFirestore(proj);
+  await publishViewerDoc(proj);
+  // Write sync beacon immediately so the plugin can find it
+  const importSyncPayload = {
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: currentUser?.displayName || currentUser?.email || 'Plugin import',
+    shareToken: proj.shareToken
+  };
+  if (proj.pluginSyncId) {
+    db.collection('handover_sync').doc(proj.pluginSyncId).set(importSyncPayload).catch(() => {});
+  }
+  if (incomingFileKey) {
+    db.collection('handover_sync').doc(incomingFileKey).set(importSyncPayload).catch(() => {});
+  }
   history.replaceState({}, '', '?project=' + id);
   openProject(id);
 }
