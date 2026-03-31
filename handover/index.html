@@ -7,6 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Domine:wght@400;500;600;700&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ─── Firebase compat SDKs (v10) ─────────────────────── -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+
 <style>
   /* ─── Reset ──────────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -766,9 +772,44 @@
   .typo-status { font-size: 12px; color: var(--text-sub); margin-top: 8px; min-height: 18px; }
   .viewer-mode .typo-url-row { display: none; }
   .viewer-mode .typo-fetch-btn { display: none; }
+
+  /* ─── Login screen ──────────────────────────────────────── */
+  .login-screen { display:none;position:fixed;inset:0;z-index:9999;background:var(--bg-page);background-image:linear-gradient(var(--grid-line) 1px, transparent 1px),linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);background-size:20px 20px;align-items:center;justify-content:center; }
+  .login-screen.active { display:flex; }
+  .login-card { background:var(--bg-card);border:1px solid var(--border);border-radius:2px;padding:48px 44px;max-width:420px;width:100%;text-align:center;box-shadow:var(--shadow-card); }
+  .login-sub { font-size:13px;color:var(--text-mute);line-height:1.6;margin-bottom:24px; }
+  .btn-google { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,0.04);font-family:inherit;font-size:14px;font-weight:600;color:var(--text-pri);cursor:pointer;transition:border-color 0.15s,transform 0.15s,opacity 0.15s;margin-bottom:16px; }
+  [data-theme="light"] .btn-google { background:var(--bg-card); }
+  .btn-google:hover { border-color:var(--kbx-yellow);transform:translateY(-1px); }
+  .btn-google svg { flex-shrink:0; }
+  .login-err { font-size:12px;color:#FF6B6B;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:2px;padding:10px 14px;margin-bottom:16px;display:none;line-height:1.5; }
+  .login-footer { font-size:11px;color:var(--text-sub);margin-top:4px; }
+  .login-user-chip { display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-mute);background:var(--bg-input);border:1px solid var(--border);border-radius:99px;padding:5px 12px;margin-left:auto; }
+  .login-user-chip button { background:none;border:none;color:var(--text-sub);font-size:11px;font-weight:600;cursor:pointer;padding:0;font-family:inherit; }
+  .login-user-chip button:hover { color:var(--text-pri); }
 </style>
 </head>
 <body>
+
+<!-- ═══ LOGIN SCREEN ═════════════════════════════════════════ -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div style="margin-bottom:28px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;">
+        <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="2" width="1" height="1" fill="#FFFF00"/><rect x="17" y="2" width="1" height="1" fill="#FFFF00"/><rect x="18" y="2" width="1" height="1" fill="#FFFF00"/><rect x="6" y="3" width="1" height="1" fill="#FFFF00"/><rect x="7" y="3" width="1" height="1" fill="#FFFF00"/><rect x="8" y="3" width="1" height="1" fill="#FFFF00"/><rect x="16" y="3" width="1" height="1" fill="#FFFF00"/><rect x="17" y="3" width="1" height="1" fill="#FFFF00"/><rect x="18" y="3" width="1" height="1" fill="#FFFF00"/><rect x="6" y="4" width="1" height="1" fill="#FFFF00"/><rect x="7" y="4" width="1" height="1" fill="#FFFF00"/><rect x="8" y="4" width="1" height="1" fill="#FFFF00"/><rect x="16" y="4" width="1" height="1" fill="#FFFF00"/><rect x="17" y="4" width="1" height="1" fill="#FFFF00"/><rect x="18" y="4" width="1" height="1" fill="#FFFF00"/><rect x="6" y="5" width="1" height="1" fill="#FFFF00"/><rect x="7" y="5" width="1" height="1" fill="#FFFF00"/><rect x="8" y="5" width="1" height="1" fill="#FFFF00"/><rect x="15" y="5" width="1" height="1" fill="#FFFF00"/><rect x="16" y="5" width="1" height="1" fill="#FFFF00"/><rect x="17" y="5" width="1" height="1" fill="#FFFF00"/><rect x="3" y="6" width="1" height="1" fill="#FFFF00"/><rect x="4" y="6" width="1" height="1" fill="#FFFF00"/><rect x="5" y="6" width="1" height="1" fill="#FFFF00"/><rect x="15" y="6" width="1" height="1" fill="#FFFF00"/><rect x="16" y="6" width="1" height="1" fill="#FFFF00"/><rect x="17" y="6" width="1" height="1" fill="#FFFF00"/><rect x="3" y="7" width="1" height="1" fill="#FFFF00"/><rect x="4" y="7" width="1" height="1" fill="#FFFF00"/><rect x="5" y="7" width="1" height="1" fill="#FFFF00"/><rect x="15" y="7" width="1" height="1" fill="#FFFF00"/><rect x="16" y="7" width="1" height="1" fill="#FFFF00"/><rect x="17" y="7" width="1" height="1" fill="#FFFF00"/></svg>
+        <div style="font-family:var(--font-heading);font-size:18px;font-weight:700;letter-spacing:-0.02em;">Design → Dev</div>
+      </div>
+      <div style="font-size:11px;color:var(--text-sub);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Handover</div>
+    </div>
+    <p class="login-sub">Sign in with your Kubix Google account to manage design handovers.</p>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-footer">For Kubix employees only · kubixmedia.co.uk</div>
+  </div>
+</div>
 
 <!-- ═══ HEADER ═══════════════════════════════════════════════ -->
 <header class="header">
@@ -798,15 +839,11 @@
         <svg class="icon-moon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         <svg class="icon-sun"  fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
       </button>
-      <!-- Global settings — token management, visible in both library and project view -->
-      <button id="global-settings-btn" class="theme-toggle" onclick="openGlobalSettings()" title="Settings" aria-label="App settings">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/><circle cx="12" cy="12" r="3"/></svg>
-      </button>
-      <!-- Per-project GitHub sync — project view only -->
-      <button class="hdr-btn hdr-btn-edit-only" onclick="openSettings()">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-        Sync
-      </button>
+      <!-- User chip + sign out -->
+      <div class="login-user-chip" id="user-chip" style="display:none;">
+        <span id="user-name"></span>
+        <button onclick="doSignOut()" title="Sign out">Sign out</button>
+      </div>
     </div>
   </div>
 </header>
@@ -830,7 +867,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-a" x1="0" y1="15.049" x2="54.845" y2="15.049" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-b" x1="1.195" y1="53.166" x2="53.745" y2="53.166" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
         Export CSV
       </button>
-      <a id="share-link-btn" href="#" class="hdr-btn mint hdr-btn-edit-only" style="display:none" onclick="copyShareLink(event)">
+      <a id="share-link-btn" href="#" class="hdr-btn mint hdr-btn-edit-only" onclick="copyShareLink(event)">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
         Share Link
       </a>
@@ -913,54 +950,160 @@ function toggleTheme() {
 })();
 
 // ─── Viewer mode ────────────────────────────────────────────────
-// Activated when the app is opened via a ?gist= shared URL.
+// Activated when the app is opened via a ?view= shared URL.
 // In viewer mode the checklist is read-only: no editing, no sync controls.
-const VIEWER_MODE = !!new URLSearchParams(location.search).get('gist');
+const VIEWER_MODE = !!new URLSearchParams(location.search).get('view');
 
-// ─── Editor gate ────────────────────────────────────────────────
-// The designer dashboard is for internal use only. If someone lands on
-// the bare URL (no ?gist= or ?import=) without stored credentials,
-// show a neutral page so the tool isn't accidentally exposed.
-// Designers who have previously set up their GitHub/Figma tokens are
-// let straight through — no friction for existing users.
-(function () {
-  const params = new URLSearchParams(location.search);
-  if (VIEWER_MODE || params.get('import') || params.get('setup')) return; // viewer, import, and first-time setup always pass
-  const hasCredentials = localStorage.getItem('gist_token') || localStorage.getItem('figma_token');
-  if (hasCredentials) return; // designer with stored tokens — let through
+// ─── Firebase ─────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyCqWrTAe_-nPFbpXv1ldkjA7XDKyAFF598",
+  authDomain:        "cro-strategic-roadmap.firebaseapp.com",
+  projectId:         "cro-strategic-roadmap",
+  storageBucket:     "cro-strategic-roadmap.firebasestorage.app",
+  messagingSenderId: "515680864654",
+  appId:             "1:515680864654:web:9481fd388407fbec387cdf"
+};
 
-  // No credentials and no project link → show neutral access page
-  const setupUrl = location.pathname + '?setup=1';
-  document.body.innerHTML = '';
-  document.body.style.cssText = 'margin:0;background:#141416;display:flex;align-items:center;justify-content:center;height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;';
-  document.body.innerHTML = `
-    <div style="text-align:center;max-width:360px;padding:32px;">
-      <svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:20px;"><rect x="16" y="2" width="1" height="1" fill="#FFFF00"/><rect x="17" y="2" width="1" height="1" fill="#FFFF00"/><rect x="18" y="2" width="1" height="1" fill="#FFFF00"/><rect x="6" y="3" width="1" height="1" fill="#FFFF00"/><rect x="7" y="3" width="1" height="1" fill="#FFFF00"/><rect x="8" y="3" width="1" height="1" fill="#FFFF00"/><rect x="16" y="3" width="1" height="1" fill="#FFFF00"/><rect x="17" y="3" width="1" height="1" fill="#FFFF00"/><rect x="18" y="3" width="1" height="1" fill="#FFFF00"/><rect x="6" y="4" width="1" height="1" fill="#FFFF00"/><rect x="7" y="4" width="1" height="1" fill="#FFFF00"/><rect x="8" y="4" width="1" height="1" fill="#FFFF00"/><rect x="16" y="4" width="1" height="1" fill="#FFFF00"/><rect x="17" y="4" width="1" height="1" fill="#FFFF00"/><rect x="18" y="4" width="1" height="1" fill="#FFFF00"/><rect x="6" y="5" width="1" height="1" fill="#FFFF00"/><rect x="7" y="5" width="1" height="1" fill="#FFFF00"/><rect x="8" y="5" width="1" height="1" fill="#FFFF00"/><rect x="15" y="5" width="1" height="1" fill="#FFFF00"/><rect x="16" y="5" width="1" height="1" fill="#FFFF00"/><rect x="17" y="5" width="1" height="1" fill="#FFFF00"/><rect x="3" y="6" width="1" height="1" fill="#FFFF00"/><rect x="4" y="6" width="1" height="1" fill="#FFFF00"/><rect x="5" y="6" width="1" height="1" fill="#FFFF00"/><rect x="15" y="6" width="1" height="1" fill="#FFFF00"/><rect x="16" y="6" width="1" height="1" fill="#FFFF00"/><rect x="17" y="6" width="1" height="1" fill="#FFFF00"/><rect x="3" y="7" width="1" height="1" fill="#FFFF00"/><rect x="4" y="7" width="1" height="1" fill="#FFFF00"/><rect x="5" y="7" width="1" height="1" fill="#FFFF00"/><rect x="15" y="7" width="1" height="1" fill="#FFFF00"/><rect x="16" y="7" width="1" height="1" fill="#FFFF00"/><rect x="17" y="7" width="1" height="1" fill="#FFFF00"/><rect x="3" y="8" width="1" height="1" fill="#FFFF00"/><rect x="4" y="8" width="1" height="1" fill="#FFFF00"/><rect x="5" y="8" width="1" height="1" fill="#FFFF00"/><rect x="14" y="8" width="1" height="1" fill="#FFFF00"/><rect x="15" y="8" width="1" height="1" fill="#FFFF00"/><rect x="16" y="8" width="1" height="1" fill="#FFFF00"/><rect x="0" y="9" width="1" height="1" fill="#FFFF00"/><rect x="1" y="9" width="1" height="1" fill="#FFFF00"/><rect x="2" y="9" width="1" height="1" fill="#FFFF00"/><rect x="14" y="9" width="1" height="1" fill="#FFFF00"/><rect x="15" y="9" width="1" height="1" fill="#FFFF00"/><rect x="16" y="9" width="1" height="1" fill="#FFFF00"/><rect x="0" y="10" width="1" height="1" fill="#FFFF00"/><rect x="1" y="10" width="1" height="1" fill="#FFFF00"/><rect x="2" y="10" width="1" height="1" fill="#FFFF00"/><rect x="14" y="10" width="1" height="1" fill="#FFFF00"/><rect x="15" y="10" width="1" height="1" fill="#FFFF00"/><rect x="16" y="10" width="1" height="1" fill="#FFFF00"/><rect x="19" y="10" width="1" height="1" fill="#FFFF00"/><rect x="20" y="10" width="1" height="1" fill="#FFFF00"/><rect x="21" y="10" width="1" height="1" fill="#FFFF00"/><rect x="0" y="11" width="1" height="1" fill="#FFFF00"/><rect x="1" y="11" width="1" height="1" fill="#FFFF00"/><rect x="2" y="11" width="1" height="1" fill="#FFFF00"/><rect x="13" y="11" width="1" height="1" fill="#FFFF00"/><rect x="14" y="11" width="1" height="1" fill="#FFFF00"/><rect x="15" y="11" width="1" height="1" fill="#FFFF00"/><rect x="19" y="11" width="1" height="1" fill="#FFFF00"/><rect x="20" y="11" width="1" height="1" fill="#FFFF00"/><rect x="21" y="11" width="1" height="1" fill="#FFFF00"/><rect x="3" y="12" width="1" height="1" fill="#FFFF00"/><rect x="4" y="12" width="1" height="1" fill="#FFFF00"/><rect x="5" y="12" width="1" height="1" fill="#FFFF00"/><rect x="13" y="12" width="1" height="1" fill="#FFFF00"/><rect x="14" y="12" width="1" height="1" fill="#FFFF00"/><rect x="15" y="12" width="1" height="1" fill="#FFFF00"/><rect x="19" y="12" width="1" height="1" fill="#FFFF00"/><rect x="20" y="12" width="1" height="1" fill="#FFFF00"/><rect x="21" y="12" width="1" height="1" fill="#FFFF00"/><rect x="3" y="13" width="1" height="1" fill="#FFFF00"/><rect x="4" y="13" width="1" height="1" fill="#FFFF00"/><rect x="5" y="13" width="1" height="1" fill="#FFFF00"/><rect x="13" y="13" width="1" height="1" fill="#FFFF00"/><rect x="14" y="13" width="1" height="1" fill="#FFFF00"/><rect x="15" y="13" width="1" height="1" fill="#FFFF00"/><rect x="22" y="13" width="1" height="1" fill="#FFFF00"/><rect x="23" y="13" width="1" height="1" fill="#FFFF00"/><rect x="24" y="13" width="1" height="1" fill="#FFFF00"/><rect x="3" y="14" width="1" height="1" fill="#FFFF00"/><rect x="4" y="14" width="1" height="1" fill="#FFFF00"/><rect x="5" y="14" width="1" height="1" fill="#FFFF00"/><rect x="12" y="14" width="1" height="1" fill="#FFFF00"/><rect x="13" y="14" width="1" height="1" fill="#FFFF00"/><rect x="14" y="14" width="1" height="1" fill="#FFFF00"/><rect x="22" y="14" width="1" height="1" fill="#FFFF00"/><rect x="23" y="14" width="1" height="1" fill="#FFFF00"/><rect x="24" y="14" width="1" height="1" fill="#FFFF00"/><rect x="6" y="15" width="1" height="1" fill="#FFFF00"/><rect x="7" y="15" width="1" height="1" fill="#FFFF00"/><rect x="8" y="15" width="1" height="1" fill="#FFFF00"/><rect x="12" y="15" width="1" height="1" fill="#FFFF00"/><rect x="13" y="15" width="1" height="1" fill="#FFFF00"/><rect x="14" y="15" width="1" height="1" fill="#FFFF00"/><rect x="22" y="15" width="1" height="1" fill="#FFFF00"/><rect x="23" y="15" width="1" height="1" fill="#FFFF00"/><rect x="24" y="15" width="1" height="1" fill="#FFFF00"/><rect x="6" y="16" width="1" height="1" fill="#FFFF00"/><rect x="7" y="16" width="1" height="1" fill="#FFFF00"/><rect x="8" y="16" width="1" height="1" fill="#FFFF00"/><rect x="12" y="16" width="1" height="1" fill="#FFFF00"/><rect x="13" y="16" width="1" height="1" fill="#FFFF00"/><rect x="14" y="16" width="1" height="1" fill="#FFFF00"/><rect x="25" y="16" width="1" height="1" fill="#FFFF00"/><rect x="26" y="16" width="1" height="1" fill="#FFFF00"/><rect x="27" y="16" width="1" height="1" fill="#FFFF00"/><rect x="6" y="17" width="1" height="1" fill="#FFFF00"/><rect x="7" y="17" width="1" height="1" fill="#FFFF00"/><rect x="8" y="17" width="1" height="1" fill="#FFFF00"/><rect x="11" y="17" width="1" height="1" fill="#FFFF00"/><rect x="12" y="17" width="1" height="1" fill="#FFFF00"/><rect x="13" y="17" width="1" height="1" fill="#FFFF00"/><rect x="25" y="17" width="1" height="1" fill="#FFFF00"/><rect x="26" y="17" width="1" height="1" fill="#FFFF00"/><rect x="27" y="17" width="1" height="1" fill="#FFFF00"/><rect x="11" y="18" width="1" height="1" fill="#FFFF00"/><rect x="12" y="18" width="1" height="1" fill="#FFFF00"/><rect x="13" y="18" width="1" height="1" fill="#FFFF00"/><rect x="25" y="18" width="1" height="1" fill="#FFFF00"/><rect x="26" y="18" width="1" height="1" fill="#FFFF00"/><rect x="27" y="18" width="1" height="1" fill="#FFFF00"/><rect x="11" y="19" width="1" height="1" fill="#FFFF00"/><rect x="12" y="19" width="1" height="1" fill="#FFFF00"/><rect x="13" y="19" width="1" height="1" fill="#FFFF00"/><rect x="22" y="19" width="1" height="1" fill="#FFFF00"/><rect x="23" y="19" width="1" height="1" fill="#FFFF00"/><rect x="24" y="19" width="1" height="1" fill="#FFFF00"/><rect x="10" y="20" width="1" height="1" fill="#FFFF00"/><rect x="11" y="20" width="1" height="1" fill="#FFFF00"/><rect x="12" y="20" width="1" height="1" fill="#FFFF00"/><rect x="22" y="20" width="1" height="1" fill="#FFFF00"/><rect x="23" y="20" width="1" height="1" fill="#FFFF00"/><rect x="24" y="20" width="1" height="1" fill="#FFFF00"/><rect x="10" y="21" width="1" height="1" fill="#FFFF00"/><rect x="11" y="21" width="1" height="1" fill="#FFFF00"/><rect x="12" y="21" width="1" height="1" fill="#FFFF00"/><rect x="22" y="21" width="1" height="1" fill="#FFFF00"/><rect x="23" y="21" width="1" height="1" fill="#FFFF00"/><rect x="24" y="21" width="1" height="1" fill="#FFFF00"/><rect x="10" y="22" width="1" height="1" fill="#FFFF00"/><rect x="11" y="22" width="1" height="1" fill="#FFFF00"/><rect x="12" y="22" width="1" height="1" fill="#FFFF00"/><rect x="19" y="22" width="1" height="1" fill="#FFFF00"/><rect x="20" y="22" width="1" height="1" fill="#FFFF00"/><rect x="21" y="22" width="1" height="1" fill="#FFFF00"/><rect x="9" y="23" width="1" height="1" fill="#FFFF00"/><rect x="10" y="23" width="1" height="1" fill="#FFFF00"/><rect x="11" y="23" width="1" height="1" fill="#FFFF00"/><rect x="19" y="23" width="1" height="1" fill="#FFFF00"/><rect x="20" y="23" width="1" height="1" fill="#FFFF00"/><rect x="21" y="23" width="1" height="1" fill="#FFFF00"/><rect x="9" y="24" width="1" height="1" fill="#FFFF00"/><rect x="10" y="24" width="1" height="1" fill="#FFFF00"/><rect x="11" y="24" width="1" height="1" fill="#FFFF00"/><rect x="19" y="24" width="1" height="1" fill="#FFFF00"/><rect x="20" y="24" width="1" height="1" fill="#FFFF00"/><rect x="21" y="24" width="1" height="1" fill="#FFFF00"/><rect x="9" y="25" width="1" height="1" fill="#FFFF00"/><rect x="10" y="25" width="1" height="1" fill="#FFFF00"/><rect x="11" y="25" width="1" height="1" fill="#FFFF00"/></svg>
-      <h2 style="font-size:18px;font-weight:700;margin-bottom:10px;letter-spacing:-0.01em;">Project link required</h2>
-      <p style="font-size:13px;color:#6E6E74;line-height:1.65;margin-bottom:22px;">This is an internal handover tool. To view a project, use the full link provided by your designer.</p>
-      <span style="display:inline-block;background:#28282B;border:1px solid #3E3E42;border-radius:99px;padding:8px 18px;font-size:12px;color:#A0A0A6;">Contact your designer for the project link</span>
-      <div style="margin-top:32px;padding-top:24px;border-top:1px solid #28282B;">
-        <a href="${setupUrl}" style="font-size:12px;color:#6E6E74;text-decoration:none;">Setting this up for the first time? <span style="color:#FFFF00;">Enter your tokens →</span></a>
-      </div>
-    </div>`;
-  throw 0; // stop all further script execution
-})();
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ─── Auth helpers ──────────────────────────────────────────────────
+let currentUser = null;
+
+function _authProvider() {
+  const p = new firebase.auth.GoogleAuthProvider();
+  p.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
+  return p;
+}
+function _authSetBtnLoading(on) {
+  const btn = document.querySelector('.btn-google');
+  if (!btn) return;
+  btn.disabled = on;
+  btn.style.opacity = on ? '0.55' : '';
+}
+function _authShowErr(msg) {
+  const el = document.getElementById('login-err');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function signInWithGoogle() {
+  _authShowErr('');
+  _authSetBtnLoading(true);
+  const guard = setTimeout(() => _authSetBtnLoading(false), 60000);
+  auth.signInWithPopup(_authProvider()).then(() => {
+    clearTimeout(guard);
+  }).catch(err => {
+    clearTimeout(guard);
+    _authSetBtnLoading(false);
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    if (err.code === 'auth/popup-blocked') {
+      auth.signInWithRedirect(_authProvider());
+      return;
+    }
+    _authShowErr(err.message?.includes('hd')
+      ? 'Please use your @kubixmedia.co.uk Google account.'
+      : `Sign-in failed (${err.code || 'unknown'}). Please try again.`);
+  });
+}
+
+function doSignOut() {
+  clearTimeout(saveTimer);
+  auth.signOut().then(() => {
+    currentUser = null;
+    projects = [];
+    activeProjectId = '';
+    showLoginScreen();
+  });
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('user-chip').style.display = 'none';
+}
+function hideLoginScreen() {
+  document.getElementById('login-screen').classList.remove('active');
+  const chip = document.getElementById('user-chip');
+  if (chip && currentUser) {
+    chip.style.display = '';
+    const nameEl = document.getElementById('user-name');
+    if (nameEl) nameEl.textContent = currentUser.displayName
+      ? currentUser.displayName.split(' ')[0]
+      : currentUser.email.split('@')[0];
+  }
+}
+
+// Handle redirect sign-in result (fallback for popup-blocked environments)
+auth.getRedirectResult().catch(err => console.error('[Redirect auth]', err));
+
+// Auth state listener — gates the entire app
+auth.onAuthStateChanged(user => {
+  if (VIEWER_MODE) return; // viewer bypasses auth entirely
+  if (!user) {
+    showLoginScreen();
+    return;
+  }
+  if (!user.email.endsWith('@kubixmedia.co.uk')) {
+    auth.signOut();
+    _authShowErr('Please use your @kubixmedia.co.uk account.');
+    return;
+  }
+  currentUser = user;
+  hideLoginScreen();
+  // Boot the app now that we're authenticated
+  _bootApp();
+});
 
 // ─── Multi-project state ────────────────────────────────────────
 let projects = [];
 let activeProjectId = '';  // '' = library view
+let _firestoreUnsubscribe = null; // active onSnapshot listener
 
 function generateId() {
   return 'kbx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 }
-function loadProjects() {
-  try { return JSON.parse(localStorage.getItem('kbx_projects') || '[]'); } catch(e) { return []; }
-}
-function saveProjects() {
-  localStorage.setItem('kbx_projects', JSON.stringify(projects));
-}
 function getActiveProject() {
   return projects.find(p => p.id === activeProjectId);
+}
+
+// ─── Firestore project CRUD ────────────────────────────────────
+async function loadProjectsFromFirestore() {
+  try {
+    const snap = await db.collection('handover_projects').orderBy('updatedAt', 'desc').get();
+    projects = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e) {
+    console.error('Firestore load error:', e);
+    projects = [];
+  }
+}
+
+async function saveProjectToFirestore(proj) {
+  if (!proj || !proj.id) return;
+  const { id, ...data } = proj;
+  try {
+    await db.collection('handover_projects').doc(id).set({
+      ...data,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch(e) {
+    console.error('Firestore save error:', e);
+    setSyncState('error');
+  }
+}
+
+async function deleteProjectFromFirestore(id) {
+  try {
+    await db.collection('handover_projects').doc(id).delete();
+    // Also clean up public view document if it exists
+    const proj = projects.find(p => p.id === id);
+    if (proj?.shareToken) {
+      await db.collection('handover_public').doc(proj.shareToken).delete().catch(() => {});
+    }
+  } catch(e) {
+    console.error('Firestore delete error:', e);
+  }
 }
 function defaultPages() {
   return {
@@ -988,10 +1131,9 @@ function saveCurrentProject() {
   proj.theme       = projectMeta.theme;
   proj.pages       = JSON.parse(JSON.stringify(pages));
   proj.generalData = JSON.parse(JSON.stringify(generalData));
-  proj.gistId      = gist.gistId;
   proj.activePage  = activePage;
   proj.updatedAt   = Date.now();
-  saveProjects();
+  scheduleSave();
 }
 
 // ─── Project management ────────────────────────────────────────
@@ -1010,91 +1152,103 @@ function openProject(id) {
   Object.values(pages).forEach(pg => { (pg.sections||[]).forEach(s => { s.id = String(s.id); }); });
   generalData = proj.generalData ? JSON.parse(JSON.stringify(proj.generalData)) : { figmaFileUrl:'', fonts:[], typography:[] };
   activePage  = proj.activePage || 'homepage';
-  gist.gistId = proj.gistId || '';
   history.pushState({}, '', '?project=' + id);
   document.body.className = 'proj-view';
   applyProjectMeta();
   render();
-  if (gist.gistId) { startPolling(); setSyncState(gist.token ? 'saved' : 'offline'); }
-  else setSyncState('offline');
+  setSyncState('saved');
 }
 
 function closeProject() {
   saveCurrentProject();
-  clearInterval(pollTimer);
   clearTimeout(saveTimer);
   activeProjectId = '';
-  gist.gistId = '';
   history.pushState({}, '', location.pathname);
   renderLibrary();
 }
 
-function newProject() {
+async function newProject() {
+  const id = db.collection('handover_projects').doc().id; // Firestore auto-ID
   const proj = {
-    id:          generateId(),
+    id,
     title:       'Enter Project Name',
     theme:       'Enter Base Theme Name',
-    gistId:      '',
-    pubUrl:      '',
+    shareToken:  '',
     activePage:  'homepage',
+    createdBy:   currentUser?.uid || '',
+    createdByName: currentUser?.displayName || currentUser?.email || '',
     createdAt:   Date.now(),
     updatedAt:   Date.now(),
     pages:       defaultPages(),
     generalData: { figmaFileUrl:'', fonts:[], typography:[] }
   };
-  projects.push(proj);
-  saveProjects();
+  projects.unshift(proj);
+  await saveProjectToFirestore(proj);
   openProject(proj.id);
 }
 
-function deleteProject(id) {
+async function deleteProject(id) {
   const proj = projects.find(p => p.id === id);
   const name = proj ? proj.title : 'this project';
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
   projects = projects.filter(p => p.id !== id);
-  saveProjects();
+  await deleteProjectFromFirestore(id);
   renderLibrary();
 }
 
-function migrateV1() {
-  if (localStorage.getItem('kbx_projects')) return; // already migrated
-  const title = localStorage.getItem('proj_title');
-  if (!title) return; // nothing to migrate
-  const proj = {
-    id:         generateId(),
-    title:      title || 'Enter Project Name',
-    theme:      localStorage.getItem('proj_theme')  || 'Enter Base Theme Name',
-    gistId:     localStorage.getItem('gist_id')     || '',
-    pubUrl:     localStorage.getItem('pub_url')      || '',
-    activePage: localStorage.getItem('active_page') || 'homepage',
-    createdAt:  Date.now(),
-    updatedAt:  Date.now(),
-    pages: (() => {
-      try { return JSON.parse(localStorage.getItem('pages_data')) || defaultPages(); } catch(e) { return defaultPages(); }
-    })()
-  };
-  projects.push(proj);
-  saveProjects();
-  ['proj_title','proj_theme','gist_id','pub_url','active_page','pages_data'].forEach(k => localStorage.removeItem(k));
+// ─── LocalStorage → Firestore migration (one-time) ─────────────
+async function migrateLocalStorageToFirestore() {
+  const raw = localStorage.getItem('kbx_projects');
+  if (!raw) return; // nothing to migrate
+  let localProjects;
+  try { localProjects = JSON.parse(raw); } catch(e) { return; }
+  if (!Array.isArray(localProjects) || localProjects.length === 0) return;
+
+  const existingIds = new Set(projects.map(p => p.id));
+  const toMigrate = localProjects.filter(p => !existingIds.has(p.id));
+  if (toMigrate.length === 0) {
+    localStorage.removeItem('kbx_projects');
+    return;
+  }
+
+  const confirmed = confirm(
+    `Found ${toMigrate.length} local handover project${toMigrate.length !== 1 ? 's' : ''} stored in this browser.\n\nMigrate ${toMigrate.length !== 1 ? 'them' : 'it'} to your Kubix account so they're accessible everywhere?`
+  );
+  if (!confirmed) return;
+
+  for (const proj of toMigrate) {
+    // Strip gist-specific fields, add Firestore fields
+    const { gistId, pubUrl, ...rest } = proj;
+    const migratedProj = {
+      ...rest,
+      shareToken:    '',
+      createdBy:     currentUser?.uid || '',
+      createdByName: currentUser?.displayName || currentUser?.email || '',
+      updatedAt:     Date.now()
+    };
+    // Ensure id exists
+    if (!migratedProj.id) migratedProj.id = generateId();
+    projects.unshift(migratedProj);
+    await saveProjectToFirestore(migratedProj);
+  }
+  localStorage.removeItem('kbx_projects');
+  renderLibrary();
 }
 
 function renderLibrary() {
-  clearInterval(pollTimer);
   clearTimeout(saveTimer);
   document.body.className = 'lib-view';
   let cards = '';
   projects.forEach(p => {
     const total  = Object.values(p.pages || {}).reduce((n, pg) => n + (pg.sections?.length || 0), 0);
-    const synced = p.gistId
-      ? `<span class="lib-card-tag" style="color:var(--kbx-mint);border-color:rgba(148,247,161,0.3);">✓ Synced</span>`
-      : `<span class="lib-card-tag">Local only</span>`;
+    const byLabel = p.createdByName ? `<span class="lib-card-tag">${esc(p.createdByName.split(' ')[0])}</span>` : '';
     cards += `
     <div class="lib-card" onclick="openProject('${p.id}')">
       <div class="lib-card-title">${esc(p.title)}</div>
       <div class="lib-card-theme">${esc(p.theme)}</div>
       <div class="lib-card-meta">
         <span class="lib-card-tag">${total} section${total !== 1 ? 's' : ''}</span>
-        ${synced}
+        ${byLabel}
       </div>
       <div class="lib-card-date">${timeAgo(p.updatedAt)}</div>
       <button class="lib-card-delete" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Delete project"><svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="5" y="0" width="4" height="1" fill="#FFFF00"/><rect x="1" y="1" width="12" height="2" fill="#FFFF00"/><rect x="2" y="3" width="1" height="8" fill="#FFFF00"/><rect x="11" y="3" width="1" height="8" fill="#FFFF00"/><rect x="2" y="11" width="10" height="1" fill="#FFFF00"/><rect x="5" y="3" width="1" height="8" fill="#FFFF00"/><rect x="8" y="3" width="1" height="8" fill="#FFFF00"/></svg></button>
@@ -1206,7 +1360,7 @@ function offerPopulate(pageId) {
         <span style="font-weight:700;font-size:13px;">Pre-populate template</span>
         <span style="font-size:11px;color:var(--text-sub);font-weight:400;text-align:left;">${def.sections.length} typical ${esc(def.label)} sections as a starting point</span>
       </button>
-      <button class="modal-btn" style="padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;height:auto;${figmaReady ? 'border-color:var(--kbx-yellow);background:rgba(255,255,0,0.04);' : 'opacity:0.6;'}" onclick="this.closest('.overlay').remove();${figmaReady ? `populateFromFigma('${pageId}')` : `openGlobalSettings()`}">
+      <button class="modal-btn" style="padding:14px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;height:auto;${figmaReady ? 'border-color:var(--kbx-yellow);background:rgba(255,255,0,0.04);' : 'opacity:0.6;'}" onclick="this.closest('.overlay').remove();${figmaReady ? `populateFromFigma('${pageId}')` : `openFigmaTokenModal()`}">
         ${FIGMA_ICON_SVG}
         <span style="font-weight:700;font-size:13px;">Populate from Figma →</span>
         <span style="font-size:11px;color:var(--text-sub);font-weight:400;text-align:left;">${figmaHint}</span>
@@ -1278,10 +1432,15 @@ function saveAllPageLinks() {
   document.querySelector('.overlay')?.remove();
 }
 
-// ─── Figma token ───────────────────────────────────────────────
+// ─── Figma token (optional — for web-app Populate from Figma feature) ─
+// This is a read-only API key; storing in localStorage is acceptable.
 let figmaKeys = {
   token: localStorage.getItem('figma_token') || ''
 };
+function saveFigmaToken(t) {
+  figmaKeys.token = t;
+  localStorage.setItem('figma_token', t);
+}
 
 // ─── General / sitewide data ────────────────────────────────────
 let generalData = {
@@ -1290,15 +1449,10 @@ let generalData = {
   typography:   []   // [{ name, family, size, weight, lineHeight }] — fetched from Figma
 };
 
-// ─── GitHub Gist Sync ──────────────────────────────────────────
-let gist = {
-  token:  localStorage.getItem('gist_token') || '',
-  gistId: ''   // loaded per-project via openProject()
-};
+// ─── Firestore Sync ────────────────────────────────────────────
 let syncState = 'offline';
 let saveTimer = null;
-let pollTimer = null;
-let lastHash  = '';
+let pollTimer = null; // kept for compatibility but no longer used
 
 function setSyncState(s) {
   syncState = s;
@@ -1307,312 +1461,163 @@ function setSyncState(s) {
   const labels = { offline:'Offline', saving:'Saving…', saved:'Synced ✓', error:'Sync error' };
   el.innerHTML = `<span class="sync-dot ${s}"></span>${labels[s]||s}`;
   const shareBtn = document.getElementById('share-link-btn');
-  if (shareBtn) shareBtn.style.display = (!VIEWER_MODE && gist.gistId) ? '' : 'none';
-}
-
-function dataForSync() {
-  const pagesData = {};
-  Object.keys(PAGE_DEFS).forEach(k => {
-    pagesData[k] = {
-      loomUrl:  pages[k]?.loomUrl  || '',
-      figmaUrl: pages[k]?.figmaUrl || '',
-      sections: (pages[k]?.sections || []).map(({id,name,status,notes,figmaLink,useThemeSpacing}) =>
-        ({id,name,status,notes,figmaLink,useThemeSpacing}))
-    };
-  });
-  return { projectMeta: { title: projectMeta.title, theme: projectMeta.theme }, pages: pagesData };
-}
-
-function hashOf(d) { return JSON.stringify(d); }
-
-async function saveToGist() {
-  if (!gist.token) return;
-  setSyncState('saving');
-  const payload = dataForSync();
-  try {
-    const isNew = !gist.gistId;
-    const url   = isNew ? 'https://api.github.com/gists' : `https://api.github.com/gists/${gist.gistId}`;
-    const res   = await fetch(url, {
-      method: isNew ? 'POST' : 'PATCH',
-      headers: { 'Authorization': `token ${gist.token}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
-      body: JSON.stringify({
-        description: `${projectMeta.title || 'Design → Dev'} Checklist · Kubix`,
-        public: true,
-        files: { 'checklist-data.json': { content: JSON.stringify(payload, null, 2) } }
-      })
-    });
-    if (!res.ok) throw new Error(`GitHub ${res.status}`);
-    const data = await res.json();
-    if (isNew) {
-      gist.gistId = data.id;
-      const proj = getActiveProject();
-      if (proj) { proj.gistId = data.id; saveProjects(); }
-    }
-    lastHash = hashOf(payload);
-    setSyncState('saved');
-  } catch(e) {
-    console.error('Gist save error:', e);
-    setSyncState('error');
+  if (shareBtn) {
+    const proj = getActiveProject();
+    shareBtn.style.display = (!VIEWER_MODE && proj?.shareToken) ? '' : 'none';
   }
 }
 
+// ─── Firestore save / schedule ─────────────────────────────────
 function scheduleSave() {
-  if (!gist.token) return;
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveToGist, 900);
+  setSyncState('saving');
+  saveTimer = setTimeout(async () => {
+    const proj = getActiveProject();
+    if (!proj) return;
+    await saveProjectToFirestore(proj);
+    // Also update the public viewer doc if a shareToken exists
+    if (proj.shareToken) await publishViewerDoc(proj);
+    setSyncState('saved');
+  }, 900);
 }
 
-async function loadFromGist(gistIdOverride) {
-  const id = gistIdOverride || gist.gistId || new URLSearchParams(location.search).get('gist');
-  if (!id) return false;
-  let dataUpdated = false;
+// ─── Public viewer doc (Firestore — no auth required to read) ──
+async function publishViewerDoc(proj) {
+  if (!proj.shareToken) return;
   try {
-    const headers = { 'Accept': 'application/vnd.github.v3+json' };
-    if (gist.token) headers['Authorization'] = `token ${gist.token}`;
-    const res  = await fetch(`https://api.github.com/gists/${id}`, { headers });
-    if (!res.ok) return false;
-    const raw  = await res.json();
-    const file = raw.files['checklist-data.json'];
-    if (!file) return false;
-    const parsed = JSON.parse(file.content);
+    await db.collection('handover_public').doc(proj.shareToken).set({
+      title:       proj.title,
+      theme:       proj.theme,
+      activePage:  proj.activePage,
+      pages:       proj.pages,
+      generalData: proj.generalData,
+      updatedAt:   firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {
+    console.error('Publish viewer doc error:', e);
+  }
+}
 
-    const newHash = hashOf(parsed);
-    if (newHash === lastHash) return true;
-    lastHash = newHash;
-
-    // Restore project metadata
-    if (parsed.projectMeta) {
-      projectMeta.title = parsed.projectMeta.title || projectMeta.title;
-      projectMeta.theme = parsed.projectMeta.theme || projectMeta.theme;
-      saveProjectMeta(); applyProjectMeta();
-    }
-
-    // New multi-page format
-    if (parsed.pages) {
-      Object.keys(parsed.pages).forEach(k => {
+// ─── Load viewer data (no auth) ────────────────────────────────
+async function loadViewerData(shareToken) {
+  try {
+    const doc = await db.collection('handover_public').doc(shareToken).get();
+    if (!doc.exists) return false;
+    const data = doc.data();
+    projectMeta.title = data.title || '';
+    projectMeta.theme = data.theme || '';
+    activePage = data.activePage || 'homepage';
+    if (data.pages) {
+      Object.keys(data.pages).forEach(k => {
         if (!pages[k]) pages[k] = { loomUrl: '', figmaUrl: '', sections: [] };
-        const pg = parsed.pages[k];
+        const pg = data.pages[k];
         pages[k].loomUrl  = pg.loomUrl  || '';
         pages[k].figmaUrl = pg.figmaUrl || '';
         if (Array.isArray(pg.sections)) {
-          const colMap = {};
-          (pages[k].sections || []).forEach(s => colMap[String(s.id)] = s.collapsed);
-          pages[k].sections = pg.sections.map((s, idx) => ({ ...s, id: String(s.id), collapsed: colMap[String(s.id)] ?? (idx > 0) }));
+          pages[k].sections = pg.sections.map((s, idx) => ({ ...s, id: String(s.id), collapsed: idx > 0 }));
         }
       });
-      savePagesData();
     }
-    // Legacy flat sections (backward compat)
-    else if (parsed.sections && Array.isArray(parsed.sections)) {
-      const colMap = {};
-      (pages.homepage.sections || []).forEach(s => colMap[String(s.id)] = s.collapsed);
-      pages.homepage.sections = parsed.sections.map((s, idx) => ({ ...s, id: String(s.id), collapsed: colMap[String(s.id)] ?? (idx > 0) }));
-      if (parsed.projectMeta?.loomUrl) pages.homepage.loomUrl = parsed.projectMeta.loomUrl;
-      savePagesData();
-    }
-
-    if (!gist.gistId) {
-      gist.gistId = id;
-      const proj = getActiveProject();
-      if (proj) { proj.gistId = id; saveProjects(); }
-    }
-    dataUpdated = true;
-    setSyncState(gist.token ? 'saved' : 'offline');
+    generalData = data.generalData || { figmaFileUrl:'', fonts:[], typography:[] };
+    applyProjectMeta();
+    render();
     return true;
   } catch(e) {
-    console.error('Gist load error:', e);
+    console.error('Viewer load error:', e);
     return false;
-  } finally {
-    // render() is called outside the data try-catch so that:
-    // 1) render() errors are reported separately (not swallowed as "Gist load error")
-    // 2) a render() crash cannot prevent the data from being updated in memory
-    if (dataUpdated) try { render(); } catch(re) { console.error('Render error after Gist sync:', re); }
   }
 }
 
-function startPolling() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(loadFromGist, 15000);
+// ─── Share URL helper ──────────────────────────────────────────
+async function getOrCreateShareToken(proj) {
+  if (proj.shareToken) return proj.shareToken;
+  const token = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  proj.shareToken = token;
+  await saveProjectToFirestore(proj);
+  await publishViewerDoc(proj);
+  return token;
 }
 
-// ─── Public URL helper ─────────────────────────────────────────
-function getShareUrl() {
-  if (!gist.gistId) return '';
+function getShareUrl(shareToken) {
+  const base = `${location.origin}${location.pathname}`;
+  return `${base}?view=${shareToken}`;
+}
+
+// ─── Share link modal ─────────────────────────────────────────
+async function openShareModal() {
   const proj = getActiveProject();
-  const pub  = (proj?.pubUrl || '').trim().replace(/\/$/, '');
-  // Use the directory root (index.html) so shared links don't expose the
-  // editor filename. Developers who strip the ?gist= param land on the
-  // neutral "project link required" page instead of the designer dashboard.
-  const base = pub || `${location.origin}${location.pathname.replace(/[^/]+$/, '')}`;
-  return `${base}?gist=${gist.gistId}`;
-}
-function isLocalhost() {
-  return location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.endsWith('.local');
+  if (!proj) return;
+
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+
+  const renderShareModal = (shareUrl) => {
+    ov.innerHTML = `
+    <div class="modal" style="width:480px;">
+      <div class="modal-head">
+        <div class="modal-title">Share with Developer</div>
+        <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+      </div>
+      <p class="modal-desc">Share this link with your developer. They can view the checklist without signing in.</p>
+      ${shareUrl ? `
+      <div class="modal-field">
+        <label>Developer link (view-only)</label>
+        <div class="url-copy-row">
+          <input id="share-url-input" type="text" class="url-box" style="font-size:11px;cursor:text;" value="${esc(shareUrl)}" readonly onclick="this.select()">
+          <button class="copy-btn" data-url="${esc(shareUrl)}" onclick="copyToClipboard(this.dataset.url, this)">Copy</button>
+        </div>
+      </div>` : `<div style="text-align:center;padding:20px;color:var(--text-mute);font-size:13px;">Generating link…</div>`}
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="this.closest('.overlay').remove()">Close</button>
+      </div>
+    </div>`;
+  };
+
+  renderShareModal(null);
+  document.body.appendChild(ov);
+
+  const token = await getOrCreateShareToken(proj);
+  const url = getShareUrl(token);
+  renderShareModal(url);
+
+  // Update the Share Link button visibility now we have a token
+  const shareBtn = document.getElementById('share-link-btn');
+  if (shareBtn) shareBtn.style.display = '';
 }
 
-// ─── Global settings modal (GitHub token — shared across all projects) ────
-function openGlobalSettings() {
-  const hasToken  = !!gist.token;
-  const hasFigma  = !!figmaKeys.token;
+// ─── Figma token modal (lightweight — just the PAT, optional) ──
+function openFigmaTokenModal() {
   const ov = document.createElement('div');
   ov.className = 'overlay';
   ov.onclick = e => { if(e.target===ov) ov.remove(); };
   ov.innerHTML = `
-  <div class="modal" style="width:520px;">
+  <div class="modal" style="width:440px;">
     <div class="modal-head">
-      <div class="modal-title">Settings</div>
+      <div class="modal-title">${FIGMA_ICON_SVG} Figma Token</div>
       <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
     </div>
-    <p class="modal-desc">These settings apply to all your handovers.</p>
-
-    <!-- GitHub -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-sub);margin-bottom:10px;">GitHub Integration</div>
-    <p class="modal-desc" style="margin-bottom:12px;">Your Personal Access Token lets the app create and update GitHub Gists — one per project — so you can share checklists with developers.</p>
-    <details style="margin-bottom:14px;">
-      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get a GitHub token ▾</summary>
-      <ol class="step-list" style="margin-top:10px;">
-        <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Kubix+Checklist" target="_blank" rel="noopener">github.com/settings/tokens</a> → Generate new token (Classic)</li>
-        <li>Under <strong>Scopes</strong>, tick <strong>gist</strong> only — no other permissions needed</li>
-        <li>Click <strong>Generate token</strong>, copy it, and paste it below</li>
-        <li>Save — the same token works for every project you create</li>
-      </ol>
-    </details>
-    <div class="modal-field">
-      <label>GitHub Personal Access Token (gist scope only)</label>
-      <input type="password" id="gs-token" value="${esc(gist.token)}" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-      ${hasToken ? `<div style="font-size:11px;color:var(--kbx-mint);margin-top:5px;">✓ Token saved — paste a new one here to replace it</div>` : `<div style="font-size:11px;color:var(--text-sub);margin-top:5px;">Paste your token above and click Save.</div>`}
-    </div>
-
-    <div style="height:1px;background:var(--border);margin:18px 0;"></div>
-
-    <!-- Figma -->
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-sub);margin-bottom:10px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 358 358" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;flex-shrink:0;border-radius:3px;"><path d="M0 81.68C0 36.57 36.57 0 81.68 0H275.76C320.872 0 357.442 36.57 357.442 81.68V275.76C357.442 320.872 320.872 357.442 275.76 357.442H81.68C36.57 357.442 0 320.872 0 275.76V81.68Z" fill="black"/><path d="M94.9458 262.496C94.9458 239.362 113.7 220.608 136.834 220.608H178.72V262.496C178.72 285.63 159.968 304.384 136.834 304.384C113.7 304.384 94.9458 285.63 94.9458 262.496Z" fill="#24CB71"/><path d="M178.72 53.058V136.832H220.608C243.742 136.832 262.496 118.08 262.496 94.946C262.496 71.812 243.742 53.058 220.608 53.058H178.72Z" fill="#FF7237"/><path d="M220.26 220.608C243.394 220.608 262.148 201.854 262.148 178.72C262.148 155.586 243.394 136.832 220.26 136.832C197.126 136.832 178.373 155.586 178.373 178.72C178.373 201.854 197.126 220.608 220.26 220.608Z" fill="#00B6FF"/><path d="M94.9458 94.946C94.9458 118.08 113.7 136.834 136.834 136.834H178.72V53.058H136.834C113.7 53.058 94.9458 71.812 94.9458 94.946Z" fill="#FF3737"/><path d="M94.9458 178.72C94.9458 201.854 113.7 220.608 136.834 220.608H178.72V136.834H136.834C113.7 136.834 94.9458 155.586 94.9458 178.72Z" fill="#874FFF"/></svg> Figma</div>
-    <p class="modal-desc" style="margin-bottom:12px;">Add your Figma Personal Access Token to enable one-click section population from your Figma design files. Frame names become section names with pre-filled Figma deep-links.</p>
+    <p class="modal-desc">Optional — add your Figma Personal Access Token to populate sections directly from your design file via the web app.</p>
     <details style="margin-bottom:14px;">
       <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get a Figma token ▾</summary>
       <ol class="step-list" style="margin-top:10px;">
         <li>Go to <a href="https://www.figma.com/settings" target="_blank" rel="noopener">figma.com → Account Settings</a></li>
         <li>Scroll to <strong>Personal Access Tokens</strong> → click <strong>Generate new token</strong></li>
-        <li>Give it a name (e.g. "Handover App"), copy it, and paste below</li>
-        <li>Save — the token works for all your handover projects</li>
+        <li>Give it a name (e.g. "Handover App") and copy it</li>
       </ol>
     </details>
     <div class="modal-field">
       <label>Figma Personal Access Token</label>
-      <input type="password" id="gs-figma" value="${esc(figmaKeys.token)}" placeholder="figd_…" autocomplete="off">
-      ${hasFigma ? `<div style="font-size:11px;color:var(--kbx-mint);margin-top:5px;">✓ Token saved — paste a new one to replace it</div>` : `<div style="font-size:11px;color:var(--text-sub);margin-top:5px;">Paste your token above and click Save.</div>`}
+      <input type="password" id="ft-token" value="${esc(figmaKeys.token)}" placeholder="figd_…" autocomplete="off">
+      <div style="font-size:11px;color:var(--text-sub);margin-top:5px;">Stored locally in your browser only. You can also use the Figma plugin instead — no token needed.</div>
     </div>
-
     <div class="modal-actions">
       <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
-      <button class="modal-btn primary" onclick="saveGlobalSettings()">Save</button>
+      <button class="modal-btn primary" onclick="saveFigmaToken(document.getElementById('ft-token').value.trim());this.closest('.overlay').remove();render();">Save</button>
     </div>
   </div>`;
   document.body.appendChild(ov);
-  setTimeout(() => document.getElementById('gs-token')?.focus(), 50);
-}
-
-function saveGlobalSettings() {
-  const newToken   = document.getElementById('gs-token')?.value.trim()  || '';
-  const figmaToken = document.getElementById('gs-figma')?.value.trim() || '';
-  gist.token = newToken;
-  localStorage.setItem('gist_token',   newToken);
-  localStorage.setItem('figma_token',  figmaToken);
-  figmaKeys.token = figmaToken;
-  document.querySelector('.overlay')?.remove();
-  // Resume or stop syncing based on token + current project state
-  if (gist.token && gist.gistId) { saveToGist().then(() => startPolling()); }
-  else if (gist.token && activeProjectId) { setSyncState('offline'); } // has token, no gist yet
-  else { clearInterval(pollTimer); setSyncState('offline'); }
-}
-
-// ─── Per-project GitHub sync modal ─────────────────────────────
-function openSettings() {
-  const proj    = getActiveProject();
-  const pubUrl  = proj?.pubUrl || '';
-  const shareUrl = getShareUrl();
-  const gistUrl  = gist.gistId ? `https://gist.github.com/${gist.gistId}` : '';
-  const isLocal  = isLocalhost();
-
-  const tokenStatus = gist.token
-    ? `<div style="display:flex;align-items:center;gap:8px;background:rgba(148,247,161,0.08);border:1px solid rgba(148,247,161,0.25);border-radius:2px;padding:9px 12px;margin-bottom:16px;">
-        <span style="font-size:13px;color:var(--kbx-mint);">✓</span>
-        <span style="font-size:12px;color:var(--text-sec);">GitHub token connected</span>
-        <button onclick="this.closest('.overlay').remove();openGlobalSettings()" style="margin-left:auto;font-size:11px;font-weight:600;color:var(--text-sub);background:none;border:none;cursor:pointer;padding:0;font-family:var(--font-body);">Change →</button>
-      </div>`
-    : `<div style="display:flex;align-items:center;gap:8px;background:rgba(200,50,50,0.08);border:1px solid rgba(200,50,50,0.25);border-radius:2px;padding:9px 12px;margin-bottom:16px;">
-        <span style="font-size:13px;">⚠️</span>
-        <span style="font-size:12px;color:var(--text-sec);">No GitHub token — </span>
-        <button onclick="this.closest('.overlay').remove();openGlobalSettings()" style="font-size:12px;font-weight:700;color:var(--kbx-teal);background:none;border:none;cursor:pointer;padding:0;font-family:var(--font-body);">add one in Settings</button>
-      </div>`;
-
-  const ov = document.createElement('div');
-  ov.className = 'overlay';
-  ov.onclick = e => { if(e.target===ov) ov.remove(); };
-  ov.innerHTML = `
-  <div class="modal" style="width:540px;">
-    <div class="modal-head">
-      <div class="modal-title">GitHub Sync</div>
-      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
-    </div>
-    <p class="modal-desc">Sync this project to a GitHub Gist to get a shareable link for your developer. Each project uses its own Gist.</p>
-
-    ${tokenStatus}
-
-    <div class="modal-field">
-      <label>Gist ID (auto-created on first sync, or paste existing)</label>
-      <input type="text" id="st-gist" value="${esc(gist.gistId)}" placeholder="Leave blank to auto-create">
-    </div>
-    ${gistUrl ? `<div class="modal-field"><label>Gist URL (view raw data)</label><div class="url-box"><a href="${esc(gistUrl)}" target="_blank" rel="noopener">${esc(gistUrl)}</a></div></div>` : ''}
-
-    <div class="modal-divider"></div>
-
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-sub);margin-bottom:10px;">Public hosting (so your developer can open the link)</div>
-    ${isLocal && !pubUrl ? `
-    <div style="background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);border-radius:2px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text-mute);line-height:1.6;">
-      ⚠️ <strong style="color:var(--text-sec);">You're on localhost</strong> — your developer won't be able to open a <code>localhost</code> link.
-      Deploy the HTML file to a free host like <a href="https://app.netlify.com/drop" target="_blank" rel="noopener" style="color:var(--kbx-teal);font-weight:600;">Netlify Drop</a> (drag &amp; drop, no account needed), then paste the URL below.
-    </div>` : ''}
-    <details style="margin-bottom:14px;">
-      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to deploy with Netlify Drop (free, 2 minutes) ▾</summary>
-      <ol class="step-list" style="margin-top:10px;">
-        <li>Go to <a href="https://app.netlify.com/drop" target="_blank" rel="noopener">app.netlify.com/drop</a></li>
-        <li>Drag your HTML file onto the page</li>
-        <li>Netlify gives you a public URL like <code>https://amazing-name-123.netlify.app</code></li>
-        <li>Copy that URL and paste it below, then click Save &amp; Sync</li>
-      </ol>
-    </details>
-    <div class="modal-field">
-      <label>🌐 Public App URL — where the app is hosted online</label>
-      <input type="url" id="st-puburl" value="${esc(pubUrl)}" placeholder="https://your-checklist.netlify.app">
-      <div style="font-size:11px;color:var(--text-sub);margin-top:5px;">Leave blank to use this machine's address (localhost — only works on your device).</div>
-    </div>
-
-    ${shareUrl ? `
-    <div class="modal-field">
-      <label>📋 Shareable Developer Link${isLocal && !pubUrl ? ' <span style="color:#C83232;font-weight:400;font-size:10px;">(localhost — set a public URL above to fix)</span>' : ''}</label>
-      <div class="url-copy-row">
-        <input id="share-url-input" type="text" class="url-box" style="font-size:11px;cursor:text;" value="${esc(shareUrl)}" readonly onclick="this.select()" title="Click to select, then copy">
-        <button class="copy-btn" data-url="${esc(shareUrl)}" onclick="copyToClipboard(this.dataset.url, this)">Copy</button>
-      </div>
-    </div>` : ''}
-
-    <div class="modal-actions">
-      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
-      <button class="modal-btn primary" onclick="saveGistSettings()">${gist.token ? 'Save &amp; Sync' : 'Save'}</button>
-    </div>
-  </div>`;
-  document.body.appendChild(ov);
-}
-
-function saveGistSettings() {
-  gist.gistId = document.getElementById('st-gist')?.value.trim() || '';
-  const pubUrl = document.getElementById('st-puburl')?.value.trim() || '';
-  const proj = getActiveProject();
-  if (proj) { proj.gistId = gist.gistId; proj.pubUrl = pubUrl; saveProjects(); }
-  document.querySelector('.overlay')?.remove();
-  if (gist.token) { saveToGist().then(() => startPolling()); }
-  else { clearInterval(pollTimer); setSyncState('offline'); }
+  setTimeout(() => document.getElementById('ft-token')?.focus(), 50);
 }
 
 // ─── Clipboard helper (works even when document not focused) ───
@@ -1649,10 +1654,7 @@ function copyToClipboard(text, btn) {
 
 function copyShareLink(e) {
   e.preventDefault();
-  if (!gist.gistId) { openSettings(); return; }
-  const url = getShareUrl();
-  const btn = document.getElementById('share-link-btn');
-  copyToClipboard(url, btn);
+  openShareModal();
 }
 
 // ─── ClickUp CSV export ─────────────────────────────────────────
@@ -2002,31 +2004,35 @@ function stripSectionPrefix(name) {
 }
 
 // ─── Init ──────────────────────────────────────────────────────
-(async function init() {
+// ─── Viewer mode boot (no auth needed) ────────────────────────
+(async function initViewerMode() {
+  if (!VIEWER_MODE) return;
+  const params = new URLSearchParams(location.search);
+  const shareToken = params.get('view');
+  document.documentElement.classList.add('viewer-mode');
+  document.body.className = 'proj-view';
+  applyProjectMeta();
+  const loaded = shareToken ? await loadViewerData(shareToken) : false;
+  if (!loaded) render();
+  setSyncState('offline');
+})();
+
+// ─── Authenticated boot (called after auth.onAuthStateChanged) ─
+async function _bootApp() {
   const params = new URLSearchParams(location.search);
 
-  // ── Viewer mode: ?gist=ID — read-only, bypass library entirely ──
-  if (VIEWER_MODE) {
-    document.documentElement.classList.add('viewer-mode');
-    document.body.className = 'proj-view';
-    const urlGist = params.get('gist');
-    if (urlGist) gist.gistId = urlGist;
-    applyProjectMeta();
-    const loaded = await loadFromGist(urlGist);
-    if (!loaded) render();
-    if (gist.gistId) { startPolling(); setSyncState('saved'); }
-    else setSyncState('offline');
-    return;
-  }
-
-  // ── Load projects from localStorage ──
-  projects = loadProjects();
+  // Load all projects from Firestore
+  await loadProjectsFromFirestore();
 
   // ── ?project=ID — reopen a bookmarked project ──
   const urlProject = params.get('project');
   if (urlProject) {
     const proj = projects.find(p => p.id === urlProject);
-    if (proj) { openProject(urlProject); return; }
+    if (proj) { openProject(urlProject); }
+    else { renderLibrary(); }
+    // Check for local migration after loading
+    await migrateLocalStorageToFirestore();
+    return;
   }
 
   // ── ?import=BASE64 — import from Figma plugin ──
@@ -2038,9 +2044,7 @@ function stripSectionPrefix(name) {
       const data    = JSON.parse(decoded);
       console.log('[PluginImport] Parsed import data:', data.title, '| activePage:', data.activePage,
         '| sections:', data.pages?.[data.activePage]?.sections?.length || 0);
-      migrateV1();
-      projects = loadProjects();
-      handlePluginImport(data);
+      await handlePluginImport(data);
       return;
     } catch(e) {
       console.error('Design→Dev: failed to parse ?import param', e);
@@ -2048,17 +2052,11 @@ function stripSectionPrefix(name) {
     }
   }
 
-  // ── Default: show library (migrate v1 data first if needed) ──
-  migrateV1();
-  projects = loadProjects(); // reload after potential migration
+  // ── Default: show library ──
   renderLibrary();
-
-  // ── ?setup=1 — first-time setup: auto-open the settings modal ──
-  if (params.get('setup')) {
-    // Small delay so the library has rendered before the modal opens
-    setTimeout(() => openGlobalSettings(), 300);
-  }
-})();
+  // Offer to migrate any locally-stored projects from before the Firebase upgrade
+  await migrateLocalStorageToFirestore();
+}
 
 // ═══════════════════════════════════════════════════════════════
 // ─── FIGMA POPULATE ───────────────────────────────────────────
@@ -2067,8 +2065,7 @@ function stripSectionPrefix(name) {
 // ─── Confirm replace if page already has sections ──────────────
 function confirmFigmaPopulate(pageId) {
   if (!figmaKeys.token) {
-    alert('Add your Figma Personal Access Token in ⚙ Settings first.');
-    openGlobalSettings();
+    openFigmaTokenModal();
     return;
   }
   if (!pages[pageId]?.figmaUrl) {
@@ -2186,7 +2183,7 @@ function showFigmaError(pageId, message) {
     <div class="figma-error-msg show" style="margin:0;">${esc(message)}</div>
     <div class="modal-actions" style="margin-top:16px;">
       <button class="modal-btn" onclick="this.closest('.overlay').remove()">Close</button>
-      <button class="modal-btn primary" onclick="this.closest('.overlay').remove();openGlobalSettings()">⚙ Open Settings</button>
+      <button class="modal-btn primary" onclick="this.closest('.overlay').remove();openFigmaTokenModal()">⚙ Add Figma Token</button>
     </div>
   </div>`;
   document.body.appendChild(ov);
@@ -2295,9 +2292,9 @@ function renderGeneralTab() {
     h += `
     <div class="typo-url-row">
       <input class="input-text" id="typo-figma-url" value="${esc(generalData.figmaFileUrl)}" placeholder="Paste your Figma file URL (e.g. https://www.figma.com/design/abc123/…)" onchange="generalData.figmaFileUrl=this.value;">
-      <button class="typo-fetch-btn" id="typo-fetch-btn" onclick="fetchTypography()" ${!figmaKeys.token ? 'disabled title="Add a Figma token in \u2699 Settings first"' : ''}>
+      <button class="typo-fetch-btn" id="typo-fetch-btn" onclick="${figmaKeys.token ? 'fetchTypography()' : 'openFigmaTokenModal()'}">
         ${FIGMA_ICON_SVG}
-        ${!figmaKeys.token ? 'No Figma token set' : 'Fetch from Figma'}
+        ${!figmaKeys.token ? 'Add Figma Token…' : 'Fetch from Figma'}
       </button>
     </div>
     <div class="typo-status" id="typo-status"></div>`;
@@ -2329,11 +2326,8 @@ function renderGeneralTab() {
 }
 
 // ─── Figma plugin import ─────────────────────────────────────
-function handlePluginImport(data) {
-  projects = loadProjects();
-
+async function handlePluginImport(data) {
   // Extract Figma file key from a URL so we can match projects by file
-  // regardless of which page was active when the URL was generated.
   const extractFileKey = url => {
     const m = url && url.match(/figma\.com\/(?:design|file)\/([^\/\?#]+)/);
     return m ? m[1] : null;
@@ -2341,26 +2335,15 @@ function handlePluginImport(data) {
 
   const incomingFileKey = extractFileKey(data.figmaFileUrl);
 
-  // Match priority: gistId first, then fileKey.
-  // gistId is the explicit user-configured link between plugin and web-app project,
-  // so it is more authoritative. fileKey-only matches can hit "ghost" projects that
-  // were auto-created by earlier failed syncs, which would route the update to the
-  // wrong project.
-  const byGistId  = data.gistId
-    ? projects.find(p => p.gistId && p.gistId === data.gistId)
-    : null;
-  const byFileKey = (!byGistId && incomingFileKey)
+  // Match by Figma file key (primary match now that gistId is gone)
+  const existingProj = incomingFileKey
     ? projects.find(p => extractFileKey(p.generalData?.figmaFileUrl) === incomingFileKey)
     : null;
-  const existingProj = byGistId || byFileKey;
 
   console.log(
-    '[PluginImport] gistId:', data.gistId,
-    '| fileKey:', incomingFileKey,
-    '| match:', existingProj
-      ? (byGistId ? `byGistId → "${existingProj.title}"` : `byFileKey → "${existingProj.title}"`)
-      : 'none — will create new project',
-    '| projects in storage:', projects.length
+    '[PluginImport] fileKey:', incomingFileKey,
+    '| match:', existingProj ? `byFileKey → "${existingProj.title}"` : 'none — will create new project',
+    '| projects in Firestore:', projects.length
   );
 
   if (existingProj) {
@@ -2369,9 +2352,6 @@ function handlePluginImport(data) {
     if (data.theme)        existingProj.theme       = data.theme;
     if (data.activePage)   existingProj.activePage  = data.activePage;
     if (data.figmaFileUrl) existingProj.generalData.figmaFileUrl = data.figmaFileUrl;
-    // Always adopt the incoming gistId if the project doesn't have one yet —
-    // this lets fileKey-matched projects upgrade to gistId matching on subsequent syncs
-    if (data.gistId && !existingProj.gistId) existingProj.gistId = data.gistId;
     existingProj.updatedAt = Date.now();
 
     // ── Merge sections for the imported page only ──
@@ -2379,13 +2359,10 @@ function handlePluginImport(data) {
     const incomingSections = data.pages?.[pageKey]?.sections || [];
     const existingSections = existingProj.pages?.[pageKey]?.sections || [];
 
-    // Update the page's Figma URL if one was sent
     if (data.pages?.[pageKey]?.figmaUrl) {
       existingProj.pages[pageKey].figmaUrl = data.pages[pageKey].figmaUrl;
     }
 
-    // Build lookups by figmaLink (primary) and name (fallback).
-    // Name fallback handles the case where fileKey was null on export so figmaLinks are empty.
     const existingByLink = {};
     const existingByName = {};
     existingSections.forEach(s => {
@@ -2393,66 +2370,50 @@ function handlePluginImport(data) {
       if (s.name) existingByName[s.name.toLowerCase().trim()] = s;
     });
 
-    // Track which existing sections were matched so we can keep unmatched ones
     const matchedIds = new Set();
-
     console.log('[PluginImport] incoming sections:', incomingSections.length, '| existing sections:', existingSections.length);
 
     const mergedSections = incomingSections.map(incoming => {
-      // Strip // prefix from incoming name (defensive: in case plugin toSection didn't strip it)
       const cleanName = stripSectionPrefix(incoming.name);
       const existing = existingByLink[incoming.figmaLink]
                     || existingByName[cleanName.toLowerCase().trim()];
       if (!existing) {
-        // New section not previously in the web app — add it
-        console.log('[PluginImport] NEW section:', cleanName, '(no match by link or name)');
+        console.log('[PluginImport] NEW section:', cleanName);
         return { ...incoming, name: cleanName, id: generateId() };
       }
       matchedIds.add(existing.id);
-      const merged = {
+      return {
         ...existing,
         name:      cleanName,
-        // Preserve existing figmaLink if incoming has none (e.g. plugin exported with null fileKey)
         figmaLink: incoming.figmaLink || existing.figmaLink,
-        // Plugin notes win if non-empty; otherwise keep any notes added in the web app
-        notes:  incoming.notes || existing.notes,
-        // Plugin status always wins — the designer made a deliberate choice in the plugin.
-        // Using incoming.status directly (not gating on !== 'existing') ensures that a
-        // designer who resets a section back to 'existing' in the plugin sees that reflected here.
-        status: incoming.status || existing.status,
+        notes:     incoming.notes || existing.notes,
+        status:    incoming.status || existing.status,
       };
-      console.log('[PluginImport] MERGED section:', cleanName, '| notes:', merged.notes, '| status:', merged.status);
-      return merged;
     });
 
-    // Append any sections that exist only in the web app (added manually, not from Figma)
     existingSections
       .filter(s => !matchedIds.has(s.id))
       .forEach(s => mergedSections.push(s));
 
     existingProj.pages[pageKey].sections = mergedSections;
 
-    saveProjects();
+    await saveProjectToFirestore(existingProj);
     history.replaceState({}, '', '?project=' + existingProj.id);
     openProject(existingProj.id);
-    // Push merged data to Gist immediately so the 15-second poller doesn't
-    // overwrite the plugin's changes before the user can see them.
-    // saveToGist() is a no-op if there's no token, so this is always safe.
-    saveToGist();
     return;
   }
 
   // ── No matching project found — create a new one ──
-  console.log('[PluginImport] Creating new project for gistId:', data.gistId, 'fileKey:', incomingFileKey);
-  const id  = generateId();
+  console.log('[PluginImport] Creating new project, fileKey:', incomingFileKey);
+  const id = db.collection('handover_projects').doc().id;
   const proj = {
     id,
     title:       data.title  || 'Figma Import',
     theme:       data.theme  || '',
-    // Persist incoming gistId so subsequent syncs match by gistId immediately
-    gistId:      data.gistId || '',
-    pubUrl:      '',
+    shareToken:  '',
     activePage:  data.activePage || 'homepage',
+    createdBy:   currentUser?.uid || '',
+    createdByName: currentUser?.displayName || currentUser?.email || '',
     createdAt:   Date.now(),
     updatedAt:   Date.now(),
     pages:       data.pages  || defaultPages(),
@@ -2463,7 +2424,6 @@ function handlePluginImport(data) {
     }
   };
 
-  // Ensure all page keys exist; ensure sections have IDs and strip any // prefix from names
   Object.keys(PAGE_DEFS).forEach(k => {
     if (!proj.pages[k]) proj.pages[k] = { loomUrl: '', figmaUrl: '', sections: [] };
     (proj.pages[k].sections || []).forEach(s => {
@@ -2472,12 +2432,10 @@ function handlePluginImport(data) {
     });
   });
 
-  projects.push(proj);
-  saveProjects();
+  projects.unshift(proj);
+  await saveProjectToFirestore(proj);
   history.replaceState({}, '', '?project=' + id);
   openProject(id);
-  // If a gist token is configured, save immediately so the project exists in the Gist
-  saveToGist();
 }
 
 // ─── Legend modal ───────────────────────────────────────────────

@@ -8,7 +8,28 @@ Single-file vanilla HTML/CSS/JS app. Firebase Auth (Google OAuth, `@kubixmedia.c
 - Preview: `npx serve . -p 3000` in `/cro` (name: `CRO Web App` in launch.json)
 - Login screen: dot-matrix canvas + KUBIX CRO Planner brand logo + Google sign-in button with animated gradient border
 
-### 2. Shopify-to-Figma Pipeline (`shopify-to-figma/`)
+### 2. Design → Dev Handover App (`design-to-dev-handover-v3-figma.html` + `figma-plugin/`)
+
+**Status: Firebase migration complete (session 2026-03-31)**
+
+Previously required GitHub PAT + Figma PAT + Gist setup per designer. Now uses same Firebase project as CRO app.
+
+**What changed:**
+- Firebase Auth (Google sign-in, `@kubixmedia.co.uk` only) replaces all token setup
+- Firestore (`handover_projects` collection) replaces GitHub Gist storage
+- `handover_public/{shareToken}` collection for unauthenticated developer viewer links
+- Viewer URL changed from `?gist=ID` → `?view=SHARE_TOKEN`
+- Plugin: removed pull-from-gist feature, Gist ID field, GitHub token field entirely
+- One-time migration prompt to move existing `kbx_projects` from localStorage → Firestore
+- Optional Figma PAT kept in localStorage only (for "Populate from Figma" REST API feature)
+
+**Still needed:**
+- Set Firestore security rules in Firebase console:
+  - `handover_projects`: auth required, `@kubixmedia.co.uk` email domain check
+  - `handover_public`: public read, no write from client
+- End-to-end test: sign in → create project → Figma plugin export → share link
+
+### 3. Shopify-to-Figma Pipeline (`shopify-to-figma/`)
 A local Node.js/Express dashboard for uploading Shopify theme ZIPs, previewing all sections via `shopify theme dev`, and building Figma section libraries.
 - Server: `npm start` in `/shopify-to-figma` → `http://localhost:3001`
 - Figma file: `uoFjCyCsednJEhryRm8G1k` ("Hyper Theme — Shopify Section Library")

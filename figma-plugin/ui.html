@@ -334,12 +334,6 @@ html, body {
 [data-theme="light"] .icon-sun  { display: none;  }
 [data-theme="light"] .icon-moon { display: block; }
 
-/* ── Pull button ─────────────────────────────────────────── */
-@keyframes kbx-spin { to { transform: rotate(360deg); } }
-#pull-btn .icon-pull-spin { display: none; }
-#pull-btn.pulling .icon-pull      { display: none; }
-#pull-btn.pulling .icon-pull-spin { display: block; animation: kbx-spin 0.7s linear infinite; }
-
 /* ── Update strip ────────────────────────────────────────── */
 #update-strip {
   display: none; align-items: center; justify-content: space-between;
@@ -444,16 +438,6 @@ html, body {
         </div>
       </div>
       <div class="hdr-actions">
-        <button class="icon-btn" id="pull-btn" title="Pull latest notes from web app" style="display:none">
-          <!-- Cloud arrow down: default state -->
-          <svg class="icon-pull" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 5.75 5.75 0 011.5 11.095"/>
-          </svg>
-          <!-- Spinner arc: shown while pulling -->
-          <svg class="icon-pull-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="13" height="13">
-            <path stroke-linecap="round" d="M12 2a10 10 0 0 1 10 10"/>
-          </svg>
-        </button>
         <button class="icon-btn theme-toggle-btn" title="Toggle light/dark mode">
           <!-- Sun: shown in dark mode -->
           <svg class="icon-sun" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
@@ -556,28 +540,18 @@ html, body {
         <small>Where your Design → Dev Handover web app is hosted.</small>
       </div>
       <div class="info-box">
-        <strong>Hosted on GitHub Pages</strong><br>
-        The default URL points to your live app. If you ever move to a different host, paste the new URL here — all three designers update their copy once and it works for everyone.
+        <strong>Sign in required</strong><br>
+        The web app now uses your Kubix Google account for sign-in — no GitHub tokens or Figma tokens needed. Just click "Open in Handover" and sign in with Google.
       </div>
       <div class="field">
         <label>Figma File URL (for frame links)</label>
         <input type="url" id="figma-file-url" placeholder="https://www.figma.com/design/…">
         <small>Paste your Figma file URL so section links are always populated, even for draft files where Figma doesn't provide a file key automatically.</small>
       </div>
-      <div class="field">
-        <label>Gist ID (for pulling notes)</label>
-        <input type="text" id="gist-id" placeholder="e.g. abc123def456…">
-        <small>Paste your Gist ID or full Gist URL here to enable the pull button. Find it in the web app's ⚙ Settings under GitHub Gist URL.</small>
-      </div>
-      <div class="field">
-        <label>GitHub Token (for pulling notes)</label>
-        <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-        <small>Paste the same GitHub token you use in the web app. Required for the pull button to authenticate with the GitHub API.</small>
-      </div>
 
       <div class="danger-zone">
         <div class="danger-zone-label">Danger Zone</div>
-        <p class="danger-zone-desc">Clears all stored data for this plugin — sections, statuses, notes, project name, Gist ID, and saved settings. Use this to start fresh after testing.</p>
+        <p class="danger-zone-desc">Clears all stored data for this plugin — sections, statuses, notes, project name, and saved settings. Use this to start fresh after testing.</p>
         <div class="danger-zone-row">
           <button class="btn-danger" id="reset-btn">Reset All Data</button>
           <button class="btn-secondary" id="reset-cancel-btn" style="display:none">Cancel</button>
@@ -687,8 +661,6 @@ let state = {
   projectName:   '',
   projectTheme:  '',
   pageType:      'homepage',
-  gistId:        '',
-  githubToken:   '',
   hasExported:   false,
   isDirty:       false,   // true when notes/status changed since last pull or sync
 };
@@ -713,21 +685,6 @@ function saveSections() {
   post({ type: 'set-storage', key: sectionsStorageKey(), value: state.sections });
 }
 
-// ── Pull-from-Gist ────────────────────────────────────────────
-function extractGistId(str) {
-  if (!str) return '';
-  // Full Gist URL: https://gist.github.com/{user}/{id} or https://gist.github.com/{id}
-  const urlMatch = str.match(/gist\.github\.com\/(?:[^/]+\/)?([a-f0-9]{20,})/i);
-  if (urlMatch) return urlMatch[1];
-  // Raw ID (32-char hex)
-  if (/^[a-f0-9]{20,}$/i.test(str.trim())) return str.trim();
-  return '';
-}
-
-function updatePullBtn() {
-  const btn = document.getElementById('pull-btn');
-  if (btn) btn.style.display = state.hasExported ? '' : 'none';
-}
 
 function updateOpenBtn() {
   const btn   = document.getElementById('open-btn');
@@ -784,11 +741,9 @@ async function checkForUpdate() {
       }
     }
 
-    const headers = { 'Accept': 'application/vnd.github.v3+json' };
-    if (state.githubToken) headers['Authorization'] = `token ${state.githubToken}`;
     const res = await fetch(
       'https://api.github.com/repos/kbx-ali/design-to-dev-handover/releases/latest',
-      { headers }
+      { headers: { 'Accept': 'application/vnd.github.v3+json' } }
     );
     if (!res.ok) return; // fail silently — non-critical
 
@@ -805,92 +760,6 @@ async function checkForUpdate() {
   }
 }
 
-async function pullFromGist() {
-  const id = extractGistId(state.gistId);
-  if (!id) {
-    document.getElementById('app-url').value        = state.appUrl;
-    document.getElementById('figma-file-url').value = state.manualFigmaUrl;
-    document.getElementById('gist-id').value        = state.gistId;
-    showScreen('screen-settings');
-    showToast('Paste your Gist ID in Settings first');
-    return;
-  }
-
-  const btn = document.getElementById('pull-btn');
-  btn.classList.add('pulling');
-  btn.disabled = true;
-
-  try {
-    const headers = { 'Accept': 'application/vnd.github.v3+json' };
-    if (state.githubToken) headers['Authorization'] = `token ${state.githubToken}`;
-    const res = await fetch(`https://api.github.com/gists/${id}`, { headers });
-    if (!res.ok) throw new Error(`GitHub API error (${res.status})`);
-
-    const raw  = await res.json();
-    const file = raw.files?.['checklist-data.json'];
-    if (!file) throw new Error('checklist-data.json not found in Gist');
-
-    const parsed = JSON.parse(file.content);
-
-    // ── Sync project name + theme from Gist (web app is source of truth) ──
-    // The web app stores default placeholder strings when no name is set;
-    // skip those so we don't overwrite a real value with a placeholder.
-    const remoteTitle = parsed.projectMeta?.title;
-    const remoteTheme = parsed.projectMeta?.theme;
-    if (remoteTitle && remoteTitle !== 'Enter Project Name') {
-      state.projectName = remoteTitle;
-      document.getElementById('project-name').value = remoteTitle;
-      post({ type: 'set-storage', key: 'projectName', value: remoteTitle });
-    }
-    if (remoteTheme && remoteTheme !== 'Enter Base Theme Name') {
-      state.projectTheme = remoteTheme;
-      document.getElementById('project-theme').value = remoteTheme;
-      post({ type: 'set-storage', key: 'projectTheme', value: remoteTheme });
-    }
-
-    const gistSections = parsed.pages?.[state.pageType]?.sections || [];
-    if (gistSections.length === 0) {
-      showToast('⚠ No sections for this page type in the Gist');
-      return;
-    }
-
-    // Build lookups by figmaLink (primary) and name (fallback).
-    // figmaLink formats can differ between plugin exports and web-app API
-    // fetches, and fileKey is sometimes unavailable making links empty —
-    // so name matching ensures the pull works in all cases.
-    const byLink = {};
-    const byName = {};
-    gistSections.forEach(s => {
-      if (s.figmaLink) byLink[s.figmaLink] = s;
-      if (s.name)      byName[s.name.toLowerCase().trim()] = s;
-    });
-
-    let updated = 0;
-    state.frames.forEach(f => {
-      const remote = byLink[f.figmaLink] || byName[(f.name || '').toLowerCase().trim()];
-      if (!remote) return;
-      ensureSection(f.id);
-      const cur = state.sections[f.id];
-      state.sections[f.id] = {
-        ...cur,
-        notes:  remote.notes  || cur.notes,
-        status: remote.status || cur.status,
-      };
-      updated++;
-    });
-
-    saveSections();
-    renderFrames();
-    state.isDirty = false; updateOpenBtn();
-    showToast(`✓ Pulled — ${updated} section${updated !== 1 ? 's' : ''} updated`);
-  } catch (e) {
-    console.error('Pull from Gist error:', e);
-    showToast('⚠ Pull failed — check Gist ID in Settings');
-  } finally {
-    btn.classList.remove('pulling');
-    btn.disabled = false;
-  }
-}
 
 function showToast(msg, ms = 2200) {
   const t = document.getElementById('toast');
@@ -1121,9 +990,6 @@ function buildExportData() {
     figmaFileUrl: effectiveFileKey
       ? `https://www.figma.com/design/${effectiveFileKey}/${encodeURIComponent(effectivePageName)}`
       : (state.figmaFileUrl || ''),
-    // Include gistId so the web app can match the project by Gist when no
-    // figmaFileUrl is stored (e.g. project was created manually in the web app).
-    gistId:       extractGistId(state.gistId),
     activePage:   pageType,
     pages
   };
@@ -1157,7 +1023,6 @@ document.getElementById('open-btn').addEventListener('click', () => {
   if (!state.hasExported) {
     state.hasExported = true;
     post({ type: 'set-storage', key: 'hasExported', value: true });
-    updatePullBtn();
   }
 });
 
@@ -1165,8 +1030,6 @@ document.getElementById('open-btn').addEventListener('click', () => {
 document.getElementById('settings-btn').addEventListener('click', () => {
   document.getElementById('app-url').value        = state.appUrl;
   document.getElementById('figma-file-url').value = state.manualFigmaUrl;
-  document.getElementById('gist-id').value        = state.gistId;
-  document.getElementById('github-token').value   = state.githubToken;
   showScreen('screen-settings');
 });
 
@@ -1179,7 +1042,7 @@ document.getElementById('back-btn').addEventListener('click', goBack);
 document.getElementById('back-btn-2').addEventListener('click', goBack);
 
 // ── Reset all plugin data ─────────────────────────────────────
-const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'gistId', 'githubToken', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
 let _resetConfirming = false;
 
 function resetConfirmClear() {
@@ -1206,8 +1069,6 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   state.sections      = {};
   state.projectName   = '';
   state.projectTheme  = '';
-  state.gistId        = '';
-  state.githubToken   = '';
   state.appUrl        = DEFAULT_URL;
   state.hasExported   = false;
   state.cachedFileKey = '';
@@ -1223,12 +1084,8 @@ document.getElementById('reset-cancel-btn').addEventListener('click', resetConfi
 document.getElementById('save-settings-btn').addEventListener('click', () => {
   const url          = document.getElementById('app-url').value.trim() || DEFAULT_URL;
   const manualUrl    = document.getElementById('figma-file-url').value.trim();
-  const gistId       = document.getElementById('gist-id').value.trim();
-  const githubToken  = document.getElementById('github-token').value.trim();
   state.appUrl        = url;
   state.manualFigmaUrl = manualUrl;
-  state.gistId        = gistId;
-  state.githubToken   = githubToken;
   // Extract fileKey from the manual URL so buildExportData can use it
   const m = manualUrl.match(/figma\.com\/(?:design|file)\/([^\/\?#]+)/);
   if (m) {
@@ -1237,8 +1094,6 @@ document.getElementById('save-settings-btn').addEventListener('click', () => {
   }
   post({ type: 'set-storage', key: 'appUrl',         value: url         });
   post({ type: 'set-storage', key: 'manualFigmaUrl', value: manualUrl   });
-  post({ type: 'set-storage', key: 'gistId',         value: gistId      });
-  post({ type: 'set-storage', key: 'githubToken',    value: githubToken });
   showToast('✓ Settings saved');
   goBack();
 });
@@ -1247,9 +1102,6 @@ document.getElementById('save-settings-btn').addEventListener('click', () => {
 document.getElementById('refresh-btn').addEventListener('click', () => {
   post({ type: 'refresh' });
 });
-
-// ── Pull from Gist ────────────────────────────────────────────
-document.getElementById('pull-btn').addEventListener('click', pullFromGist);
 
 // ── Live field sync ───────────────────────────────────────────
 document.getElementById('project-name').addEventListener('input',  e => { state.projectName  = e.target.value; });
@@ -1312,9 +1164,7 @@ window.onmessage = event => {
     if (key === 'appUrl')       { state.appUrl       = value; }
     if (key === 'projectName')  { state.projectName  = value; document.getElementById('project-name').value  = value; }
     if (key === 'projectTheme') { state.projectTheme = value; document.getElementById('project-theme').value = value; }
-    if (key === 'gistId')        { state.gistId        = value || ''; }
-    if (key === 'githubToken')   { state.githubToken   = value || ''; }
-    if (key === 'hasExported')   { state.hasExported   = !!value; updatePullBtn(); }
+    if (key === 'hasExported')   { state.hasExported   = !!value; }
     if (key === 'cachedFileKey') { state.cachedFileKey   = value || ''; }
     if (key === 'manualFigmaUrl') {
       state.manualFigmaUrl = value || '';
@@ -1339,7 +1189,7 @@ window.onmessage = event => {
 // ── File context detection ────────────────────────────────────
 // We wait for all 8 storage keys AND page-data before deciding which screen
 // to show, to avoid flickering from stale state.
-const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'gistId', 'githubToken', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
 let _initStorageCount = 0;
 let _pageDataReady    = false;
 
@@ -1348,7 +1198,7 @@ function _maybeCheckFileContext() {
 }
 
 function checkFileContext() {
-  // Run version check now that all storage (inc. githubToken) is loaded
+  // Run version check once all storage keys are loaded
   checkForUpdate();
 
   // Case 1: Brand new install — never exported, no cached file key
@@ -1375,17 +1225,16 @@ document.getElementById('modal-new-btn').addEventListener('click', () => {
   post({ type: 'set-storage', key: 'cachedFileKey', value: state.fileKey });
   // Clear project-specific state
   state.projectName  = '';  state.projectTheme = '';
-  state.gistId       = '';  state.hasExported  = false;
+  state.hasExported  = false;
   state.sections     = {};  state.isDirty      = false;
   state.manualFigmaUrl = '';
   post({ type: 'set-storage', key: 'projectName',   value: '' });
   post({ type: 'set-storage', key: 'projectTheme',  value: '' });
-  post({ type: 'set-storage', key: 'gistId',        value: '' });
   post({ type: 'set-storage', key: 'hasExported',   value: false });
   post({ type: 'set-storage', key: 'manualFigmaUrl',value: '' });
   document.getElementById('project-name').value  = '';
   document.getElementById('project-theme').value = '';
-  updatePullBtn(); updateOpenBtn();
+  updateOpenBtn();
   renderFrames();
   document.getElementById('new-file-modal').classList.remove('show');
   showToast('Starting fresh — sections cleared');
