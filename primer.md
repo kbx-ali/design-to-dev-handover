@@ -25,6 +25,15 @@ Single-file vanilla HTML/CSS/JS app. Same Firebase project as CRO. Live at `kubi
   - Animated Google gradient border via `@property --gg-angle` conic-gradient on sign-in button hover
   - `setTheme(t)` syncs `lgn-btn-dark` / `lgn-btn-light` active states; header toggle still uses single `toggleTheme()` which delegates to `setTheme()`
 - Share Link button always visible when a project is open (was previously hidden until a `shareToken` existed)
+- **Google Drive assets integration added (2026-03-31):**
+  - `generalData.driveUrl` — project-level Google Drive folder URL; editable in General tab
+  - Teal banner "Project Assets Folder" shown above sections list when a Drive URL is set (both editor and viewer)
+  - Per-section `driveUrl` — optional section-specific Drive folder input (editor only; viewer sees link button)
+  - Per-section `assets: []` — file upload dropzone in each section card; files go to Firebase Storage at `handover/{projectId}/{sectionId}/{assetId}_{filename}`; asset metadata (id, name, url, type, size) stored in Firestore section data
+  - Asset chips shown in both editor and viewer mode — click to download; editor has × remove button
+  - Firebase Storage SDK (v10 compat) added alongside existing Auth/Firestore SDKs
+  - Backward compat: `openProject()` and viewer mode boot normalise missing `driveUrl`/`assets` fields on existing projects
+  - **Pending manual step:** Firebase Storage rules must be updated in Firebase Console to allow `handover/{allPaths=**}` read: `true`, write: `request.auth != null`
 
 **Key CSS tokens (handover):**
 - Light: `--accent-text: var(--kbx-teal)` · Dark: `--accent-text: var(--kbx-yellow)`
@@ -39,6 +48,9 @@ Single-file vanilla HTML/CSS/JS app. Same Firebase project as CRO. Live at `kubi
 - `handover_projects` — Kubix read/write only
 - `handover_public/{shareToken}` — public read, Kubix write
 - `handover_sync/{figmaFileKey}` — public read, Kubix write (plugin beacon)
+
+**Firebase Storage paths:**
+- `handover/{projectId}/{sectionId}/{assetId}_{filename}` — section asset uploads (needs Storage rules update)
 
 **Plugin (`figma-plugin/ui.html`):**
 - Iconify pixelarticons: reload, sun, moon, settings, chevron-left, external-link
