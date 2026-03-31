@@ -69,9 +69,10 @@ Single-file vanilla HTML/CSS/JS app. Same Firebase project as CRO. Live at `kubi
 ---
 
 ### 3. Handover Landing Page (`landing.html`)
-Currently hosted on GitHub Pages: `kbx-ali.github.io/design-to-dev-handover/landing.html`
+Live at `kubix-design.netlify.app/handover-plugin` (served via `netlify.toml` redirect → `/landing.html` at repo root).
+Plugin `LANDING_URL` updated to `https://kubix-design.netlify.app/handover-plugin`.
 
-**Next session task:** Move landing page to Netlify (`kubix-design.netlify.app/handover/landing` or similar) so it's on the same domain as the app, and update the plugin's `LANDING_URL` constant.
+**Next session task:** Redesign the landing page.
 
 ---
 
@@ -105,12 +106,12 @@ Local Node.js/Express dashboard for Shopify theme section libraries.
 - Repo: `github.com/kbx-ali/design-to-dev-handover`
 - Auto-deploys on push to `main`
 - Firebase authorized domain: `kubix-design.netlify.app`
-- Landing page currently on GitHub Pages — **to be migrated to Netlify next session**
+- Landing page live at `kubix-design.netlify.app/handover-plugin`
 
 ---
 
 ## Next Steps
 
-- **Landing page:** Move `landing.html` to Netlify, update plugin `LANDING_URL` constant and `v1.1.0` version tag to point to new URL
+- **Landing page:** Redesign `landing.html` (now live at `kubix-design.netlify.app/handover-plugin`)
 - Potential: revoke/regenerate share token UX in share modal
 - Potential: bump `PLUGIN_VERSION` to `v1.1.0` to clear the update banner (after landing page is live on Netlify)
