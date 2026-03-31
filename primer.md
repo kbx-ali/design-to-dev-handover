@@ -6,58 +6,76 @@
 Single-file vanilla HTML/CSS/JS app. Firebase Auth (Google OAuth, `@kubixmedia.co.uk` only). Firestore data. Dark/light theme via CSS custom properties.
 - Figma file: `TsyQQYJcZCOFc6OilAgLTV` (KBX — CRO App)
 - Preview: `npx serve . -p 3000` in `/cro`
-- Login screen: dot-matrix canvas ripple (yellow) + floating dark/light pill toggle + KUBIX brand icon + animated Google gradient border on sign-in button
-- `setTheme(t)` syncs `lgn/db/cl/cfg` button prefixes across all screens
 
 ### 2. Design → Dev Handover App (`handover/index.html` + `figma-plugin/ui.html`)
 Single-file vanilla HTML/CSS/JS app. Same Firebase project as CRO. Live at `kubix-design.netlify.app/handover`.
 - Repo: `kbx-ali/design-to-dev-handover` — Netlify auto-deploys on push to `main`
 - Firebase project: `cro-strategic-roadmap`
 
-**Current state (2026-03-31):**
-- All emoji (📋, ✓) and Heroicons SVGs replaced with `<iconify-icon>` from `pixelarticons` set via Iconify CDN v2.1.0
-- Same replacement done in `figma-plugin/ui.html`
-- Login screen fully redesigned to match CRO app style:
-  - Full-page canvas with dot-matrix ripple (orchid `#E591E5` in dark, darker orchid in light)
-  - Glassmorphism login card (`backdrop-filter: blur(40px)`)
-  - Floating dark/light theme toggle pill (fixed, top-center)
-  - Correct branding: pixel `</>` code brackets SVG (28×28, `currentColor`) + Kubix wordmark SVG + "HANDOVER" label in `--accent-text`
-  - Animated Google gradient border via `@property --gg-angle` conic-gradient on sign-in button hover
-  - `setTheme(t)` syncs `lgn-btn-dark` / `lgn-btn-light` active states; header toggle still uses single `toggleTheme()` which delegates to `setTheme()`
-- Share Link button always visible when a project is open (was previously hidden until a `shareToken` existed)
-- **Google Drive assets integration added (2026-03-31):**
-  - `generalData.driveUrl` — project-level Google Drive folder URL; editable in General tab
-  - Teal banner "Project Assets Folder" shown above sections list when a Drive URL is set (both editor and viewer)
-  - Per-section `driveUrl` — optional section-specific Drive folder input (editor only; viewer sees link button)
-  - Per-section `assets: []` — file upload dropzone in each section card; files go to Firebase Storage at `handover/{projectId}/{sectionId}/{assetId}_{filename}`; asset metadata (id, name, url, type, size) stored in Firestore section data
-  - Asset chips shown in both editor and viewer mode — click to download; editor has × remove button
-  - Firebase Storage SDK (v10 compat) added alongside existing Auth/Firestore SDKs
-  - Backward compat: `openProject()` and viewer mode boot normalise missing `driveUrl`/`assets` fields on existing projects
-  - **Pending manual step:** Firebase Storage rules must be updated in Firebase Console to allow `handover/{allPaths=**}` read: `true`, write: `request.auth != null`
+**Current state (stable as of 2026-03-31):**
+- Login screen: dot-matrix ripple (orchid), glassmorphism card, animated Google gradient border
+- Share Link button always visible when a project is open
+- Google Drive assets integration fully working (uploads to Kubix Shared Drive, not Firebase Storage)
+- Plugin ↔ web app sync fully working (both directions)
+
+**Google Drive assets:**
+- `generalData.driveUrl` — project-level folder URL, editable in General tab
+- Per-section `driveUrl` override + `assets: []` dropzone per section card
+- Drive scope in `_authProvider()` so token captured at initial sign-in (no second popup)
+- `supportsAllDrives=true` on all Drive API calls for Shared Drive folders
+- Asset chips shown in editor and viewer; click opens in Drive; editor has × remove
+
+**Plugin ↔ web app sync (fully working):**
+
+*Plugin → web app:*
+- Plugin clicks "Sync Changes with Handover" → encodes export data as base64 in URL (`?import=...`)
+- Web app receives it in `handlePluginImport(data)`, creates/updates project
+- On first export a unique `pluginSyncId` is generated and persisted in plugin `clientStorage`
+- Web app stores `pluginSyncId` on the project and writes `handover_sync/{pluginSyncId}` immediately
+- Share token is auto-generated on first plugin import (no manual "Share Link" click needed)
+
+*Web app → plugin:*
+- Every `scheduleSave()` writes `handover_sync/{pluginSyncId}` AND `handover_sync/{figmaFileKey}` (if available) with `{ updatedAt, updatedBy, shareToken }`
+- Plugin polls both keys every 60s via unauthenticated Firestore REST API
+- When `updatedAt > lastSyncTs`, the pull button (↺) appears in the plugin header with a yellow dot
+- Clicking pull reads `handover_public/{shareToken}` and matches sections by **name** (not ID) to update notes + status
+- After pulling, `lastSyncTs` is updated and the pull button hides
+
+*Important: a first "Sync to Handover" from the plugin is required before web→plugin sync works — this establishes the `pluginSyncId` handshake.*
+
+**Why `figma.fileKey` is not relied on:**
+- `figma.fileKey` returns `null` for draft/local files
+- The `pluginSyncId` fallback means sync works regardless of whether Figma provides a file key
+- If `figma.fileKey` IS available, both keys are written/polled (redundant = more reliable)
+
+**Firestore collections:**
+- `handover_projects` — Kubix read/write only
+- `handover_public/{shareToken}` — public read, Kubix write (viewer + plugin pull source)
+- `handover_sync/{key}` — public read, Kubix write (`key` = figmaFileKey OR pluginSyncId)
+
+**Plugin (`figma-plugin/ui.html`):**
+- All icons are inline SVG (Iconify CDN was removed — blocked by Figma sandbox)
+- App URL: `kubix-design.netlify.app/handover`
+- `firestore.googleapis.com` in manifest `networkAccess.allowedDomains`
+- `PLUGIN_VERSION = 'v1.0.0'` — version check hits GitHub Releases API; `v1.1.0` banner appears (working correctly, opens landing page)
+- `localStorage` wrapped in `_safeLS()` try/catch (data: URL context blocks it in Figma)
+- Plugin must be manually reloaded in Figma after `ui.html` changes (import manifest again)
 
 **Key CSS tokens (handover):**
 - Light: `--accent-text: var(--kbx-teal)` · Dark: `--accent-text: var(--kbx-yellow)`
 - Surfaces: `--bg-page`, `--bg-card`, `--bg-input`, `--border`, `--text-pri`, `--text-sec`, `--text-mute`, `--text-sub`
 - No `--bg` or `--text` (use `--bg-page` / `--text-pri`)
 
-**Share URL flow:**
-- Editor clicks "Share Link" → `openShareModal()` → `getOrCreateShareToken()` generates token + saves to Firestore → shows copyable `?view=TOKEN` URL
-- Viewer opens URL → `VIEWER_MODE = true` → reads from `handover_public/{shareToken}` (no auth required)
+---
 
-**Firestore collections:**
-- `handover_projects` — Kubix read/write only
-- `handover_public/{shareToken}` — public read, Kubix write
-- `handover_sync/{figmaFileKey}` — public read, Kubix write (plugin beacon)
+### 3. Handover Landing Page (`landing.html`)
+Currently hosted on GitHub Pages: `kbx-ali.github.io/design-to-dev-handover/landing.html`
 
-**Firebase Storage paths:**
-- `handover/{projectId}/{sectionId}/{assetId}_{filename}` — section asset uploads (needs Storage rules update)
+**Next session task:** Move landing page to Netlify (`kubix-design.netlify.app/handover/landing` or similar) so it's on the same domain as the app, and update the plugin's `LANDING_URL` constant.
 
-**Plugin (`figma-plugin/ui.html`):**
-- Iconify pixelarticons: reload, sun, moon, settings, chevron-left, external-link
-- App URL: `kubix-design.netlify.app/handover`
-- `firestore.googleapis.com` in manifest `networkAccess`
+---
 
-### 3. Shopify-to-Figma Pipeline (`shopify-to-figma/`)
+### 4. Shopify-to-Figma Pipeline (`shopify-to-figma/`)
 Local Node.js/Express dashboard for Shopify theme section libraries.
 - Server: `npm start` → `http://localhost:3001`
 - Figma file: `uoFjCyCsednJEhryRm8G1k` ("Hyper Theme — Shopify Section Library")
@@ -87,11 +105,12 @@ Local Node.js/Express dashboard for Shopify theme section libraries.
 - Repo: `github.com/kbx-ali/design-to-dev-handover`
 - Auto-deploys on push to `main`
 - Firebase authorized domain: `kubix-design.netlify.app`
+- Landing page currently on GitHub Pages — **to be migrated to Netlify next session**
 
 ---
 
-## Next Steps / Open Items
+## Next Steps
 
-- None outstanding — all features stable and deployed
-- Potential: revoke/regenerate share token UX in the share modal
-- Potential: show ripple animation colour as orchid in Figma plugin preview too
+- **Landing page:** Move `landing.html` to Netlify, update plugin `LANDING_URL` constant and `v1.1.0` version tag to point to new URL
+- Potential: revoke/regenerate share token UX in share modal
+- Potential: bump `PLUGIN_VERSION` to `v1.1.0` to clear the update banner (after landing page is live on Netlify)
