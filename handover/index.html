@@ -1122,6 +1122,7 @@ let currentUser = null;
 
 function _authProvider() {
   const p = new firebase.auth.GoogleAuthProvider();
+  p.addScope('https://www.googleapis.com/auth/drive');
   p.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
   return p;
 }
@@ -1142,8 +1143,9 @@ function signInWithGoogle() {
   _authShowErr('');
   _authSetBtnLoading(true);
   const guard = setTimeout(() => _authSetBtnLoading(false), 60000);
-  auth.signInWithPopup(_authProvider()).then(() => {
+  auth.signInWithPopup(_authProvider()).then(result => {
     clearTimeout(guard);
+    if (result.credential?.accessToken) driveAccessToken = result.credential.accessToken;
   }).catch(err => {
     clearTimeout(guard);
     _authSetBtnLoading(false);
@@ -1288,7 +1290,9 @@ function initLoginCanvas() {
 }
 
 // Handle redirect sign-in result (fallback for popup-blocked environments)
-auth.getRedirectResult().catch(err => console.error('[Redirect auth]', err));
+auth.getRedirectResult().then(result => {
+  if (result?.credential?.accessToken) driveAccessToken = result.credential.accessToken;
+}).catch(err => console.error('[Redirect auth]', err));
 
 // Auth state listener — gates the entire app
 auth.onAuthStateChanged(user => {
@@ -2367,7 +2371,7 @@ async function uploadFileToDrive(file, folderId, accessToken) {
   form.append('metadata', new Blob([JSON.stringify({ name: file.name, parents: [folderId] })], { type: 'application/json' }));
   form.append('file', file);
   const res = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink',
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink&supportsAllDrives=true',
     { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form }
   );
   if (!res.ok) {
@@ -2376,11 +2380,11 @@ async function uploadFileToDrive(file, folderId, accessToken) {
   }
   const fileData = await res.json();
   // Make public — "anyone with link can view"
-  await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions`, {
+  await fetch(`https://www.googleapis.com/drive/v3/files/${fileData.id}/permissions?supportsAllDrives=true`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ role: 'reader', type: 'anyone' })
-  });
+  }).catch(() => {}); // non-fatal — file is still uploaded
   return fileData;
 }
 
