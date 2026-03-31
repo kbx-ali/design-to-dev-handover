@@ -1,155 +1,116 @@
-# Session Primer — CRO Planner / KBX Figma
+# Session Primer — CRO Planner / KBX Figma + Shopify-to-Figma
 
-## Project Overview
-A single-file vanilla HTML/CSS/JS CRO project management app for Kubix Media (`cro/index.html`).
-- Firebase Auth (Google OAuth, restricted to `@kubixmedia.co.uk`)
-- Firestore for data
-- Dark/light theme support via `data-theme` CSS tokens
-- All styles in `<style>` inside `index.html` — no build step
+## Projects
 
-Figma file: `TsyQQYJcZCOFc6OilAgLTV` (KBX — CRO App)
+### 1. KBX CRO App (`cro/index.html`)
+Single-file vanilla HTML/CSS/JS app. Firebase Auth (Google OAuth, `@kubixmedia.co.uk` only). Firestore data. Dark/light theme via CSS custom properties.
+- Figma file: `TsyQQYJcZCOFc6OilAgLTV` (KBX — CRO App)
+- Preview: `npx serve . -p 3000` in `/cro` (name: `CRO Web App` in launch.json)
+- Login screen: dot-matrix canvas + KUBIX CRO Planner brand logo + Google sign-in button with animated gradient border
 
----
-
-## What Changed This Session
-
-### Brand Logo on Login Card ✅
-Replaced `div.login-k` (K icon + KUBIX wordmark horizontal) and `h1.login-h1` ("CRO Planner") with the combined KUBIX CRO Planner brand lock-up used in the dashboard header:
-
-```html
-<div class="brand" style="justify-content:center;margin:0 auto 32px;">
-  <svg class="brand-icon" ...K pixel icon...></svg>
-  <div class="brand-wordmark-wrap">
-    <svg class="kubix-wordmark" width="94" height="23" ...></svg>
-    <div class="brand-sub">CRO Planner</div>
-  </div>
-</div>
-```
-
-`.brand-sub` renders as `11.5px` uppercase `CRO PLANNER` beneath the KUBIX wordmark. The stale `.login-k` and `.login-h1` CSS rules remain in the stylesheet but are unused (orphaned).
+### 2. Shopify-to-Figma Pipeline (`shopify-to-figma/`)
+A local Node.js/Express dashboard for uploading Shopify theme ZIPs, previewing all sections via `shopify theme dev`, and building Figma section libraries.
+- Server: `npm start` in `/shopify-to-figma` → `http://localhost:3001`
+- Figma file: `uoFjCyCsednJEhryRm8G1k` ("Hyper Theme — Shopify Section Library")
 
 ---
 
-### Sign-in Button Fix ✅
-**Problem:** `signInWithPopup` was blocked by the browser (popup blocker). The fallback `auth.signInWithRedirect(provider)` was called silently with no `.catch()`, so errors were swallowed and the button appeared dead. In the Claude preview iframe, redirect navigation is also blocked — giving no feedback at all.
+## Shopify-to-Figma: Full Session History
 
-**Fix — rewritten auth functions:**
+### What Was Built
 
-```javascript
-function _authProvider() {
-  const p = new firebase.auth.GoogleAuthProvider();
-  p.addScope('https://www.googleapis.com/auth/drive.file');
-  p.setCustomParameters({ hd: 'kubixmedia.co.uk', prompt: 'select_account' });
-  return p;
-}
-function _authSetBtnLoading(on) {
-  const btn = document.querySelector('.btn-google');
-  if (!btn) return;
-  btn.disabled = on;
-  btn.style.opacity = on ? '0.55' : '';
-  btn.style.pointerEvents = on ? 'none' : '';
-}
-function _authShowErr(html) {
-  const el = document.getElementById('login-err');
-  if (!el) return;
-  el.innerHTML = html;
-  el.style.display = html ? 'block' : 'none';
-}
+#### Dashboard App (`shopify-to-figma/`)
+- `server.js` — Express server: ZIP upload (multer), extraction (adm-zip), section parsing, Shopify CLI command generator, SSE log streaming
+- `index.html` — 4-step UI: ZIP drop → Store URL → Copy terminal command → Generate Figma
+- `lib/theme-parser.js` — Parses `sections/*.liquid`, extracts `{% schema %}` JSON, infers section type by handle pattern
+- `lib/preview-builder.js` — Writes `index.liquid` (Liquid template, no 25-section limit), backs up `index.json` to `.sfp-backups/` OUTSIDE theme dir to avoid Shopify CLI conflicts
+- `sample-data/products.csv` — 16 products (Arc Chair, Beam Table, Oslo Sofa, etc.) with Unsplash images, variants, prices, tags
 
-function signInWithGoogle() {
-  _authShowErr('');
-  _authSetBtnLoading(true);
-  auth.signInWithPopup(_authProvider()).then(result => {
-    if (result.credential?.accessToken) state.driveAccessToken = result.credential.accessToken;
-  }).catch(err => {
-    _authSetBtnLoading(false);
-    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
-    if (err.code === 'auth/operation-not-supported-in-this-environment' || err.code === 'auth/popup-blocked') {
-      _authShowErr('Pop-ups are blocked by your browser. <a href="#" onclick="signInViaRedirect();return false;" style="color:var(--accent-text);text-decoration:underline;white-space:nowrap;">Try redirect sign-in →</a>');
-      return;
-    }
-    if (err.code === 'auth/unauthorized-domain') {
-      _authShowErr('This domain isn\'t authorised in Firebase. Add it under Authentication → Settings → Authorised domains.');
-      return;
-    }
-    _authShowErr(err.message?.includes('hd') ? 'Please use your @kubixmedia.co.uk Google account.' : `Sign-in failed (${err.code || 'unknown'}). Please try again.`);
-  });
-}
+#### Figma Section Library (`uoFjCyCsednJEhryRm8G1k`)
+10 pages built programmatically via `use_figma` (Figma Plugin API):
 
-function signInViaRedirect() {
-  _authShowErr('');
-  _authSetBtnLoading(true);
-  auth.signInWithRedirect(_authProvider()).catch(err => {
-    _authSetBtnLoading(false);
-    _authShowErr(`Redirect sign-in failed (${err.code || 'unknown'}). Please try again.`);
-  });
-}
-```
+| Page | Contents |
+|------|----------|
+| 🏠 Overview | Rainbow summary cards — 67 sections across 7 types |
+| ⚡ Hero | 8 sections |
+| 🛒 Commerce | 14 sections |
+| 📝 Content | 12 sections |
+| 🎨 Media | 10 sections |
+| ⭐ Social Proof | 6 sections |
+| ❓ FAQ & Form | 8 sections |
+| ⚙️ General & Nav | 9 sections |
+| 📐 Page Layouts | Annotated wireframes: Homepage (12 sections), Collection, Product page — real heights and content labels |
+| 🛍️ Product Catalog | All 16 products, 28 SKUs — price, variants, tags (bestseller/trending/sale/new/gift) |
 
-**Key behaviours:**
-- Button is disabled + dimmed while popup is opening
-- Popup blocked → shows yellow `"Try redirect sign-in →"` link (inline HTML in error div)
-- Redirect errors now caught and surfaced
-- `auth/popup-closed-by-user` / `auth/cancelled-popup-request` → silent (expected)
-
-**CSS added to `.login-err`:**
-```css
-.login-err { ... line-height:1.5; }
-.login-err a { color:var(--accent-text) !important; }
-```
+Each section card: 360×140px dark frame, colour-coded left accent bar, type badge, section name, `handle.liquid`, settings · blocks count.
 
 ---
 
-### Animated Google Gradient Border on `.btn-google` ✅
-On hover, the button border animates through Google brand colours (blue → green → yellow → red) in a continuous clockwise rotation. Border-ring only — button interior stays dark.
+### Key Technical Lessons
 
-**Technique: `@property` + `mask-composite: exclude` punch-out**
+#### Shopify CLI
+- **TTY issue**: Shopify CLI v3 uses `@inquirer/prompts` which checks `process.stdin.isTTY` → throws "Failed to prompt" when spawned as a Node child process. **Fix**: don't spawn it — generate the shell command and let user run it manually in their own terminal.
+- **25-section JSON limit**: `templates/index.json` max 25 sections in `order` array. **Fix**: use `index.liquid` template instead (no limit). `{% section 'handle' %}` can only be called from template files, NOT from within other section files.
+- **index.backup.json conflict**: Backing up `index.json` as `index.backup.json` inside `templates/` causes Shopify to treat it as an `index` template variant → "Filename index already exists with json extension" error. **Fix**: store backup at `../.sfp-backups/index.json` OUTSIDE the theme directory.
+- **Dev store password**: Shopify development stores force password protection (can't be disabled). Must pass `--store-password` to `shopify theme dev`.
+- **Sections rendering black**: `index.liquid` renders sections with zero settings — no collection assigned, no blog selected etc. Sections need settings configured to display content. The dev store approach is limited without importing real data AND configuring section settings.
 
-```css
-@property --gg-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
+#### Figma Plugin API (`use_figma`)
+- **Async IIFE returning no value**: `(async () => { ... })()` at the top level doesn't block — the tool captures the return of the outer expression (a Promise), not the resolved value. **Fix**: use top-level `await` directly (Figma's sandbox supports it): `await figma.loadFontAsync(...)` then synchronous operations.
+- **`figma.currentPage =` not allowed**: Use `await figma.setCurrentPageAsync(page)` instead.
+- **`page.fills` doesn't exist**: Pages have `backgrounds`, not `fills`. Setting `page.fills` throws "object is not extensible". Use fill-less frames or skip background setting on Page nodes.
+- **No network access in plugin sandbox**: `figma.fetch()` → "not a function". Global `fetch()` → "not defined". `figma.createImageAsync(url)` → "not a supported API". Cannot fetch external images from within `use_figma` code.
+- **`figma.createImageAsync` with URL**: Not supported in this plugin context.
+- **Empty fills array**: `frame.fills = []` can cause issues — use a transparent fill `[{type:'SOLID',color:{r:0,g:0,b:0},opacity:0}]` for transparent frames.
 
-.btn-google {
-  /* existing styles + */
-  position: relative;
-  isolation: isolate;
-  transition: border-color 0.15s, transform 0.15s, opacity 0.15s;
-}
-.btn-google:hover { border-color: transparent; transform: translateY(-1px); }
-
-.btn-google::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  padding: 1px;                    /* ring thickness */
-  --gg-angle: 0deg;
-  background: conic-gradient(from var(--gg-angle), #4285F4 0%, #34A853 25%, #FBBC05 50%, #EA4335 75%, #4285F4 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;        /* punches out interior — ring only */
-  opacity: 0;
-  z-index: 0;
-  transition: opacity 0.3s;
-}
-.btn-google:hover::before { opacity: 1; animation: gg-border-spin 2s linear infinite; }
-@keyframes gg-border-spin { to { --gg-angle: 360deg; } }
-```
-
-**Why `mask-composite: exclude`:** Without it, the conic-gradient fills the entire button background. The mask subtracts the content-box area from the full element, leaving only the `padding` ring visible. Browser support: Chrome 85+, Firefox 128+, Safari 16.4+.
+#### `generate_figma_design` (live page capture)
+- This capability is **NOT available via the cloud MCP server**. It requires:
+  1. Figma **desktop app** running
+  2. The Figma MCP plugin running **locally** (not cloud)
+  3. A local connection between Claude and the desktop plugin
+- See setup instructions below.
 
 ---
 
-## Current State
-- Login screen: animated dot-matrix canvas + ripple effect + KUBIX CRO Planner brand logo + single Google sign-in button with animated gradient border on hover
-- Sign-in error handling: button loading state, popup-blocked message with redirect fallback link, all error codes surfaced
-- Preview server: `npx serve . -p 3000` in `/cro` (config in `cro/.claude/launch.json`, name: `CRO Web App`)
-- Firebase project: `cro-strategic-roadmap` (real credentials configured)
-- All other screens (dashboard, client, config) unchanged
+### What Didn't Work
+
+| Attempt | Failure | Reason |
+|---------|---------|--------|
+| Spawn `shopify theme dev` as child_process | TTY error | CLI requires interactive terminal |
+| `templates/index.json` with 25+ sections | Hard limit error | Shopify JSON template cap |
+| `index.backup.json` inside `templates/` | Filename conflict | Shopify treats any `.json` in templates/ as a template |
+| Sections rendering with content | All black | No settings configured, no data assigned |
+| `figma.fetch()` for CDN images | "not a function" | No network access in plugin sandbox |
+| `figma.createImageAsync(url)` | "not a supported API" | URL overload not available in this plugin |
+| `generate_figma_design` from demo URL | Tool not found | Requires Figma desktop + local MCP plugin |
+| Chrome MCP screenshots | "Cannot access chrome-extension URL" | Extension cross-origin permission boundary |
+| Claude-flow browser_screenshot | `spawnSync ENOENT` | Puppeteer/agent-browser binary not installed |
 
 ---
 
-## Next Steps / Open Items
-- Test sign-in flow in real browser (localhost:3000) to confirm popup works when allowed, and redirect flow works as fallback
-- Potential: add a brief success animation after Google sign-in before transitioning to dashboard
-- Potential: dashboard screen updates / Figma frame work
+## How to Set Up Figma Desktop MCP (for `generate_figma_design`)
+
+See section below in this primer — or ask Claude to explain the Figma desktop MCP setup.
+
+**Short version:**
+1. Install Figma desktop app
+2. Enable MCP server in Figma: Preferences → Enable MCP Server (or via Figma Dev Mode plugin)
+3. Configure Claude Code to connect to it locally (add to `settings.json` MCP section pointing to `localhost` or the Figma socket)
+4. With that running, `generate_figma_design` becomes available and can capture any browser URL as Figma frames
+
+---
+
+## Next Steps
+
+- **Figma desktop MCP setup** → enables `generate_figma_design` to capture `hyper-theme-demo.myshopify.com` pages as actual visual frames
+- **Configure section settings** in dev store → assign collections, blogs etc so sections render with real content
+- **Convert section cards to real Figma components** → use `use_figma` to call `figma.createComponent()` on each section card frame
+- **Add image thumbnails** → once desktop MCP works, replace placeholder image areas in product catalog with real product photos
+
+---
+
+## Dev Store Info
+- Store: Set up via Shopify Partners at dev.shopify.com
+- Products: 17 products, 28 SKUs imported from `sample-data/products.csv`
+- Collections created with automated tags: furniture, chairs, tables, decor, lighting, rugs, sofas
+- Sections still render empty (no settings configured)

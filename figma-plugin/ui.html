@@ -42,8 +42,8 @@
   --c-bsp-bg:   #E591E5; --c-bsp-bd:   #C860C8; --c-bsp-tx:   #28282B; --c-bsp-dot:   #9E1FA0;
 
   /* ── Radii & shadows ── */
-  --radius-card: 12px;
-  --radius:       8px;
+  --radius-card: 2px;
+  --radius:       2px;
   --radius-sm:    6px;
   --shadow-card:  0 1px 4px rgba(0,0,0,0.55);
   --shadow-hover: 0 4px 16px rgba(0,0,0,0.75);
@@ -148,7 +148,7 @@ html, body {
   font-size: 11px; font-weight: 600; font-family: var(--font-body);
   color: var(--text-sub); background: transparent; border: none;
   cursor: pointer; display: flex; align-items: center; gap: 4px;
-  padding: 3px 8px; border-radius: 5px; transition: color 0.15s, background 0.15s;
+  padding: 3px 8px; border-radius: 6px; transition: color 0.15s, background 0.15s;
 }
 .refresh-btn:hover { color: var(--text); background: var(--bg-input); }
 
@@ -184,7 +184,7 @@ html, body {
 .status-btn {
   font-size: 11px; font-weight: 700; font-family: var(--font-body);
   border: 1px solid var(--border); background: transparent; color: var(--text-mute);
-  cursor: pointer; padding: 5px 9px; border-radius: 8px;
+  cursor: pointer; padding: 5px 9px; border-radius: 6px;
   transition: all 0.12s; white-space: nowrap; line-height: 1;
 }
 .status-btn:hover { color: var(--text); border-color: var(--text-mute); background: var(--bg-input); }
@@ -225,7 +225,7 @@ html, body {
 /* ── Buttons ── */
 .btn-primary {
   flex: 1; padding: 10px 14px; background: var(--kbx-mint); color: var(--kbx-black);
-  border: none; border-radius: var(--radius); font-size: 13px; font-weight: 700;
+  border: none; border-radius: 6px; font-size: 13px; font-weight: 700;
   font-family: var(--font-body); cursor: pointer; transition: background 0.15s;
   display: flex; align-items: center; justify-content: center; gap: 6px;
 }
@@ -237,14 +237,14 @@ html, body {
 #open-btn.dirty:hover:not(:disabled) { background: #d470d4; }
 .btn-secondary {
   padding: 10px 14px; background: var(--bg-input); color: var(--text-sec);
-  border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;
+  border: 1px solid var(--border); border-radius: 6px; font-size: 13px;
   font-weight: 600; font-family: var(--font-body); cursor: pointer;
   transition: all 0.15s; white-space: nowrap;
 }
 .btn-secondary:hover { color: var(--text); border-color: var(--text-mute); }
 .btn-danger {
   padding: 10px 14px; background: transparent; color: #F87171;
-  border: 1px solid rgba(239,68,68,0.35); border-radius: var(--radius); font-size: 13px;
+  border: 1px solid rgba(239,68,68,0.35); border-radius: 6px; font-size: 13px;
   font-weight: 600; font-family: var(--font-body); cursor: pointer;
   transition: all 0.15s; white-space: nowrap; flex: 1;
 }
@@ -358,7 +358,7 @@ html, body {
 }
 .welcome-icon {
   width: 52px; height: 52px; background: var(--bg-card);
-  border: 1px solid var(--border); border-radius: 14px;
+  border: 1px solid var(--border); border-radius: 2px;
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto;
 }
@@ -403,13 +403,13 @@ html, body {
 #new-file-modal.show { display: flex; }
 .modal-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 22px 18px 18px; width: 100%;
+  border-radius: 2px; padding: 22px 18px 18px; width: 100%;
   box-shadow: 0 8px 40px rgba(0,0,0,0.75);
   display: flex; flex-direction: column; gap: 12px;
 }
 .modal-icon {
   width: 42px; height: 42px; background: var(--bg-input);
-  border: 1px solid var(--border); border-radius: 10px;
+  border: 1px solid var(--border); border-radius: 2px;
   display: flex; align-items: center; justify-content: center;
 }
 .modal-title {
@@ -423,7 +423,7 @@ html, body {
   font-size: 10px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--text-sub);
   background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: 6px; padding: 5px 10px; display: inline-block;
+  border-radius: 2px; padding: 5px 10px; display: inline-block;
   font-family: var(--font-body);
 }
 .modal-btns { display: flex; flex-direction: column; gap: 7px; margin-top: 2px; }
@@ -586,7 +586,7 @@ html, body {
 
       <div style="border-top:1px solid var(--border); padding-top:14px; margin-top:4px; display:flex; align-items:center; justify-content:space-between;">
         <span style="font-size:10px; color:var(--text-sub); font-family:var(--font-body);">Plugin version <strong id="settings-version" style="color:var(--text-mute);"></strong></span>
-        <button id="settings-update-btn" style="display:none; font-size:10px; font-weight:700; font-family:var(--font-body); background:var(--kbx-yellow); color:var(--kbx-black); border:none; border-radius:5px; padding:3px 9px; cursor:pointer; line-height:1.6;">↑ Update available</button>
+        <button id="settings-update-btn" style="display:none; font-size:10px; font-weight:700; font-family:var(--font-body); background:var(--kbx-yellow); color:var(--kbx-black); border:none; border-radius:2px; padding:3px 9px; cursor:pointer; line-height:1.6;">↑ Update available</button>
       </div>
     </div>
 
