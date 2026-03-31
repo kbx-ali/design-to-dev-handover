@@ -1823,6 +1823,9 @@ function getShareUrl(shareToken) {
 async function openShareModal() {
   const proj = getActiveProject();
   if (!proj) return;
+  // Ensure in-memory generalData (incl. figmaFileUrl) is synced to proj before sharing
+  proj.generalData = JSON.parse(JSON.stringify(generalData));
+  proj.pages       = JSON.parse(JSON.stringify(pages));
 
   const ov = document.createElement('div');
   ov.className = 'overlay';
@@ -2785,7 +2788,7 @@ function renderGeneralTab() {
   if (!VIEWER_MODE) {
     h += `
     <div class="typo-url-row">
-      <input class="input-text" id="typo-figma-url" value="${esc(generalData.figmaFileUrl)}" placeholder="Paste your Figma file URL (e.g. https://www.figma.com/design/abc123/…)" onchange="generalData.figmaFileUrl=this.value;">
+      <input class="input-text" id="typo-figma-url" value="${esc(generalData.figmaFileUrl)}" placeholder="Paste your Figma file URL (e.g. https://www.figma.com/design/abc123/…)" onchange="generalData.figmaFileUrl=this.value;savePagesData();">
       <button class="typo-fetch-btn" id="typo-fetch-btn" onclick="${figmaKeys.token ? 'fetchTypography()' : 'openFigmaTokenModal()'}">
         ${FIGMA_ICON_SVG}
         ${!figmaKeys.token ? 'Add Figma Token…' : 'Fetch from Figma'}
