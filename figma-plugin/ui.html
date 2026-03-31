@@ -742,8 +742,8 @@ async function checkForUpdate() {
   if (verEl) verEl.textContent = PLUGIN_VERSION;
 
   try {
-    // Check localStorage cache — avoid hitting the API more than once per 24h
-    const cached = localStorage.getItem(VERSION_CACHE_KEY);
+    // Check cache — avoid hitting the API more than once per 24h
+    const cached = _safeLS('get', VERSION_CACHE_KEY);
     if (cached) {
       const { tag, ts } = JSON.parse(cached);
       if (Date.now() - ts < VERSION_CACHE_TTL) {
@@ -763,7 +763,7 @@ async function checkForUpdate() {
     if (!tag) return;
 
     // Cache for 24 hours so we don't spam the API on every plugin open
-    localStorage.setItem(VERSION_CACHE_KEY, JSON.stringify({ tag, ts: Date.now() }));
+    _safeLS('set', VERSION_CACHE_KEY, JSON.stringify({ tag, ts: Date.now() }));
 
     if (isNewerVersion(tag, PLUGIN_VERSION)) showUpdateAvailable(tag);
   } catch (e) {
@@ -1207,17 +1207,29 @@ async function pullFromFirestore() {
     const sectionsArr = pageData.sections?.arrayValue?.values || [];
     let updatedCount = 0;
 
+    // Build a name→frame lookup for matching (web app IDs are kbx_..., plugin IDs are Figma node IDs)
+    const frameByName = {};
+    state.frames.forEach(f => {
+      frameByName[f.name.toLowerCase().trim()] = f;
+    });
+
     sectionsArr.forEach(sVal => {
       const sf = sVal?.mapValue?.fields;
       if (!sf) return;
-      const id = sf.id?.stringValue || sf.id?.integerValue;
-      if (!id) return;
-      const sid = String(id);
-      // Only update frames that still exist in the current plugin state
-      if (!state.frames.find(f => f.id === sid)) return;
-      if (!state.sections[sid]) state.sections[sid] = {};
-      if (sf.notes  !== undefined) state.sections[sid].notes  = sf.notes.stringValue  || '';
-      if (sf.status !== undefined) state.sections[sid].status = sf.status.stringValue || 'existing';
+      const webId = sf.id?.stringValue || sf.id?.integerValue || '';
+      const name  = sf.name?.stringValue || '';
+
+      // Match by ID first (if plugin exported to web, the ID might match), then by name
+      let frame = state.frames.find(f => f.id === String(webId));
+      if (!frame && name) {
+        frame = frameByName[name.toLowerCase().trim()];
+      }
+      if (!frame) return;
+
+      const fid = frame.id;
+      if (!state.sections[fid]) state.sections[fid] = {};
+      if (sf.notes  !== undefined) state.sections[fid].notes  = sf.notes.stringValue  || '';
+      if (sf.status !== undefined) state.sections[fid].status = sf.status.stringValue || 'existing';
       updatedCount++;
     });
 
@@ -1411,8 +1423,12 @@ document.getElementById('settings-update-btn').addEventListener('click', () => {
 INIT_KEYS.forEach(key => post({ type: 'get-storage', key }));
 
 // ── Theme toggle ──────────────────────────────────────────────
+function _safeLS(action, key, value) {
+  try { return action === 'get' ? localStorage.getItem(key) : localStorage.setItem(key, value); }
+  catch(e) { return null; }
+}
 function initTheme() {
-  const saved = localStorage.getItem('kbx_plugin_theme') || 'dark';
+  const saved = _safeLS('get', 'kbx_plugin_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
 }
 
@@ -1421,7 +1437,7 @@ document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     const next    = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('kbx_plugin_theme', next);
+    _safeLS('set', 'kbx_plugin_theme', next);
   });
 });
 
