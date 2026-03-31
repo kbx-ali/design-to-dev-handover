@@ -334,6 +334,20 @@ html, body {
 [data-theme="light"] .icon-sun  { display: none;  }
 [data-theme="light"] .icon-moon { display: block; }
 
+/* ── Pull / sync button ──────────────────────────────────── */
+@keyframes kbx-spin { to { transform: rotate(360deg); } }
+#pull-btn { position: relative; display: none; }
+#pull-btn.visible { display: flex; }
+#pull-btn .icon-pull-spin { display: none; }
+#pull-btn.pulling .icon-pull      { display: none; }
+#pull-btn.pulling .icon-pull-spin { display: block; animation: kbx-spin 0.7s linear infinite; }
+.sync-dot {
+  position: absolute; top: 2px; right: 2px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--kbx-yellow); display: none; pointer-events: none;
+}
+#pull-btn.has-update .sync-dot { display: block; }
+
 /* ── Update strip ────────────────────────────────────────── */
 #update-strip {
   display: none; align-items: center; justify-content: space-between;
@@ -438,6 +452,15 @@ html, body {
         </div>
       </div>
       <div class="hdr-actions">
+        <button class="icon-btn" id="pull-btn" title="Pull updates from web app">
+          <svg class="icon-pull" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.338-2.32 5.75 5.75 0 011.5 11.095"/>
+          </svg>
+          <svg class="icon-pull-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+            <path stroke-linecap="round" d="M12 2a10 10 0 0 1 10 10"/>
+          </svg>
+          <span class="sync-dot"></span>
+        </button>
         <button class="icon-btn theme-toggle-btn" title="Toggle light/dark mode">
           <!-- Sun: shown in dark mode -->
           <svg class="icon-sun" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
@@ -640,7 +663,12 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
-const DEFAULT_URL    = 'https://kbx-ali.github.io/design-to-dev-handover/design-to-dev-handover-v3-figma.html';
+const DEFAULT_URL    = 'https://kubix-design.netlify.app/handover';
+
+// ── Firestore sync constants ───────────────────────────────────
+const FIRESTORE_PROJECT  = 'cro-strategic-roadmap';
+const FIRESTORE_BASE     = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT}/databases/(default)/documents`;
+const SYNC_POLL_INTERVAL = 60 * 1000; // check every 60 seconds
 const LANDING_URL    = 'https://kbx-ali.github.io/design-to-dev-handover/landing.html';
 const PLUGIN_VERSION = 'v1.0.0';
 const VERSION_CACHE_KEY = 'kbx_version_check'; // localStorage — survives sessions
@@ -663,6 +691,8 @@ let state = {
   pageType:      'homepage',
   hasExported:   false,
   isDirty:       false,   // true when notes/status changed since last pull or sync
+  shareToken:    '',      // share token from web app (for Firestore pull)
+  lastSyncTs:    0,       // ms timestamp of last successful pull from web app
 };
 
 // ── Utilities ─────────────────────────────────────────────────
@@ -1042,7 +1072,7 @@ document.getElementById('back-btn').addEventListener('click', goBack);
 document.getElementById('back-btn-2').addEventListener('click', goBack);
 
 // ── Reset all plugin data ─────────────────────────────────────
-const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+const ALL_STORAGE_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl', 'shareToken', 'lastSyncTs'];
 let _resetConfirming = false;
 
 function resetConfirmClear() {
@@ -1069,6 +1099,8 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   state.sections      = {};
   state.projectName   = '';
   state.projectTheme  = '';
+  state.shareToken    = '';
+  state.lastSyncTs    = 0;
   state.appUrl        = DEFAULT_URL;
   state.hasExported   = false;
   state.cachedFileKey = '';
@@ -1102,6 +1134,110 @@ document.getElementById('save-settings-btn').addEventListener('click', () => {
 document.getElementById('refresh-btn').addEventListener('click', () => {
   post({ type: 'refresh' });
 });
+
+// ── Pull from Firestore ───────────────────────────────────────
+document.getElementById('pull-btn').addEventListener('click', pullFromFirestore);
+
+let _syncPollTimer = null;
+
+function startSyncPolling() {
+  clearInterval(_syncPollTimer);
+  checkForWebAppUpdates();
+  _syncPollTimer = setInterval(checkForWebAppUpdates, SYNC_POLL_INTERVAL);
+}
+
+async function checkForWebAppUpdates() {
+  const fk = state.fileKey || state.cachedFileKey;
+  if (!fk) return;
+  try {
+    const res = await fetch(`${FIRESTORE_BASE}/handover_sync/${fk}`);
+    if (!res.ok) return; // no sync doc yet — not an error
+    const doc = await res.json();
+    if (!doc.fields) return;
+
+    // Parse Firestore timestamp value
+    const tsVal = doc.fields.updatedAt?.timestampValue;
+    if (!tsVal) return;
+    const ts = new Date(tsVal).getTime();
+
+    // Cache the shareToken so we can pull later
+    const shareToken = doc.fields.shareToken?.stringValue || '';
+    if (shareToken && shareToken !== state.shareToken) {
+      state.shareToken = shareToken;
+      post({ type: 'set-storage', key: 'shareToken', value: shareToken });
+    }
+
+    // If the web app is newer than our last pull, show indicator
+    if (ts > state.lastSyncTs) {
+      const updatedBy = doc.fields.updatedBy?.stringValue || 'Someone';
+      showSyncIndicator(updatedBy);
+    }
+  } catch(e) {
+    // Fail silently — sync check is non-critical
+  }
+}
+
+function showSyncIndicator(updatedBy) {
+  const btn = document.getElementById('pull-btn');
+  if (!btn) return;
+  btn.classList.add('visible', 'has-update');
+  btn.title = `${updatedBy} updated the web app — click to pull changes`;
+}
+
+async function pullFromFirestore() {
+  if (!state.shareToken) {
+    showToast('⚠ No share link yet — generate one in the web app first');
+    return;
+  }
+  const btn = document.getElementById('pull-btn');
+  if (btn) btn.classList.add('pulling');
+
+  try {
+    const res = await fetch(`${FIRESTORE_BASE}/handover_public/${state.shareToken}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const doc = await res.json();
+    if (!doc.fields) throw new Error('Empty document');
+
+    // Firestore REST API returns nested mapValue/arrayValue structures — parse them
+    const pagesMap = doc.fields.pages?.mapValue?.fields || {};
+    const pageKey  = state.pageType || 'homepage';
+    const pageData = pagesMap[pageKey]?.mapValue?.fields;
+    if (!pageData) throw new Error(`No data for page: ${pageKey}`);
+
+    const sectionsArr = pageData.sections?.arrayValue?.values || [];
+    let updatedCount = 0;
+
+    sectionsArr.forEach(sVal => {
+      const sf = sVal?.mapValue?.fields;
+      if (!sf) return;
+      const id = sf.id?.stringValue || sf.id?.integerValue;
+      if (!id) return;
+      const sid = String(id);
+      // Only update frames that still exist in the current plugin state
+      if (!state.frames.find(f => f.id === sid)) return;
+      if (!state.sections[sid]) state.sections[sid] = {};
+      if (sf.notes  !== undefined) state.sections[sid].notes  = sf.notes.stringValue  || '';
+      if (sf.status !== undefined) state.sections[sid].status = sf.status.stringValue || 'existing';
+      updatedCount++;
+    });
+
+    // Persist and re-render
+    state.lastSyncTs = Date.now();
+    state.isDirty    = false;
+    post({ type: 'set-storage', key: 'lastSyncTs', value: state.lastSyncTs });
+    saveSections();
+    renderFrames();
+    updateOpenBtn();
+
+    if (btn) btn.classList.remove('pulling', 'has-update', 'visible');
+    showToast(`✓ Pulled updates (${updatedCount} frame${updatedCount !== 1 ? 's' : ''} updated)`);
+
+  } catch(e) {
+    if (btn) btn.classList.remove('pulling');
+    showToast('⚠ Pull failed — check your connection');
+    console.error('[Pull]', e);
+  }
+}
 
 // ── Live field sync ───────────────────────────────────────────
 document.getElementById('project-name').addEventListener('input',  e => { state.projectName  = e.target.value; });
@@ -1165,6 +1301,8 @@ window.onmessage = event => {
     if (key === 'projectName')  { state.projectName  = value; document.getElementById('project-name').value  = value; }
     if (key === 'projectTheme') { state.projectTheme = value; document.getElementById('project-theme').value = value; }
     if (key === 'hasExported')   { state.hasExported   = !!value; }
+    if (key === 'shareToken')    { state.shareToken    = value || ''; }
+    if (key === 'lastSyncTs')    { state.lastSyncTs    = Number(value) || 0; }
     if (key === 'cachedFileKey') { state.cachedFileKey   = value || ''; }
     if (key === 'manualFigmaUrl') {
       state.manualFigmaUrl = value || '';
@@ -1189,7 +1327,7 @@ window.onmessage = event => {
 // ── File context detection ────────────────────────────────────
 // We wait for all 8 storage keys AND page-data before deciding which screen
 // to show, to avoid flickering from stale state.
-const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl'];
+const INIT_KEYS = ['appUrl', 'projectName', 'projectTheme', 'hasExported', 'cachedFileKey', 'manualFigmaUrl', 'shareToken', 'lastSyncTs'];
 let _initStorageCount = 0;
 let _pageDataReady    = false;
 
@@ -1200,6 +1338,8 @@ function _maybeCheckFileContext() {
 function checkFileContext() {
   // Run version check once all storage keys are loaded
   checkForUpdate();
+  // Start polling Firestore for web app updates
+  startSyncPolling();
 
   // Case 1: Brand new install — never exported, no cached file key
   if (!state.hasExported && !state.cachedFileKey) {

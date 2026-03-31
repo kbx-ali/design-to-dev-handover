@@ -1477,6 +1477,16 @@ function scheduleSave() {
     await saveProjectToFirestore(proj);
     // Also update the public viewer doc if a shareToken exists
     if (proj.shareToken) await publishViewerDoc(proj);
+    // Write a lightweight sync beacon so the Figma plugin can detect changes
+    const fkMatch = proj.generalData?.figmaFileUrl?.match(/figma\.com\/(?:design|file)\/([^\/\?#]+)/);
+    const fk = fkMatch ? fkMatch[1] : null;
+    if (fk) {
+      db.collection('handover_sync').doc(fk).set({
+        updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy:   currentUser?.displayName || currentUser?.email || 'A teammate',
+        shareToken:  proj.shareToken || null
+      }).catch(() => {}); // fail silently
+    }
     setSyncState('saved');
   }, 900);
 }
