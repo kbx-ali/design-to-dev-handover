@@ -1609,7 +1609,7 @@ function setSyncState(s) {
   const shareBtn = document.getElementById('share-link-btn');
   if (shareBtn) {
     const proj = getActiveProject();
-    shareBtn.style.display = (!VIEWER_MODE && proj?.shareToken) ? '' : 'none';
+    shareBtn.style.display = (!VIEWER_MODE && proj) ? '' : 'none';
   }
 }
 
