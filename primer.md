@@ -72,7 +72,28 @@ Single-file vanilla HTML/CSS/JS app. Same Firebase project as CRO. Live at `kubi
 Live at `kubix-design.netlify.app/handover-plugin` (served via `netlify.toml` redirect → `/landing.html` at repo root).
 Plugin `LANDING_URL` updated to `https://kubix-design.netlify.app/handover-plugin`.
 
-**Next session task:** Redesign the landing page.
+**Landing page current state (as of 2026-04-01):**
+- Setup guide rewritten to 3 steps (no tokens, no hosting, no config)
+  - Step 1 (yellow): Install plugin — download zip, import manifest in Figma dev mode
+  - Step 2 (mint): Sign in at `/handover` with `@kubixmedia.co.uk` Google account
+  - Step 3 (orchid): Paste Figma file URL in plugin Settings
+- All three step mockups updated to reflect real UI (screenshots used as reference):
+  - Step 1: Figma context menu + file picker showing `manifest.json` selected
+  - Step 2: Faithful HTML/CSS recreation of the real login card (glassmorphism, pixel-art logo, KUBIX wordmark, Google sign-in button)
+  - Step 3: Plugin settings panel with label, input, hint text
+- Stale copy removed (GitHub Gist references gone)
+- Orchid dot-matrix ripple canvas animation added behind the plug-ui, on continuous loop
+  - Canvas (`#plug-canvas`) sits inside `#plugin` (z-index: 2), sized to `section height + 340px BLEED` so it physically extends into the "How It Works" section below
+  - Origin fixed at `cx = w * 0.72` (right column centre, always within canvas bounds)
+  - `canvas.style.height` set explicitly in JS so CSS doesn't clamp it
+- Ripple bleeds into "How It Works" section with graceful fade:
+  - `.how-it-works` z-index: 3 (content above canvas)
+  - `.how-it-works` background: transparent (canvas shows through)
+  - `.how-it-works::before` — full-height gradient overlay, `bottom: 0`, transparent→`rgb(20,20,22)` top-to-bottom, z-index: 0 (above canvas, below content)
+  - `.how-it-works > *` z-index: 1 (content above the gradient overlay)
+  - `background-image: none` on `.how-it-works` to suppress `.grid-dk` white grid (prevented double-grid moiré with canvas)
+
+**Not yet pushed to main** — ask user before pushing.
 
 ---
 
@@ -108,10 +129,13 @@ Local Node.js/Express dashboard for Shopify theme section libraries.
 - Firebase authorized domain: `kubix-design.netlify.app`
 - Landing page live at `kubix-design.netlify.app/handover-plugin`
 
+> **Always ask** before pushing to main — user may not know when a push is needed to trigger a Netlify deploy. Prompt: "Would you like me to push these changes to main so Netlify deploys them?"
+
 ---
 
 ## Next Steps
 
-- **Landing page:** Redesign `landing.html` (now live at `kubix-design.netlify.app/handover-plugin`)
+- **Push landing.html to main** — canvas ripple + bleed fixes not yet deployed
+- **Landing page:** Continue redesigning other sections beyond the setup guide
 - Potential: revoke/regenerate share token UX in share modal
 - Potential: bump `PLUGIN_VERSION` to `v1.1.0` to clear the update banner (after landing page is live on Netlify)

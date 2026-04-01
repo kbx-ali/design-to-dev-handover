@@ -452,10 +452,23 @@
     .cu-tag-bes { background: rgba(229,145,229,0.22); color: #7a1e7a; border: 1px solid rgba(200,96,200,0.4); }
 
     /* ── PLUGIN SHOWCASE ────────────────────────────────────── */
-    .plug-section { background: var(--dk-bg); padding: 110px 0; overflow: hidden; }
+    .plug-section { background: var(--dk-bg); padding: 110px 0; overflow: visible; position: relative; z-index: 2; }
+    /* z-index: 3 keeps how-it-works content above the #plugin canvas bleed (z-index: 2) */
+    .how-it-works { position: relative; z-index: 3; }
+    /* Gradient overlay: sits above the ripple canvas, below the section content.
+       Fades from transparent at the top (ripple visible) to solid at ~300px down (ripple hidden). */
+    .how-it-works::before {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 100%; pointer-events: none; z-index: 0;
+      background: linear-gradient(to bottom, transparent 0%, rgb(20, 20, 22) 100%);
+    }
+    .how-it-works > * { position: relative; z-index: 1; }
+    /* height is set by JS so the canvas can bleed below the section */
+    #plug-canvas { position: absolute; top: 0; left: 0; width: 100%; z-index: 0; pointer-events: none; }
     .plug-inner {
       max-width: 1060px; margin: 0 auto; padding: 0 28px;
       display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
+      position: relative; z-index: 1;
     }
     .plug-heading {
       font-family: 'Domine', serif; font-size: clamp(32px, 4.2vw, 52px);
@@ -519,7 +532,9 @@
     }
 
     /* ── HOW IT WORKS (visual flow) ──────────────────────────── */
-    .how-it-works { background: var(--dk-bg); padding: 100px 0; overflow: hidden; }
+    /* background-color transparent so ripple canvas shows through from #plugin below.
+       background-image: none overrides the .grid-dk class — canvas provides the grid */
+    .how-it-works { background-color: transparent; background-image: none; padding: 100px 0; overflow: hidden; }
     .hiw-inner { max-width: 1060px; margin: 0 auto; padding: 0 28px; }
     .hiw-hdr { text-align: center; margin-bottom: 64px; }
     .hiw-heading {
@@ -760,6 +775,113 @@
       background: var(--kbx-mint); color: var(--kbx-black);
       padding: 6px 14px; border-radius: 6px; border: none;
       font-size: 9.5px; font-weight: 700; margin-top: 4px;
+    }
+
+    /* Figma import mockup — two panels */
+    .figma-mock {
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    /* Context menu panel */
+    .figma-ctx-menu {
+      background: #323232; border-radius: 7px; padding: 4px 0;
+      border: 1px solid #494949; min-width: 188px; flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .figma-ctx-item {
+      padding: 5px 14px; font-size: 9px; color: #c8c8c8; white-space: nowrap;
+    }
+    .figma-ctx-item.highlight {
+      background: #0D99FF; color: #fff; border-radius: 4px; margin: 0 3px;
+    }
+    .figma-ctx-divider { height: 1px; background: #494949; margin: 3px 0; }
+    /* File picker panel */
+    .figma-file-picker {
+      background: #2b2b2b; border-radius: 7px; border: 1px solid #454545;
+      overflow: hidden; min-width: 160px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .figma-fp-header {
+      padding: 5px 12px; font-size: 8.5px; font-weight: 700; color: #a0a0a0;
+      border-bottom: 1px solid #454545; background: #262626;
+    }
+    .figma-fp-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 12px; font-size: 9px; color: #c8c8c8;
+    }
+    .figma-fp-row.selected { background: #0058CC; color: #fff; }
+    .figma-fp-icon {
+      width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 7px;
+    }
+    .figma-fp-icon.js  { background: #3d8c40; color: #fff; font-weight: 700; }
+    .figma-fp-icon.json{ background: #c0550a; color: #fff; font-weight: 700; }
+    .figma-fp-icon.html{ background: #1a73e8; color: #fff; font-weight: 700; }
+
+    /* Login screen mockup — faithful recreation */
+    .login-mock {
+      position: relative; overflow: hidden; border-radius: 8px;
+      background-color: #141416;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 22px 22px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 28px 20px;
+    }
+    .lm-card {
+      background: rgba(30,30,33,0.48);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 22px 20px;
+      width: 100%; max-width: 240px;
+      text-align: center;
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .lm-k {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      color: #FFFF00; margin-bottom: 13px;
+    }
+    .lm-wordmark-wrap {
+      display: flex; flex-direction: column; gap: 2px; text-align: left;
+    }
+    .lm-app-label {
+      font-size: 6px; font-weight: 600; color: #878790;
+      text-transform: uppercase; letter-spacing: 0.1em;
+    }
+    .lm-sub {
+      font-size: 8px; color: #878790; line-height: 1.65; margin-bottom: 13px;
+    }
+    .lm-btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; padding: 7px 10px;
+      border-radius: 6px; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      font-family: inherit; font-size: 8px; font-weight: 600;
+      color: rgba(255,255,255,0.92); margin-bottom: 10px;
+    }
+    .lm-footer {
+      font-size: 7px; color: #52525a;
+      padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* Plugin settings mockup */
+    .plugin-settings-mock {
+      background: #1a1a1d; border-radius: 8px; padding: 14px 16px;
+      border: 1px solid #2a2a2e;
+    }
+    .psm-field { margin-bottom: 0; }
+    .psm-label {
+      font-size: 8px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: #a0a0a8; margin-bottom: 6px; display: block;
+    }
+    .psm-input {
+      width: 100%; background: #252528; border: 1px solid #3a3a3e;
+      border-radius: 5px; padding: 7px 10px; font-size: 9px;
+      color: #6a6a72; font-family: monospace; margin-bottom: 8px;
+    }
+    .psm-hint {
+      font-size: 8.5px; color: #52525a; line-height: 1.55;
     }
 
     /* Tip callout */
@@ -1146,6 +1268,7 @@
 
 <!-- ══════════════════════ PLUGIN SHOWCASE ══════════════════════════ -->
 <section class="plug-section" id="plugin">
+  <canvas id="plug-canvas"></canvas>
   <div class="plug-inner">
 
     <!-- Left: copy -->
@@ -1164,7 +1287,7 @@
         </li>
         <li class="plug-bullet">
           <span class="plug-bullet-chk"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#94F7A1" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
-          Syncs to GitHub Gist &mdash; no server needed
+          One-click sync to the live Handover web app
         </li>
         <li class="plug-bullet">
           <span class="plug-bullet-chk"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="#94F7A1" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
@@ -1290,244 +1413,32 @@
   <div class="setup-inner">
     <div class="setup-hdr">
       <div class="section-label lbl-orchid"><span class="lbl-dot"></span>Setup guide</div>
-      <h2 class="setup-heading">Up and running<br>in ten minutes.</h2>
-      <p class="setup-sub">No coding required. Just a few accounts, a couple of tokens, and a drag-and-drop. We'll walk you through every click.</p>
+      <h2 class="setup-heading">Up and running<br>in minutes.</h2>
+      <p class="setup-sub">Three steps. No tokens, no hosting, no config. Just install the plugin and sign in.</p>
     </div>
 
-    <!-- Prerequisites -->
-    <div class="prereq">
-      <div class="prereq-title">
-        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--kbx-teal)" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        Before you start, you'll need:
-      </div>
-      <ul class="prereq-list">
-        <li class="prereq-item">
-          <span class="prereq-check"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#2EAB42" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
-          A free <strong>GitHub account</strong> (for saving your project data)
-        </li>
-        <li class="prereq-item">
-          <span class="prereq-check"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#2EAB42" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
-          A <strong>Figma account</strong> (you already have this!)
-        </li>
-        <li class="prereq-item">
-          <span class="prereq-check"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="#2EAB42" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
-          A free <strong>Netlify account</strong> (for hosting your handover page)
-        </li>
-      </ul>
-      <div class="prereq-note">
-        <strong>Don't have a GitHub account?</strong> Head to github.com and sign up &mdash; it's free and takes 2 minutes. You won't need to write any code. We just use GitHub as a free, reliable place to store your handover data.
-      </div>
-    </div>
-
-    <!-- STEP 1: GitHub Token -->
-    <div class="step-card" data-step="1">
+    <!-- STEP 1: Install the plugin -->
+    <div class="step-card open" data-step="1">
       <div class="step-header" onclick="toggleStep(this)">
         <div class="step-num sn-yellow">1</div>
         <div class="step-header-text">
-          <div class="step-title">Create a GitHub token</div>
-          <div class="step-time">~3 minutes &middot; One-time setup</div>
-        </div>
-        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </div>
-      <div class="step-body">
-        <div class="step-body-inner">
-          <p style="font-size:13px;color:var(--lt-text-mute);margin-bottom:16px;line-height:1.65;">A "token" is like a password that lets the handover tool save and read your project data on GitHub. You only need to create it once.</p>
-          <ol class="step-instructions">
-            <li class="step-instruction"><span class="sub-num"></span><span>Log into GitHub, click your <strong>profile picture</strong> (top right), then go to <strong>Settings</strong>.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Scroll all the way down in the left sidebar and click <strong>Developer settings</strong>.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Click <strong>Personal access tokens</strong> &rarr; <strong>Tokens (classic)</strong>.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Click <strong>"Generate new token"</strong> &rarr; <strong>"Generate new token (classic)"</strong>.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Give it a name like <code>Design Handover</code>. Set expiration to <strong>"No expiration"</strong> (so you don't have to redo this).</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Under scopes, tick <strong>only</strong> the <code>gist</code> checkbox. Nothing else is needed.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Click the green <strong>"Generate token"</strong> button at the bottom.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span><strong>Copy the token immediately</strong> and paste it somewhere safe (like Notes or a password manager). GitHub only shows it once!</span></li>
-          </ol>
-
-          <!-- GitHub mockup -->
-          <div class="step-mockup">
-            <div class="step-mockup-bar">
-              <div class="step-mockup-dots"><span></span><span></span><span></span></div>
-              <span class="step-mockup-url">github.com/settings/tokens/new</span>
-            </div>
-            <div class="step-mockup-content">
-              <div class="gh-mock">
-                <div class="gh-mock-nav">
-                  <span class="gh-mock-logo"><svg width="16" height="16" viewBox="0 0 16 16" fill="#fff"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span>
-                  <span class="gh-mock-breadcrumb">Settings / Developer settings / Personal access tokens</span>
-                </div>
-                <div class="gh-mock-body">
-                  <div class="gh-mock-title">New personal access token (classic)</div>
-                  <div class="gh-mock-field">
-                    <span class="gh-mock-label">Note</span>
-                    <div class="gh-mock-input" style="color:#24292e;font-weight:600;">Design Handover</div>
-                  </div>
-                  <div class="gh-mock-field">
-                    <span class="gh-mock-label">Expiration</span>
-                    <div class="gh-mock-input">No expiration</div>
-                  </div>
-                  <div style="margin-bottom:10px;">
-                    <span class="gh-mock-label">Select scopes</span>
-                    <div class="gh-mock-scope">
-                      <div class="gh-mock-checkbox"><svg width="8" height="8" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="4"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-                      <span><span class="gh-mock-scope-text">gist</span> <span class="gh-mock-scope-desc">&mdash; Create and edit gists</span></span>
-                    </div>
-                  </div>
-                  <div class="gh-mock-btn">Generate token</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-tip">
-            <span class="step-tip-icon">&#9889;</span>
-            <span><strong>Why "gist" scope only?</strong> A Gist is a simple text snippet on GitHub. The handover tool saves your project data as a Gist. The token only needs permission to create/edit Gists &mdash; it cannot touch any code repositories.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- STEP 2: Host the web app -->
-    <div class="step-card" data-step="2">
-      <div class="step-header" onclick="toggleStep(this)">
-        <div class="step-num sn-mint">2</div>
-        <div class="step-header-text">
-          <div class="step-title">Download &amp; host the web app</div>
-          <div class="step-time">~3 minutes &middot; Drag-and-drop deploy</div>
-        </div>
-        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </div>
-      <div class="step-body">
-        <div class="step-body-inner">
-          <p style="font-size:13px;color:var(--lt-text-mute);margin-bottom:16px;line-height:1.65;">The handover tool is two HTML files. Download the latest version below, then drop them onto Netlify for a free live URL in seconds.</p>
-          <div class="dl-cards">
-            <div class="dl-card">
-              <div class="dl-card-info">
-                <div class="dl-card-icon">📦</div>
-                <div>
-                  <div class="dl-card-name">Web App Files</div>
-                  <div class="dl-card-meta"><code>index.html</code> + editor &nbsp;·&nbsp; <span class="version-tag">latest</span></div>
-                </div>
-              </div>
-              <a href="https://github.com/kbx-ali/design-to-dev-handover/releases/latest/download/handover-app.zip" class="btn-dl" target="_blank" rel="noopener">
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V8m0 8l-3-3m3 3l3-3M4 20h16"/></svg>
-                Download
-              </a>
-            </div>
-          </div>
-          <div class="dl-changelog">
-            <a href="https://github.com/kbx-ali/design-to-dev-handover/releases" target="_blank" rel="noopener">View release notes &rarr;</a>
-          </div>
-          <ol class="step-instructions">
-            <li class="step-instruction"><span class="sub-num"></span><span>Unzip <code>handover-app.zip</code> — you'll get two files. Put both in the <strong>same folder</strong> on your computer.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Go to <strong>app.netlify.com/drop</strong> and log in (sign up free if needed).</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span><strong>Drag your folder</strong> directly onto the drop zone. That's it &mdash; Netlify will give you a live URL like <code>cool-name-123.netlify.app</code>.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span><strong>Save that URL</strong> &mdash; you'll need it for the Figma plugin settings. You can rename the site in Netlify's settings if you want a nicer name.</span></li>
-          </ol>
-
-          <!-- Netlify mockup -->
-          <div class="step-mockup">
-            <div class="step-mockup-bar">
-              <div class="step-mockup-dots"><span></span><span></span><span></span></div>
-              <span class="step-mockup-url">app.netlify.com/drop</span>
-            </div>
-            <div class="step-mockup-content">
-              <div class="nf-mock">
-                <div class="nf-mock-nav">
-                  <span class="nf-mock-logo">&#9650; netlify</span>
-                </div>
-                <div class="nf-mock-body">
-                  <div class="nf-mock-drop">
-                    <div class="nf-mock-drop-icon">&#8682;</div>
-                    <div class="nf-mock-drop-text">Drag and drop your site output folder here</div>
-                    <div class="nf-mock-drop-sub">Or, browse to upload</div>
-                  </div>
-                  <div class="nf-mock-url">&#10003; your-project-abc.netlify.app</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-success">
-            <span class="step-success-icon">&#10003;</span>
-            <span>Once deployed, open your Netlify URL in a browser. You should see the handover app load. Don't worry that it asks for tokens &mdash; we'll add those next.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- STEP 3: Configure the web app -->
-    <div class="step-card" data-step="3">
-      <div class="step-header" onclick="toggleStep(this)">
-        <div class="step-num sn-orchid">3</div>
-        <div class="step-header-text">
-          <div class="step-title">Configure the web app</div>
-          <div class="step-time">~1 minute &middot; Paste your token</div>
-        </div>
-        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </div>
-      <div class="step-body">
-        <div class="step-body-inner">
-          <ol class="step-instructions">
-            <li class="step-instruction"><span class="sub-num"></span><span>Open your Netlify URL with <code style="background:#28282B;border-radius:4px;padding:1px 6px;font-size:12px;color:#FFFF00;">?setup=1</code> added to the end — e.g. <code style="background:#28282B;border-radius:4px;padding:1px 6px;font-size:12px;color:#A0A0A6;">your-site.netlify.app/design-to-dev-handover-v3-figma.html?setup=1</code>. This bypasses the access gate and opens the settings panel automatically.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Paste your <strong>GitHub token</strong> (from Step 1) into the <strong>GitHub Token</strong> field.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>For the <strong>Figma token</strong>: go to Figma &rarr; click your profile icon (top left) &rarr; <strong>Settings</strong> &rarr; scroll to <strong>"Personal access tokens"</strong> &rarr; type a name &rarr; hit Enter &rarr; <strong>copy the token</strong>.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Paste the Figma token into the <strong>Figma Token</strong> field.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Click <strong>Save</strong>. Your tokens are stored in the browser — you won't need the <code style="background:#28282B;border-radius:4px;padding:1px 6px;font-size:12px;color:#FFFF00;">?setup=1</code> param again after this. Just open your Netlify URL normally from now on.</span></li>
-          </ol>
-
-          <!-- App settings mockup -->
-          <div class="step-mockup">
-            <div class="step-mockup-bar">
-              <div class="step-mockup-dots"><span></span><span></span><span></span></div>
-              <span class="step-mockup-url">your-project.netlify.app &mdash; Settings</span>
-            </div>
-            <div class="step-mockup-content">
-              <div class="app-settings-mock">
-                <div class="asm-title">Global Settings</div>
-                <div class="asm-field">
-                  <span class="asm-label">GitHub Token</span>
-                  <div class="asm-input filled">ghp_a1b2c3d4e5f6g7h8i9j0&bull;&bull;&bull;&bull;&bull;&bull;</div>
-                </div>
-                <div class="asm-field">
-                  <span class="asm-label">Figma Token</span>
-                  <div class="asm-input filled">figd_k1l2m3n4o5p6q7r8s9t0&bull;&bull;&bull;&bull;&bull;</div>
-                </div>
-                <div class="asm-btn">
-                  <svg width="10" height="10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                  Save
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-tip">
-            <span class="step-tip-icon">&#9889;</span>
-            <span><strong>Where's the Figma token?</strong> In Figma, click your profile picture (top-left corner) &rarr; Settings &rarr; scroll down to "Personal access tokens." Give it any name, press Enter, and copy it immediately. Figma only shows it once.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- STEP 4: Install the plugin -->
-    <div class="step-card" data-step="4">
-      <div class="step-header" onclick="toggleStep(this)">
-        <div class="step-num sn-teal">4</div>
-        <div class="step-header-text">
           <div class="step-title">Install the Figma plugin</div>
-          <div class="step-time">~2 minutes &middot; One-time install</div>
+          <div class="step-time">~2 minutes &middot; One-time setup</div>
         </div>
         <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
       </div>
       <div class="step-body">
         <div class="step-body-inner">
-          <p style="font-size:13px;color:var(--lt-text-mute);margin-bottom:16px;line-height:1.65;">The Figma plugin is what lets you tag frames and push them to the web app. Download the latest version below.</p>
+          <p style="font-size:13px;color:var(--lt-text-mute);margin-bottom:16px;line-height:1.65;">Download the plugin zip, then point Figma to the manifest file. You only need to do this once — it stays installed.</p>
           <div class="dl-cards">
             <div class="dl-card">
               <div class="dl-card-info">
-                <div class="dl-card-icon">🔌</div>
+                <div class="dl-card-icon">
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/></svg>
+                </div>
                 <div>
                   <div class="dl-card-name">Figma Plugin</div>
-                  <div class="dl-card-meta">Design &rarr; Dev Handover &nbsp;·&nbsp; <span class="version-tag">latest</span></div>
+                  <div class="dl-card-meta">Design &rarr; Dev Handover &nbsp;&middot;&nbsp; <span class="version-tag">latest</span></div>
                 </div>
               </div>
               <a href="https://github.com/kbx-ali/design-to-dev-handover/releases/latest/download/figma-plugin.zip" class="btn-dl" target="_blank" rel="noopener">
@@ -1540,44 +1451,148 @@
             <a href="https://github.com/kbx-ali/design-to-dev-handover/releases" target="_blank" rel="noopener">View release notes &rarr;</a>
           </div>
           <ol class="step-instructions">
-            <li class="step-instruction"><span class="sub-num"></span><span>Unzip <code>figma-plugin.zip</code> to get a folder containing <code>manifest.json</code>, <code>code.js</code>, and <code>ui.html</code>. Save it somewhere you won't accidentally delete it.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>In Figma desktop app, go to <strong>Menu</strong> (hamburger icon, top left) &rarr; <strong>Plugins</strong> &rarr; <strong>Development</strong> &rarr; <strong>Import plugin from manifest&hellip;</strong></span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Navigate to the plugin folder and select the <code>manifest.json</code> file.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>The plugin is now installed. To run it: <strong>right-click the canvas</strong> &rarr; <strong>Plugins</strong> &rarr; <strong>Development</strong> &rarr; <strong>Design &rarr; Dev Handover</strong>.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Unzip <code>figma-plugin.zip</code> — you'll get a folder with <code>manifest.json</code>, <code>code.js</code>, and <code>ui.html</code> inside. Keep it somewhere permanent (like your Documents folder).</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Open the <strong>Figma desktop app</strong>. Click the <strong>menu icon</strong> (top left) &rarr; <strong>Plugins</strong> &rarr; <strong>Development</strong> &rarr; <strong>Import plugin from manifest&hellip;</strong></span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Navigate into the unzipped plugin folder and select the <code>manifest.json</code> file.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>To run the plugin: <strong>right-click</strong> anywhere on the Figma canvas &rarr; <strong>Plugins</strong> &rarr; <strong>Development</strong> &rarr; <strong>Design &rarr; Dev Handover</strong>.</span></li>
           </ol>
+
+          <!-- Figma import mockup -->
+          <div class="step-mockup">
+            <div class="step-mockup-bar">
+              <div class="step-mockup-dots"><span></span><span></span><span></span></div>
+              <span class="step-mockup-url">Figma &mdash; Import plugin from manifest</span>
+            </div>
+            <div class="step-mockup-content">
+              <div class="figma-mock">
+                <div class="figma-ctx-menu">
+                  <div class="figma-ctx-item">Manage plugins in development</div>
+                  <div class="figma-ctx-item">New plugin&hellip;</div>
+                  <div class="figma-ctx-item highlight">Import plugin from manifest&hellip;</div>
+                  <div class="figma-ctx-divider"></div>
+                  <div class="figma-ctx-item">View API documentation</div>
+                  <div class="figma-ctx-item">Show/Hide console</div>
+                  <div class="figma-ctx-item">Use developer VM</div>
+                  <div class="figma-ctx-item">Hot reload plugin</div>
+                </div>
+                <div class="figma-file-picker">
+                  <div class="figma-fp-header">Name</div>
+                  <div class="figma-fp-row">
+                    <div class="figma-fp-icon js">JS</div>
+                    <span>code.js</span>
+                  </div>
+                  <div class="figma-fp-row selected">
+                    <div class="figma-fp-icon json">{}</div>
+                    <span>manifest.json</span>
+                  </div>
+                  <div class="figma-fp-row">
+                    <div class="figma-fp-icon html">H</div>
+                    <span>ui.html</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="step-success">
             <span class="step-success-icon">&#10003;</span>
-            <span>You should see the Kubix plugin panel open inside Figma with the yellow logo and your page's frames listed.</span>
+            <span>The plugin panel will open inside Figma with the yellow Kubix logo and your page's frames listed.</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- STEP 5: Configure the plugin -->
-    <div class="step-card" data-step="5">
+    <!-- STEP 2: Sign in to the web app -->
+    <div class="step-card" data-step="2">
       <div class="step-header" onclick="toggleStep(this)">
-        <div class="step-num sn-yellow">5</div>
+        <div class="step-num sn-mint">2</div>
         <div class="step-header-text">
-          <div class="step-title">Connect the plugin to your web app</div>
-          <div class="step-time">~1 minute &middot; Final step!</div>
+          <div class="step-title">Sign in to the web app</div>
+          <div class="step-time">30 seconds &middot; Use your Kubix account</div>
         </div>
         <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
       </div>
       <div class="step-body">
         <div class="step-body-inner">
           <ol class="step-instructions">
-            <li class="step-instruction"><span class="sub-num"></span><span>In the plugin, click the <strong>gear icon</strong> (top right) to open Settings.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Paste your <strong>Netlify URL</strong> (from Step 2) into the <strong>"Handover App URL"</strong> field.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Paste the <strong>full URL</strong> of your Figma file into the <strong>"Figma File URL"</strong> field. (Just copy it from your browser's address bar while the file is open.)</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>If your web app already has a Gist ID (shown in the web app's sync modal), paste it into the <strong>"Gist ID"</strong> field. This links the plugin to the same project.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Paste your <strong>GitHub token</strong> (same one from Step 1) into the <strong>"GitHub Token"</strong> field. This is needed for syncing.</span></li>
-            <li class="step-instruction"><span class="sub-num"></span><span>Go back to the main view. You should see your frames listed. Tag them, add notes, and hit <strong>"Open in Handover"</strong> to send everything to your web app!</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Go to <strong><a href="https://kubix-design.netlify.app/handover" target="_blank" rel="noopener">kubix-design.netlify.app/handover</a></strong> in your browser.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Click <strong>"Sign in with Google"</strong> and select your <code>@kubixmedia.co.uk</code> account. Access is restricted to Kubix team members only.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Once signed in, you'll land on the projects dashboard. You're ready to receive your first sync from the plugin.</span></li>
           </ol>
+
+          <!-- Login screen mockup -->
+          <div class="step-mockup">
+            <div class="step-mockup-bar">
+              <div class="step-mockup-dots"><span></span><span></span><span></span></div>
+              <span class="step-mockup-url">kubix-design.netlify.app/handover</span>
+            </div>
+            <div class="step-mockup-content">
+              <div class="login-mock">
+                <div class="lm-card">
+                  <div class="lm-k">
+                    <!-- Pixel-art Kubix logo mark (same SVG as real app, scaled) -->
+                    <svg width="20" height="20" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect x="16" y="2" width="1" height="1" fill="currentColor"/><rect x="17" y="2" width="1" height="1" fill="currentColor"/><rect x="18" y="2" width="1" height="1" fill="currentColor"/><rect x="6" y="3" width="1" height="1" fill="currentColor"/><rect x="7" y="3" width="1" height="1" fill="currentColor"/><rect x="8" y="3" width="1" height="1" fill="currentColor"/><rect x="16" y="3" width="1" height="1" fill="currentColor"/><rect x="17" y="3" width="1" height="1" fill="currentColor"/><rect x="18" y="3" width="1" height="1" fill="currentColor"/><rect x="6" y="4" width="1" height="1" fill="currentColor"/><rect x="7" y="4" width="1" height="1" fill="currentColor"/><rect x="8" y="4" width="1" height="1" fill="currentColor"/><rect x="16" y="4" width="1" height="1" fill="currentColor"/><rect x="17" y="4" width="1" height="1" fill="currentColor"/><rect x="18" y="4" width="1" height="1" fill="currentColor"/><rect x="6" y="5" width="1" height="1" fill="currentColor"/><rect x="7" y="5" width="1" height="1" fill="currentColor"/><rect x="8" y="5" width="1" height="1" fill="currentColor"/><rect x="15" y="5" width="1" height="1" fill="currentColor"/><rect x="16" y="5" width="1" height="1" fill="currentColor"/><rect x="17" y="5" width="1" height="1" fill="currentColor"/><rect x="3" y="6" width="1" height="1" fill="currentColor"/><rect x="4" y="6" width="1" height="1" fill="currentColor"/><rect x="5" y="6" width="1" height="1" fill="currentColor"/><rect x="15" y="6" width="1" height="1" fill="currentColor"/><rect x="16" y="6" width="1" height="1" fill="currentColor"/><rect x="17" y="6" width="1" height="1" fill="currentColor"/><rect x="3" y="7" width="1" height="1" fill="currentColor"/><rect x="4" y="7" width="1" height="1" fill="currentColor"/><rect x="5" y="7" width="1" height="1" fill="currentColor"/><rect x="15" y="7" width="1" height="1" fill="currentColor"/><rect x="16" y="7" width="1" height="1" fill="currentColor"/><rect x="17" y="7" width="1" height="1" fill="currentColor"/><rect x="3" y="8" width="1" height="1" fill="currentColor"/><rect x="4" y="8" width="1" height="1" fill="currentColor"/><rect x="5" y="8" width="1" height="1" fill="currentColor"/><rect x="14" y="8" width="1" height="1" fill="currentColor"/><rect x="15" y="8" width="1" height="1" fill="currentColor"/><rect x="16" y="8" width="1" height="1" fill="currentColor"/><rect x="0" y="9" width="1" height="1" fill="currentColor"/><rect x="1" y="9" width="1" height="1" fill="currentColor"/><rect x="2" y="9" width="1" height="1" fill="currentColor"/><rect x="14" y="9" width="1" height="1" fill="currentColor"/><rect x="15" y="9" width="1" height="1" fill="currentColor"/><rect x="16" y="9" width="1" height="1" fill="currentColor"/><rect x="0" y="10" width="1" height="1" fill="currentColor"/><rect x="1" y="10" width="1" height="1" fill="currentColor"/><rect x="2" y="10" width="1" height="1" fill="currentColor"/><rect x="14" y="10" width="1" height="1" fill="currentColor"/><rect x="15" y="10" width="1" height="1" fill="currentColor"/><rect x="16" y="10" width="1" height="1" fill="currentColor"/><rect x="19" y="10" width="1" height="1" fill="currentColor"/><rect x="20" y="10" width="1" height="1" fill="currentColor"/><rect x="21" y="10" width="1" height="1" fill="currentColor"/><rect x="0" y="11" width="1" height="1" fill="currentColor"/><rect x="1" y="11" width="1" height="1" fill="currentColor"/><rect x="2" y="11" width="1" height="1" fill="currentColor"/><rect x="13" y="11" width="1" height="1" fill="currentColor"/><rect x="14" y="11" width="1" height="1" fill="currentColor"/><rect x="15" y="11" width="1" height="1" fill="currentColor"/><rect x="19" y="11" width="1" height="1" fill="currentColor"/><rect x="20" y="11" width="1" height="1" fill="currentColor"/><rect x="21" y="11" width="1" height="1" fill="currentColor"/><rect x="3" y="12" width="1" height="1" fill="currentColor"/><rect x="4" y="12" width="1" height="1" fill="currentColor"/><rect x="5" y="12" width="1" height="1" fill="currentColor"/><rect x="13" y="12" width="1" height="1" fill="currentColor"/><rect x="14" y="12" width="1" height="1" fill="currentColor"/><rect x="15" y="12" width="1" height="1" fill="currentColor"/><rect x="19" y="12" width="1" height="1" fill="currentColor"/><rect x="20" y="12" width="1" height="1" fill="currentColor"/><rect x="21" y="12" width="1" height="1" fill="currentColor"/><rect x="3" y="13" width="1" height="1" fill="currentColor"/><rect x="4" y="13" width="1" height="1" fill="currentColor"/><rect x="5" y="13" width="1" height="1" fill="currentColor"/><rect x="13" y="13" width="1" height="1" fill="currentColor"/><rect x="14" y="13" width="1" height="1" fill="currentColor"/><rect x="15" y="13" width="1" height="1" fill="currentColor"/><rect x="22" y="13" width="1" height="1" fill="currentColor"/><rect x="23" y="13" width="1" height="1" fill="currentColor"/><rect x="24" y="13" width="1" height="1" fill="currentColor"/><rect x="3" y="14" width="1" height="1" fill="currentColor"/><rect x="4" y="14" width="1" height="1" fill="currentColor"/><rect x="5" y="14" width="1" height="1" fill="currentColor"/><rect x="12" y="14" width="1" height="1" fill="currentColor"/><rect x="13" y="14" width="1" height="1" fill="currentColor"/><rect x="14" y="14" width="1" height="1" fill="currentColor"/><rect x="22" y="14" width="1" height="1" fill="currentColor"/><rect x="23" y="14" width="1" height="1" fill="currentColor"/><rect x="24" y="14" width="1" height="1" fill="currentColor"/><rect x="6" y="15" width="1" height="1" fill="currentColor"/><rect x="7" y="15" width="1" height="1" fill="currentColor"/><rect x="8" y="15" width="1" height="1" fill="currentColor"/><rect x="12" y="15" width="1" height="1" fill="currentColor"/><rect x="13" y="15" width="1" height="1" fill="currentColor"/><rect x="14" y="15" width="1" height="1" fill="currentColor"/><rect x="22" y="15" width="1" height="1" fill="currentColor"/><rect x="23" y="15" width="1" height="1" fill="currentColor"/><rect x="24" y="15" width="1" height="1" fill="currentColor"/><rect x="6" y="16" width="1" height="1" fill="currentColor"/><rect x="7" y="16" width="1" height="1" fill="currentColor"/><rect x="8" y="16" width="1" height="1" fill="currentColor"/><rect x="12" y="16" width="1" height="1" fill="currentColor"/><rect x="13" y="16" width="1" height="1" fill="currentColor"/><rect x="14" y="16" width="1" height="1" fill="currentColor"/><rect x="25" y="16" width="1" height="1" fill="currentColor"/><rect x="26" y="16" width="1" height="1" fill="currentColor"/><rect x="27" y="16" width="1" height="1" fill="currentColor"/><rect x="6" y="17" width="1" height="1" fill="currentColor"/><rect x="7" y="17" width="1" height="1" fill="currentColor"/><rect x="8" y="17" width="1" height="1" fill="currentColor"/><rect x="11" y="17" width="1" height="1" fill="currentColor"/><rect x="12" y="17" width="1" height="1" fill="currentColor"/><rect x="13" y="17" width="1" height="1" fill="currentColor"/><rect x="25" y="17" width="1" height="1" fill="currentColor"/><rect x="26" y="17" width="1" height="1" fill="currentColor"/><rect x="27" y="17" width="1" height="1" fill="currentColor"/><rect x="11" y="18" width="1" height="1" fill="currentColor"/><rect x="12" y="18" width="1" height="1" fill="currentColor"/><rect x="13" y="18" width="1" height="1" fill="currentColor"/><rect x="25" y="18" width="1" height="1" fill="currentColor"/><rect x="26" y="18" width="1" height="1" fill="currentColor"/><rect x="27" y="18" width="1" height="1" fill="currentColor"/><rect x="11" y="19" width="1" height="1" fill="currentColor"/><rect x="12" y="19" width="1" height="1" fill="currentColor"/><rect x="13" y="19" width="1" height="1" fill="currentColor"/><rect x="22" y="19" width="1" height="1" fill="currentColor"/><rect x="23" y="19" width="1" height="1" fill="currentColor"/><rect x="24" y="19" width="1" height="1" fill="currentColor"/><rect x="10" y="20" width="1" height="1" fill="currentColor"/><rect x="11" y="20" width="1" height="1" fill="currentColor"/><rect x="12" y="20" width="1" height="1" fill="currentColor"/><rect x="22" y="20" width="1" height="1" fill="currentColor"/><rect x="23" y="20" width="1" height="1" fill="currentColor"/><rect x="24" y="20" width="1" height="1" fill="currentColor"/><rect x="10" y="21" width="1" height="1" fill="currentColor"/><rect x="11" y="21" width="1" height="1" fill="currentColor"/><rect x="12" y="21" width="1" height="1" fill="currentColor"/><rect x="22" y="21" width="1" height="1" fill="currentColor"/><rect x="23" y="21" width="1" height="1" fill="currentColor"/><rect x="24" y="21" width="1" height="1" fill="currentColor"/><rect x="10" y="22" width="1" height="1" fill="currentColor"/><rect x="11" y="22" width="1" height="1" fill="currentColor"/><rect x="12" y="22" width="1" height="1" fill="currentColor"/><rect x="19" y="22" width="1" height="1" fill="currentColor"/><rect x="20" y="22" width="1" height="1" fill="currentColor"/><rect x="21" y="22" width="1" height="1" fill="currentColor"/><rect x="9" y="23" width="1" height="1" fill="currentColor"/><rect x="10" y="23" width="1" height="1" fill="currentColor"/><rect x="11" y="23" width="1" height="1" fill="currentColor"/><rect x="19" y="23" width="1" height="1" fill="currentColor"/><rect x="20" y="23" width="1" height="1" fill="currentColor"/><rect x="21" y="23" width="1" height="1" fill="currentColor"/><rect x="9" y="24" width="1" height="1" fill="currentColor"/><rect x="10" y="24" width="1" height="1" fill="currentColor"/><rect x="11" y="24" width="1" height="1" fill="currentColor"/><rect x="19" y="24" width="1" height="1" fill="currentColor"/><rect x="20" y="24" width="1" height="1" fill="currentColor"/><rect x="21" y="24" width="1" height="1" fill="currentColor"/><rect x="9" y="25" width="1" height="1" fill="currentColor"/><rect x="10" y="25" width="1" height="1" fill="currentColor"/><rect x="11" y="25" width="1" height="1" fill="currentColor"/></svg>
+                    <div class="lm-wordmark-wrap">
+                      <!-- KUBIX wordmark SVG, same paths as real app -->
+                      <svg width="46" height="11" viewBox="0 0 141 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:rgba(255,255,255,0.92);fill:currentColor"><path d="M26.4541 31.1907L14.9187 15.8965L25.451 2.51405C25.9525 1.87679 25.5764 0.857178 24.6987 0.857178H19.0564C18.8056 0.857178 18.3041 1.11208 18.1787 1.36699L8.14802 14.1122V2.00424C8.14802 1.36698 7.64649 0.857178 7.01957 0.857178H1.75345C1.12653 0.857178 0.625 1.36698 0.625 2.00424V31.828C0.625 32.4652 1.12653 32.975 1.75345 32.975H7.01957C7.52111 32.975 8.02264 32.4652 8.02264 31.828V18.1906L18.4295 32.3378C18.5549 32.5927 19.0564 32.8476 19.3072 32.8476H25.7017C26.5794 32.8476 26.9556 31.828 26.4541 31.1907Z"/><path d="M30.3438 1.74934C30.3438 1.23953 30.7198 0.857178 31.2214 0.857178H36.7383C37.2398 0.857178 37.6159 1.23953 37.6159 1.74934V20.3573C37.6159 23.5436 39.9983 26.0926 43.1329 26.0926C46.3929 26.0926 48.7752 23.5436 48.7752 20.3573V1.74934C48.7752 1.23953 49.1513 0.857178 49.6529 0.857178H55.1698C55.6713 0.857178 56.0475 1.23953 56.0475 1.74934V20.7397C56.0475 27.7495 50.2798 33.4848 43.1329 33.4848C35.9861 33.4848 30.3438 27.7495 30.3438 20.7397V1.74934Z"/><path d="M63.3164 1.74934C63.3164 1.23953 63.6925 0.857178 64.1941 0.857178H74.7263C79.9924 0.857178 84.3809 4.55328 84.3809 9.39645C84.3809 12.9651 81.2463 15.5141 79.1147 16.6612C81.497 17.6808 85.1332 19.9749 85.1332 24.1809C85.1332 29.2789 80.6194 32.975 75.3532 32.975H64.1941C63.6925 32.975 63.3164 32.5927 63.3164 32.0829V1.74934ZM73.8486 13.8573C75.604 13.8573 76.9832 12.3278 76.9832 10.5435C76.9832 8.75919 75.4786 7.48467 73.8486 7.48467H70.3379V13.8573H73.8486ZM74.4756 26.475C76.2309 26.475 77.7355 24.9456 77.7355 23.1612C77.7355 21.3769 75.8548 19.9749 73.974 19.9749H70.3379V26.475H74.4756Z"/><path d="M90.9023 1.74934C90.9023 1.23953 91.2785 0.857178 91.78 0.857178H97.1715C97.6731 0.857178 98.0492 1.23953 98.0492 1.74934V32.0829C98.0492 32.5927 97.6731 32.975 97.1715 32.975H91.78C91.2785 32.975 90.9023 32.5927 90.9023 32.0829V1.74934Z"/><path d="M112.469 16.5338L103.316 2.1317C102.939 1.49444 103.316 0.857178 104.068 0.857178H110.713C111.089 0.857178 111.34 1.11208 111.466 1.23953L116.606 9.7788L121.872 1.23953C121.998 1.11208 122.249 0.857178 122.625 0.857178H129.27C130.022 0.857178 130.398 1.49444 130.022 2.1317L120.869 16.5338L130.398 31.7005C130.775 32.3378 130.398 32.975 129.646 32.975H123.377C123.126 32.975 122.75 32.8476 122.625 32.5927L116.732 23.2887H116.606L110.839 32.5927C110.713 32.7201 110.462 32.975 110.086 32.975H103.817C103.065 32.975 102.689 32.3378 103.065 31.7005L112.469 16.5338Z"/><path d="M135.577 32.9793H139.779C140.245 32.9793 140.626 32.5921 140.626 32.119V27.5915C140.626 27.1183 140.245 26.7312 139.779 26.7312H135.577C135.112 26.7312 134.73 27.1183 134.73 27.5915V32.119C134.73 32.5921 135.101 32.9793 135.577 32.9793Z"/></svg>
+                      <span class="lm-app-label">Handover</span>
+                    </div>
+                  </div>
+                  <p class="lm-sub">Sign in with your Kubix Google account to manage design handovers.</p>
+                  <div class="lm-btn-google">
+                    <svg width="10" height="10" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Sign in with Google
+                  </div>
+                  <div class="lm-footer">For Kubix employees only &middot; kubixmedia.co.uk</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Add Figma file URL -->
+    <div class="step-card" data-step="3">
+      <div class="step-header" onclick="toggleStep(this)">
+        <div class="step-num sn-orchid">3</div>
+        <div class="step-header-text">
+          <div class="step-title">Add your Figma file URL</div>
+          <div class="step-time">30 seconds &middot; Final step!</div>
+        </div>
+        <svg class="step-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </div>
+      <div class="step-body">
+        <div class="step-body-inner">
+          <p style="font-size:13px;color:var(--lt-text-mute);margin-bottom:16px;line-height:1.65;">The plugin needs to know which Figma file you're working in so it can generate direct jump links to each section.</p>
+          <ol class="step-instructions">
+            <li class="step-instruction"><span class="sub-num"></span><span>In the plugin, click the <strong>gear icon</strong> (top right of the plugin panel) to open Settings.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Switch to your Figma file's browser tab and <strong>copy the full URL</strong> from the address bar.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Paste it into the <strong>"Figma File URL"</strong> field in the plugin settings. Click <strong>Save</strong>.</span></li>
+            <li class="step-instruction"><span class="sub-num"></span><span>Head back to the main view — your frames will be listed. Tag their status, add notes, and hit <strong>"Open in Handover"</strong> to sync everything to the web app.</span></li>
+          </ol>
+
+          <!-- Plugin settings mockup -->
+          <div class="step-mockup">
+            <div class="step-mockup-bar">
+              <div class="step-mockup-dots"><span></span><span></span><span></span></div>
+              <span class="step-mockup-url">Design &rarr; Dev Handover &mdash; Settings</span>
+            </div>
+            <div class="step-mockup-content">
+              <div class="plugin-settings-mock">
+                <div class="psm-field">
+                  <span class="psm-label">Figma File URL (for frame links)</span>
+                  <div class="psm-input">https://www.figma.com/design/&hellip;</div>
+                  <div class="psm-hint">Paste your Figma file URL so section links are always populated, even for draft files where Figma doesn't provide a file key automatically.</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="step-success">
             <span class="step-success-icon">&#127881;</span>
-            <span><strong>You're all set!</strong> Your frames will appear in the web app with all their statuses and notes. Share the Netlify link with your developers and they'll see a clean, read-only handover brief.</span>
+            <span><strong>You're all set!</strong> Tag your frames, add notes, and sync to the web app. Your team sees a clean, real-time handover brief at <strong>kubix-design.netlify.app/handover</strong>.</span>
           </div>
         </div>
       </div>
@@ -2061,6 +2076,114 @@
   /* ── Auto-updating footer year ── */
   const fyEl = document.getElementById('footer-year');
   if (fyEl) fyEl.textContent = new Date().getFullYear();
+
+  /* ── Plug section canvas — dot-matrix orchid ripple, continuous loop ── */
+  (function initPlugCanvas() {
+    var canvas  = document.getElementById('plug-canvas');
+    var section = document.getElementById('plugin');
+    if (!canvas || !section) return;
+
+    var ctx = canvas.getContext('2d');
+    var SPACING     = 22;
+    var RIPPLE_SECS = 2.6;
+    var BLEED       = 340;    /* px the canvas extends below section into How It Works */
+    var IDLE_ALPHA  = 0.07;
+    var PEAK_ALPHA  = 0.30;
+    var COLOR       = '229,145,229'; /* orchid */
+
+    var cells = [], w = 0, h = 0, maxDist = 1;
+    var raf = null, rippleTs = null;
+
+    function buildGrid() {
+      w = section.offsetWidth;
+      h = section.offsetHeight + BLEED;
+
+      /* Size canvas pixel buffer AND display size — display size must be explicit
+         so the element physically extends below the section for the bleed effect */
+      canvas.width          = w;
+      canvas.height         = h;
+      canvas.style.width    = w + 'px';
+      canvas.style.height   = h + 'px';
+
+      /* Origin: right column centre, always clamped within canvas */
+      var cx = Math.round(Math.min(w * 0.72, w - 10));
+      var cy = Math.round(section.offsetHeight * 0.48);
+
+      maxDist = Math.max(
+        Math.hypot(cx, cy),
+        Math.hypot(w - cx, cy),
+        Math.hypot(cx, h - cy),
+        Math.hypot(w - cx, h - cy)
+      ) || 1;
+
+      cells = [];
+      for (var y = 0; y <= h + SPACING; y += SPACING) {
+        for (var x = 0; x <= w + SPACING; x += SPACING) {
+          var dx = x - cx, dy = y - cy;
+          cells.push({ x: x, y: y, nd: Math.sqrt(dx*dx + dy*dy) / maxDist });
+        }
+      }
+    }
+
+    function drawGrid(getAlpha) {
+      ctx.clearRect(0, 0, w, h);
+      ctx.lineWidth = 0.75;
+
+      /* Build alpha lookup by key "x,y" */
+      var am = {};
+      for (var i = 0; i < cells.length; i++) {
+        var c = cells[i];
+        am[c.x + ',' + c.y] = getAlpha(c);
+      }
+
+      /* Horizontal segments */
+      for (var sy = 0; sy <= h; sy += SPACING) {
+        for (var sx = 0; sx < w; sx += SPACING) {
+          var a = ((am[sx + ',' + sy] || 0) + (am[(sx + SPACING) + ',' + sy] || 0)) * 0.5;
+          if (a < 0.004) continue;
+          ctx.strokeStyle = 'rgba(' + COLOR + ',' + a.toFixed(3) + ')';
+          ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + SPACING, sy); ctx.stroke();
+        }
+      }
+
+      /* Vertical segments */
+      for (var vx = 0; vx <= w; vx += SPACING) {
+        for (var vy = 0; vy < h; vy += SPACING) {
+          var va = ((am[vx + ',' + vy] || 0) + (am[vx + ',' + (vy + SPACING)] || 0)) * 0.5;
+          if (va < 0.004) continue;
+          ctx.strokeStyle = 'rgba(' + COLOR + ',' + va.toFixed(3) + ')';
+          ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(vx, vy + SPACING); ctx.stroke();
+        }
+      }
+    }
+
+    function getAlphaAt(c, elapsed) {
+      /* Normalised wave front position: 0→1 over RIPPLE_SECS */
+      var delta = elapsed / RIPPLE_SECS - c.nd;
+      if (delta < 0) return 0;                        /* wave hasn't reached yet */
+      var rise  = Math.min(1, delta / 0.07);          /* fast rise */
+      var decay = Math.min(1, Math.max(0, (delta - 0.07) / 0.48)); /* decay to idle */
+      return PEAK_ALPHA * rise * (1 - decay) + IDLE_ALPHA * rise * decay;
+    }
+
+    function rippleFrame(ts) {
+      if (!rippleTs) rippleTs = ts;
+      var elapsed = (ts - rippleTs) / 1000;
+      if (elapsed > RIPPLE_SECS + 1.2) { rippleTs = null; raf = requestAnimationFrame(rippleFrame); return; }
+      drawGrid(function(c) { return getAlphaAt(c, elapsed); });
+      raf = requestAnimationFrame(rippleFrame);
+    }
+
+    buildGrid();
+    window.addEventListener('resize', buildGrid);
+
+    function play()  { if (!raf) { rippleTs = null; raf = requestAnimationFrame(rippleFrame); } }
+    function pause() { if (raf)  { cancelAnimationFrame(raf); raf = null; } }
+
+    new IntersectionObserver(function(entries) {
+      entries[0].isIntersecting ? play() : pause();
+    }, { threshold: 0 }).observe(section);
+  })();
 </script>
 </body>
 </html>
