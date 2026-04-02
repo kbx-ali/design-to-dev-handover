@@ -392,13 +392,16 @@
   /* Read-only inputs */
   .viewer-mode .input-text[readonly] { cursor: default; }
   .viewer-mode textarea[readonly] { cursor: default; resize: none; }
-  /* Viewer badge — always hidden (kept in DOM but never shown) */
-  .viewer-badge { display: none !important; }
+  /* Viewer badge — hidden by default, shown when viewer-mode is active */
+  .viewer-badge { display: none; }
+  .viewer-mode .viewer-badge { display: inline-flex !important; }
   /* In viewer mode, also hide the sync indicator — developer doesn't need it */
   .viewer-mode #sync-indicator { display: none !important; }
-  /* In viewer mode, hide the back-to-library button and global settings */
-  html.viewer-mode #back-btn            { display: none !important; }
-  html.viewer-mode #global-settings-btn { display: none !important; }
+  /* In share-link viewer mode, hide the back-to-library button and global settings */
+  html.share-viewer #back-btn            { display: none !important; }
+  html.share-viewer #global-settings-btn { display: none !important; }
+  /* Hide font remove buttons in viewer mode */
+  .viewer-mode .font-remove-btn { display: none !important; }
 
   /* ─── Library / Project view states ─────────────────────────── */
   /* In library view: hide project-specific controls */
@@ -1120,6 +1123,42 @@ const db   = firebase.firestore();
 // ─── Auth helpers ──────────────────────────────────────────────────
 let currentUser = null;
 
+// ─── Editor access control ────────────────────────────────────────
+let IS_EDITOR = false;
+let editorEmails = [];
+const SEED_EDITORS = [
+  'alister.sisk@kubixmedia.co.uk',
+  'elodie@kubixmedia.co.uk',
+  'kel.richardson@kubixmedia.co.uk'
+];
+
+async function loadEditorList() {
+  try {
+    const doc = await db.collection('handover_settings').doc('editors').get();
+    if (doc.exists && Array.isArray(doc.data().emails)) {
+      editorEmails = doc.data().emails.map(e => e.toLowerCase().trim());
+    } else {
+      editorEmails = [...SEED_EDITORS];
+      await db.collection('handover_settings').doc('editors').set({
+        emails: editorEmails,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: 'system'
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load editor list:', e);
+    editorEmails = [...SEED_EDITORS];
+  }
+}
+
+function checkIsEditor(email) {
+  return editorEmails.includes(email.toLowerCase().trim());
+}
+
+function isReadOnly() {
+  return VIEWER_MODE || !IS_EDITOR;
+}
+
 function _authProvider() {
   const p = new firebase.auth.GoogleAuthProvider();
   p.addScope('https://www.googleapis.com/auth/drive');
@@ -1295,7 +1334,7 @@ auth.getRedirectResult().then(result => {
 }).catch(err => console.error('[Redirect auth]', err));
 
 // Auth state listener — gates the entire app
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async (user) => {
   if (VIEWER_MODE) return; // viewer bypasses auth entirely
   if (!user) {
     showLoginScreen();
@@ -1307,6 +1346,11 @@ auth.onAuthStateChanged(user => {
     return;
   }
   currentUser = user;
+  await loadEditorList();
+  IS_EDITOR = checkIsEditor(user.email);
+  if (!IS_EDITOR) {
+    document.documentElement.classList.add('viewer-mode');
+  }
   hideLoginScreen();
   // Boot the app now that we're authenticated
   _bootApp();
@@ -1429,6 +1473,7 @@ function closeProject() {
 }
 
 async function newProject() {
+  if (!IS_EDITOR) return;
   const id = db.collection('handover_projects').doc().id; // Firestore auto-ID
   const proj = {
     id,
@@ -1449,6 +1494,7 @@ async function newProject() {
 }
 
 async function deleteProject(id) {
+  if (!IS_EDITOR) return;
   const proj = projects.find(p => p.id === id);
   const name = proj ? proj.title : 'this project';
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
@@ -1512,17 +1558,27 @@ function renderLibrary() {
         ${byLabel}
       </div>
       <div class="lib-card-date">${timeAgo(p.updatedAt)}</div>
-      <button class="lib-card-delete" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Delete project"><svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="5" y="0" width="4" height="1" fill="#FFFF00"/><rect x="1" y="1" width="12" height="2" fill="#FFFF00"/><rect x="2" y="3" width="1" height="8" fill="#FFFF00"/><rect x="11" y="3" width="1" height="8" fill="#FFFF00"/><rect x="2" y="11" width="10" height="1" fill="#FFFF00"/><rect x="5" y="3" width="1" height="8" fill="#FFFF00"/><rect x="8" y="3" width="1" height="8" fill="#FFFF00"/></svg></button>
+      ${IS_EDITOR ? `<button class="lib-card-delete" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Delete project"><svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" style="display:block"><rect x="5" y="0" width="4" height="1" fill="#FFFF00"/><rect x="1" y="1" width="12" height="2" fill="#FFFF00"/><rect x="2" y="3" width="1" height="8" fill="#FFFF00"/><rect x="11" y="3" width="1" height="8" fill="#FFFF00"/><rect x="2" y="11" width="10" height="1" fill="#FFFF00"/><rect x="5" y="3" width="1" height="8" fill="#FFFF00"/><rect x="8" y="3" width="1" height="8" fill="#FFFF00"/></svg></button>` : ''}
     </div>`;
   });
   const empty = projects.length === 0
-    ? `<div class="lib-empty"><strong>No handovers yet</strong>Click <em>+ New Handover</em> to create your first project.</div>`
+    ? `<div class="lib-empty"><strong>No handovers yet</strong>${IS_EDITOR ? 'Click <em>+ New Handover</em> to create your first project.' : 'Editors will add projects here.'}</div>`
     : '';
   document.getElementById('app').innerHTML = `
   <div class="lib-header">
     <h2 class="lib-title">Your Handovers</h2>
-    <button class="hdr-btn green" onclick="newProject()">+ New Handover</button>
+    <div style="display:flex;gap:8px;align-items:center;">
+      ${IS_EDITOR ? `<button class="hdr-btn" onclick="openEditorSettingsModal()" title="Editor settings" style="display:inline-flex;align-items:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="2" width="14" height="2"/><rect x="0" y="6" width="14" height="2"/><rect x="0" y="10" width="14" height="2"/><rect x="3" y="1" width="2" height="4"/><rect x="8" y="5" width="2" height="4"/><rect x="5" y="9" width="2" height="4"/></svg>
+        Settings
+      </button>` : ''}
+      ${IS_EDITOR ? `<button class="hdr-btn green" onclick="newProject()">+ New Handover</button>` : ''}
+    </div>
   </div>
+  ${!IS_EDITOR ? `<div style="text-align:center;padding:8px 0;"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-mute);background:var(--bg-input);border:1px solid var(--border);border-radius:99px;padding:5px 14px;">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="4" r="1.5"/><path d="M3 9.5C3 7.5 4.3 6.5 6 6.5s3 1 3 3"/></svg>
+    View Only — contact a designer for edit access
+  </span></div>` : ''}
   <div class="lib-grid">
     ${cards}
     ${empty}
@@ -1635,6 +1691,7 @@ function offerPopulate(pageId) {
 }
 
 function populatePage(pageId) {
+  if (!IS_EDITOR) return;
   pages[pageId].sections = JSON.parse(JSON.stringify(PAGE_DEFS[pageId].sections)).map(s => ({ ...s, id: String(s.id) }));
   savePagesData(); render(); scheduleSave();
 }
@@ -1723,7 +1780,7 @@ function setSyncState(s) {
   const shareBtn = document.getElementById('share-link-btn');
   if (shareBtn) {
     const proj = getActiveProject();
-    shareBtn.style.display = (!VIEWER_MODE && proj) ? '' : 'none';
+    shareBtn.style.display = (!isReadOnly() && proj) ? '' : 'none';
   }
 }
 
@@ -1868,6 +1925,92 @@ async function openShareModal() {
   // Update the Share Link button visibility now we have a token
   const shareBtn = document.getElementById('share-link-btn');
   if (shareBtn) shareBtn.style.display = '';
+}
+
+// ─── Editor Settings Modal ─────────────────────────────────────
+async function openEditorSettingsModal() {
+  await loadEditorList();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+
+  function renderEditorRows() {
+    return editorEmails.map(email => `
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <span style="flex:1;font-size:13px;color:var(--text-sec);">${esc(email)}</span>
+        ${editorEmails.length > 1 ? `<button class="hdr-btn" style="padding:4px 10px;font-size:11px;" onclick="removeEditor('${esc(email)}')">Remove</button>` : ''}
+      </div>`).join('');
+  }
+
+  ov.innerHTML = `
+  <div class="modal" style="width:480px;">
+    <div class="modal-head">
+      <div class="modal-title">Editor Access</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">&times;</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-mute);margin:0 0 16px;">Only people on this list can create and edit handover projects. Other @kubixmedia.co.uk users can view projects in read-only mode.</p>
+    <div id="editor-list">${renderEditorRows()}</div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <input type="email" id="new-editor-email" class="input-text" placeholder="email@kubixmedia.co.uk" style="flex:1;" onkeydown="if(event.key==='Enter')addEditor()">
+      <button class="hdr-btn green" onclick="addEditor()" style="white-space:nowrap;">Add Editor</button>
+    </div>
+    <div id="editor-settings-err" style="font-size:12px;color:#F87171;margin-top:8px;display:none;"></div>
+    <div style="margin-top:22px;text-align:right;">
+      <button class="hdr-btn" onclick="this.closest('.overlay').remove()">Close</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+async function addEditor() {
+  const input = document.getElementById('new-editor-email');
+  const errEl = document.getElementById('editor-settings-err');
+  const email = input?.value.trim().toLowerCase();
+  if (!email) return;
+  if (!email.endsWith('@kubixmedia.co.uk')) {
+    errEl.textContent = 'Only @kubixmedia.co.uk emails are allowed.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (editorEmails.includes(email)) {
+    errEl.textContent = 'This email is already an editor.';
+    errEl.style.display = 'block';
+    return;
+  }
+  editorEmails.push(email);
+  await saveEditorList();
+  document.querySelector('.overlay')?.remove();
+  openEditorSettingsModal();
+}
+
+async function removeEditor(email) {
+  email = email.toLowerCase();
+  if (email === currentUser?.email?.toLowerCase()) {
+    if (!confirm('Remove yourself? You will lose edit access.')) return;
+  }
+  editorEmails = editorEmails.filter(e => e !== email);
+  await saveEditorList();
+  if (!checkIsEditor(currentUser?.email)) {
+    IS_EDITOR = false;
+    document.documentElement.classList.add('viewer-mode');
+    document.querySelector('.overlay')?.remove();
+    renderLibrary();
+    return;
+  }
+  document.querySelector('.overlay')?.remove();
+  openEditorSettingsModal();
+}
+
+async function saveEditorList() {
+  try {
+    await db.collection('handover_settings').doc('editors').set({
+      emails: editorEmails,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: currentUser?.email || ''
+    });
+  } catch (e) {
+    console.error('Failed to save editor list:', e);
+  }
 }
 
 // ─── Figma token modal (lightweight — just the PAT, optional) ──
@@ -2097,7 +2240,7 @@ function render() {
       <div class="page-links-row">
         ${pg.loomUrl
           ? `<a href="${esc(pg.loomUrl)}" target="_blank" rel="noopener" class="page-link-btn loom-link"><span class="loom-dot"></span>Watch Loom</a>`
-          : VIEWER_MODE ? '' : `<span class="page-link-none">No Loom video yet</span>`}
+          : isReadOnly() ? '' : `<span class="page-link-none">No Loom video yet</span>`}
         ${pg.figmaUrl
           ? `<a href="${esc(pg.figmaUrl)}" target="_blank" rel="noopener" class="page-link-btn figma-link"><iconify-icon icon="pixelarticons:external-link" style="font-size:11px"></iconify-icon>View Figma</a>`
           : ''}
@@ -2105,7 +2248,7 @@ function render() {
           <iconify-icon icon="pixelarticons:edit" style="font-size:11px"></iconify-icon>
           Edit links
         </button>
-        ${!VIEWER_MODE ? `<button class="figma-gen-btn hdr-btn-edit-only" onclick="confirmFigmaPopulate('${activePage}')" style="display:inline-flex;align-items:center;gap:5px;">${FIGMA_ICON_SVG} Populate from Figma</button>` : ''}
+        ${!isReadOnly() ? `<button class="figma-gen-btn hdr-btn-edit-only" onclick="confirmFigmaPopulate('${activePage}')" style="display:inline-flex;align-items:center;gap:5px;">${FIGMA_ICON_SVG} Populate from Figma</button>` : ''}
       </div>
     </div>
     ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
@@ -2150,7 +2293,7 @@ function render() {
 
   /* ── Empty state ── */
   if (secs.length === 0) {
-    html += VIEWER_MODE
+    html += isReadOnly()
       ? `<div class="empty-state">
           <div class="empty-state-icon"><iconify-icon icon="pixelarticons:clipboard"></iconify-icon></div>
           <div class="empty-state-title">No sections for ${esc(def.label)} yet</div>
@@ -2174,7 +2317,7 @@ function render() {
     const SC      = STATUS_CONFIG[s.status] || STATUS_CONFIG.existing;
     const realIdx = secs.findIndex(x => x.id === s.id);
     html += `
-    <div class="card" data-id="${s.id}"${VIEWER_MODE ? '' : ` draggable="true" ondragstart="onDragStart(event,'${s.id}')" ondragover="onDragOver(event,'${s.id}')" ondragleave="onDragLeave(event,'${s.id}')" ondrop="onDrop(event,'${s.id}')" ondragend="onDragEnd()"`}>
+    <div class="card" data-id="${s.id}"${isReadOnly() ? '' : ` draggable="true" ondragstart="onDragStart(event,'${s.id}')" ondragover="onDragOver(event,'${s.id}')" ondragleave="onDragLeave(event,'${s.id}')" ondrop="onDrop(event,'${s.id}')" ondragend="onDragEnd()"`}>
       <div class="card-head">
         <div class="drag-handle" title="Drag to reorder">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
@@ -2196,16 +2339,16 @@ function render() {
           <div>
             <div class="field">
               <div class="field-label">Section Name</div>
-              <input class="input-text" value="${esc(s.name)}"${VIEWER_MODE ? ' readonly' : ` onchange="setField('${s.id}','name',this.value)"`}>
+              <input class="input-text" value="${esc(s.name)}"${isReadOnly() ? ' readonly' : ` onchange="setField('${s.id}','name',this.value)"`}>
             </div>
             <div class="field">
               <div class="field-label">Section Status</div>
               <div class="btn-group">
                 ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
-                <button class="btn-opt ${s.status===k?'sel-'+k:''}"${VIEWER_MODE ? ' disabled' : ` onclick="setField('${s.id}','status','${k}');render()"`}>${v.label}</button>`).join('')}
+                <button class="btn-opt ${s.status===k?'sel-'+k:''}"${isReadOnly() ? ' disabled' : ` onclick="setField('${s.id}','status','${k}');render()"`}>${v.label}</button>`).join('')}
               </div>
               <div class="theme-spacing-row">
-                <input type="checkbox" id="tsc-${s.id}" ${s.useThemeSpacing !== false ? 'checked' : ''}${VIEWER_MODE ? ' disabled' : ` onchange="setField('${s.id}','useThemeSpacing',this.checked);"`}>
+                <input type="checkbox" id="tsc-${s.id}" ${s.useThemeSpacing !== false ? 'checked' : ''}${isReadOnly() ? ' disabled' : ` onchange="setField('${s.id}','useThemeSpacing',this.checked);"`}>
                 <label for="tsc-${s.id}">
                   Use Existing Theme Structure &amp; Spacing
                 </label>
@@ -2214,7 +2357,7 @@ function render() {
             <div class="field">
               <div class="field-label">Figma Frame Link</div>
               <div class="figma-row">
-                <input class="input-text" value="${esc(s.figmaLink||'')}" placeholder="Paste Figma frame URL…"${VIEWER_MODE ? ' readonly' : ` onchange="setField('${s.id}','figmaLink',this.value)"`}>
+                <input class="input-text" value="${esc(s.figmaLink||'')}" placeholder="Paste Figma frame URL…"${isReadOnly() ? ' readonly' : ` onchange="setField('${s.id}','figmaLink',this.value)"`}>
                 ${s.figmaLink ? `
                 <a class="figma-btn" href="${esc(s.figmaLink)}" target="_blank" rel="noopener">
                   <iconify-icon icon="pixelarticons:external-link" style="font-size:12px"></iconify-icon>
@@ -2226,7 +2369,7 @@ function render() {
           <div style="display:flex;flex-direction:column;">
             <div class="field" style="flex:1;display:flex;flex-direction:column;">
               <div class="field-label">Notes for Developer</div>
-              <textarea class="input-text notes-textarea" style="min-height:200px;"${VIEWER_MODE ? ' readonly' : ` onchange="setField('${s.id}','notes',this.value)"`}>${esc(s.notes||'')}</textarea>
+              <textarea class="input-text notes-textarea" style="min-height:200px;"${isReadOnly() ? ' readonly' : ` onchange="setField('${s.id}','notes',this.value)"`}>${esc(s.notes||'')}</textarea>
             </div>
           </div>
         </div>
@@ -2240,7 +2383,7 @@ function render() {
               <path d="M76.6667 67.9487H35.2564L17.6282 98.4615C19.359 99.4872 21.3462 100 23.3974 100H88.5256C90.5769 100 92.5641 99.4231 94.2949 98.4615L76.6667 67.9487Z" fill="#2684FC"/>
               <path d="M94.1026 33.9744L77.8205 5.76923C76.7949 3.97436 75.3205 2.5641 73.5897 1.53846L55.9615 32.0513L76.6667 67.9487H111.859C111.859 65.9615 111.346 63.9744 110.321 62.1795L94.1026 33.9744Z" fill="#FFBA00"/>
             </svg>
-            ${!VIEWER_MODE
+            ${!isReadOnly()
               ? `<input class="input-text drive-input" value="${esc(s.driveUrl||'')}" placeholder="Section Drive folder (optional — overrides project folder)"
                   onchange="setField('${s.id}','driveUrl',this.value)">`
               : `<span class="field-label" style="margin:0;">Section Assets</span>`}
@@ -2249,7 +2392,7 @@ function render() {
               Open
             </a>` : ''}
           </div>
-          ${!VIEWER_MODE ? `<div class="asset-drop-zone"
+          ${!isReadOnly() ? `<div class="asset-drop-zone"
                id="adz-${s.id}"
                ondragover="assetDragOver(event,'${s.id}')"
                ondragleave="assetDragLeave(event,'${s.id}')"
@@ -2266,11 +2409,11 @@ function render() {
             <div class="asset-chip">
               ${assetIcon(a.name)}
               <a href="${esc(a.url)}" target="_blank" rel="noopener" class="chip-name" title="${esc(a.name)}">${esc(a.name)}</a>
-              ${VIEWER_MODE ? '' : `<button class="chip-remove" onclick="removeAsset('${s.id}','${a.id}')" title="Remove">×</button>`}
+              ${isReadOnly() ? '' : `<button class="chip-remove" onclick="removeAsset('${s.id}','${a.id}')" title="Remove">×</button>`}
             </div>`).join('')}
           </div>` : ''}
         </div>
-        ${VIEWER_MODE ? '' : `<div class="card-footer">
+        ${isReadOnly() ? '' : `<div class="card-footer">
           <button class="remove-btn" onclick="removeSection('${s.id}')">Remove section</button>
         </div>`}
       </div>` : ''}
@@ -2278,7 +2421,7 @@ function render() {
   });
 
   /* ── Add button (editor only) ── */
-  if (!VIEWER_MODE) html += `
+  if (!isReadOnly()) html += `
   <button class="add-btn" onclick="addSection()">
     <iconify-icon icon="pixelarticons:plus" style="font-size:15px"></iconify-icon>
     Add Section to ${esc(def.label)}
@@ -2306,6 +2449,7 @@ function toggleSection(id) {
   render();
 }
 function setField(id, key, val) {
+  if (!IS_EDITOR) return;
   const s = curSections().find(s => String(s.id) === String(id));
   if (s) s[key] = val;
   if (key !== 'notes') render();
@@ -2314,6 +2458,7 @@ function setField(id, key, val) {
 function setFilter(f) { activeFilter = f; render(); }
 
 function addSection() {
+  if (!IS_EDITOR) return;
   const secs  = curSections();
   const newId = generateId();
   secs.push({ id:newId, name:"New Section", status:"existing", useThemeSpacing: true, notes:"", figmaLink:"", driveUrl:"", assets:[], collapsed:false });
@@ -2322,6 +2467,7 @@ function addSection() {
 }
 
 function removeSection(id) {
+  if (!IS_EDITOR) return;
   if (!confirm('Remove this section from the checklist?')) return;
   pages[activePage].sections = curSections().filter(s => String(s.id) !== String(id));
   savePagesData(); render(); scheduleSave();
@@ -2455,6 +2601,7 @@ async function processAssetFiles(sectionId, files) {
 }
 
 function removeAsset(sectionId, assetId) {
+  if (!IS_EDITOR) return;
   const s = curSections().find(s => String(s.id) === String(sectionId));
   if (!s?.assets) return;
   s.assets = s.assets.filter(a => String(a.id) !== String(assetId));
@@ -2489,7 +2636,7 @@ function stripSectionPrefix(name) {
   if (!VIEWER_MODE) return;
   const params = new URLSearchParams(location.search);
   const shareToken = params.get('view');
-  document.documentElement.classList.add('viewer-mode');
+  document.documentElement.classList.add('viewer-mode', 'share-viewer');
   document.body.className = 'proj-view';
   applyProjectMeta();
   const loaded = shareToken ? await loadViewerData(shareToken) : false;
@@ -2746,7 +2893,7 @@ function renderGeneralTab() {
         <path d="M94.1026 33.9744L77.8205 5.76923C76.7949 3.97436 75.3205 2.5641 73.5897 1.53846L55.9615 32.0513L76.6667 67.9487H111.859C111.859 65.9615 111.346 63.9744 110.321 62.1795L94.1026 33.9744Z" fill="#FFBA00"/>
       </svg>
       <input class="input-text" value="${esc(generalData.driveUrl||'')}" placeholder="https://drive.google.com/drive/folders/…"
-        ${VIEWER_MODE ? 'readonly' : `onchange="generalData.driveUrl=this.value;savePagesData();scheduleSave();"`}>
+        ${isReadOnly() ? 'readonly' : `onchange="generalData.driveUrl=this.value;savePagesData();scheduleSave();"`}>
       ${generalData.driveUrl
         ? `<a href="${esc(generalData.driveUrl)}" target="_blank" rel="noopener" class="drive-open-btn" title="Open folder">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2764,7 +2911,7 @@ function renderGeneralTab() {
         <div class="general-section-title">Brand &amp; Custom Fonts</div>
         <div class="general-section-desc">List any fonts required that aren't part of the base theme</div>
       </div>
-      ${!VIEWER_MODE ? `<button class="hdr-btn hdr-btn-edit-only general-add" onclick="addFont()" style="background:var(--kbx-yellow);border-color:transparent;color:var(--kbx-black);font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+      ${!isReadOnly() ? `<button class="hdr-btn hdr-btn-edit-only general-add" onclick="addFont()" style="background:var(--kbx-yellow);border-color:transparent;color:var(--kbx-black);font-weight:700;display:inline-flex;align-items:center;gap:6px;">
         <iconify-icon icon="pixelarticons:plus" style="font-size:13px"></iconify-icon>
         Add Font
       </button>` : ''}
@@ -2772,15 +2919,15 @@ function renderGeneralTab() {
     <div class="font-list">`;
 
   if (generalData.fonts.length === 0) {
-    h += `<div class="typo-empty">${VIEWER_MODE ? 'No fonts added yet.' : 'No fonts added yet — click <strong>Add Font</strong> to get started.'}</div>`;
+    h += `<div class="typo-empty">${isReadOnly() ? 'No fonts added yet.' : 'No fonts added yet — click <strong>Add Font</strong> to get started.'}</div>`;
   } else {
     generalData.fonts.forEach(f => {
       h += `
       <div class="font-entry">
-        <input class="input-text" value="${esc(f.name)}" placeholder="e.g. Neue Haas Grotesk"${VIEWER_MODE ? ' readonly' : ` onchange="setFontField('${f.id}','name',this.value)"`} style="margin:0;">
+        <input class="input-text" value="${esc(f.name)}" placeholder="e.g. Neue Haas Grotesk"${isReadOnly() ? ' readonly' : ` onchange="setFontField('${f.id}','name',this.value)"`} style="margin:0;">
         <div class="font-type-group">
           ${['google','adobe','custom'].map(t => `
-          <button class="font-type-btn${f.type===t?' active':''}"${VIEWER_MODE ? ' disabled' : ` onclick="setFontField('${f.id}','type','${t}');render()"`}>${t==='google'?'Google Font':t==='adobe'?'Adobe Font':'Custom Font'}</button>`).join('')}
+          <button class="font-type-btn${f.type===t?' active':''}"${isReadOnly() ? ' disabled' : ` onclick="setFontField('${f.id}','type','${t}');render()"`}>${t==='google'?'Google Font':t==='adobe'?'Adobe Font':'Custom Font'}</button>`).join('')}
         </div>
         <button class="font-remove-btn" onclick="removeFont('${f.id}')" title="Remove">✕</button>
       </div>`;
@@ -2799,7 +2946,7 @@ function renderGeneralTab() {
       </div>
     </div>`;
 
-  if (!VIEWER_MODE) {
+  if (!isReadOnly()) {
     h += `
     <div class="typo-url-row">
       <input class="input-text" id="typo-figma-url" value="${esc(generalData.figmaFileUrl)}" placeholder="Paste your Figma file URL (e.g. https://www.figma.com/design/abc123/…)" onchange="generalData.figmaFileUrl=this.value;savePagesData();">
@@ -2812,7 +2959,7 @@ function renderGeneralTab() {
   }
 
   if (generalData.typography.length === 0) {
-    h += `<div class="typo-empty">${VIEWER_MODE ? 'No typography data — fetch from Figma in edit mode.' : 'Paste your Figma file URL above and click <strong>Fetch from Figma</strong>.'}</div>`;
+    h += `<div class="typo-empty">${isReadOnly() ? 'No typography data — fetch from Figma in edit mode.' : 'Paste your Figma file URL above and click <strong>Fetch from Figma</strong>.'}</div>`;
   } else {
     h += `<div class="typo-table-wrap"><table class="typo-table">
       <thead><tr>
@@ -3008,16 +3155,19 @@ function openLegend() {
 
 // ─── Font management ────────────────────────────────────────────
 function addFont() {
+  if (!IS_EDITOR) return;
   generalData.fonts.push({ id: generateId(), name: '', type: 'google' });
   saveCurrentProject();
   render();
 }
 function removeFont(id) {
+  if (!IS_EDITOR) return;
   generalData.fonts = generalData.fonts.filter(f => f.id !== id);
   saveCurrentProject();
   render();
 }
 function setFontField(id, field, value) {
+  if (!IS_EDITOR) return;
   const font = generalData.fonts.find(f => f.id === id);
   if (font) { font[field] = value; saveCurrentProject(); }
 }
