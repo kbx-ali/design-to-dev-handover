@@ -1029,7 +1029,7 @@
       <button id="push-clickup-btn" class="hdr-btn hdr-btn-edit-only" onclick="pushToClickUp(this)" title="Push tasks directly to ClickUp via API">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-p-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-p-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-p-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-p-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
         <span id="push-clickup-label">Push to ClickUp</span>
-      </button>
+      </button><span id="push-clickup-list-hint"></span>
       <a id="share-link-btn" href="#" class="hdr-btn mint hdr-btn-edit-only" onclick="copyShareLink(event)">
         <iconify-icon icon="pixelarticons:link" style="font-size:13px"></iconify-icon>
         Share Link
@@ -1063,12 +1063,19 @@ function applyProjectMeta() {
   if (titleEl) titleEl.textContent = projectMeta.title || 'Untitled Project';
   if (themeEl) themeEl.textContent = projectMeta.theme || 'Theme (TBC)';
   document.title = `${projectMeta.title || 'Design → Dev'} · Kubix`;
-  // Update ClickUp button label based on whether project has been pushed
+  // Update ClickUp button label + list indicator
   const cuLabel = document.getElementById('push-clickup-label');
   if (cuLabel) {
     const proj = getActiveProject();
     const hasPushed = proj?.clickup?.pages && Object.values(proj.clickup.pages).some(p => p?.taskId);
     cuLabel.textContent = hasPushed ? 'Update ClickUp' : 'Push to ClickUp';
+  }
+  const cuListHint = document.getElementById('push-clickup-list-hint');
+  if (cuListHint) {
+    const label = getClickUpListLabel();
+    cuListHint.innerHTML = label
+      ? `<span style="font-size:10px;color:var(--text-mute);margin-left:2px;" title="${esc(label)}">· ${esc(label.split(' → ').pop())} <a href="#" onclick="event.preventDefault();openClickUpListModal(false)" style="color:var(--text-mute);text-decoration:underline;">change</a></span>`
+      : '';
   }
 }
 
@@ -2112,25 +2119,25 @@ function openFigmaTokenModal() {
   setTimeout(() => document.getElementById('ft-token')?.focus(), 50);
 }
 
-// ─── ClickUp settings modal ─────────────────────────────────────
+// ─── ClickUp token modal (dashboard — token only) ───────────────
+const CU_ICON_SVG = `<svg width="16" height="16" viewBox="0 0 54.8 65.8" style="vertical-align:-2px;margin-right:4px"><defs><linearGradient id="cu-m-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-m-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-m-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-m-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>`;
+
 function openClickUpSettingsModal() {
   const savedToken = localStorage.getItem('clickup_api_token') || '';
-  const savedListId = getClickUpListId();
-  const savedListLabel = getClickUpListLabel();
 
   const ov = document.createElement('div');
   ov.className = 'overlay';
   ov.onclick = e => { if (e.target === ov) ov.remove(); };
   ov.innerHTML = `
-  <div class="modal" style="width:500px;">
+  <div class="modal" style="width:460px;">
     <div class="modal-head">
-      <div class="modal-title"><svg width="16" height="16" viewBox="0 0 54.8 65.8" style="vertical-align:-2px;margin-right:4px"><defs><linearGradient id="cu-m-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-m-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-m-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-m-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg> ClickUp Integration</div>
+      <div class="modal-title">${CU_ICON_SVG} ClickUp API Token</div>
       <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
     </div>
-    <p class="modal-desc">Connect to ClickUp to push tasks directly from this handover. The list selection is saved per-project, so each handover can push to a different ClickUp list.</p>
+    <p class="modal-desc">Your personal API token connects the app to ClickUp. This is stored in your browser only — each designer adds their own once.</p>
 
     <details style="margin-bottom:14px;">
-      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get a ClickUp API token ▾</summary>
+      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get your API token ▾</summary>
       <ol class="step-list" style="margin-top:10px;">
         <li>Open ClickUp → click your <strong>avatar</strong> (top-right) → <strong>Settings</strong></li>
         <li>Click <strong>ClickUp API</strong> in the sidebar</li>
@@ -2141,60 +2148,35 @@ function openClickUpSettingsModal() {
     </details>
 
     <div class="modal-field">
-      <label>ClickUp Personal API Token</label>
+      <label>Personal API Token</label>
       <div style="display:flex;gap:8px;">
         <input type="password" id="cu-token" value="${esc(savedToken)}" placeholder="pk_…" autocomplete="off" style="flex:1;">
-        <button class="hdr-btn" id="cu-test-btn" onclick="testClickUpConnection()" style="white-space:nowrap;">Test</button>
+        <button class="hdr-btn" id="cu-test-btn" onclick="testClickUpToken()" style="white-space:nowrap;">Test</button>
       </div>
-      <div id="cu-token-status" style="font-size:11px;margin-top:5px;color:var(--text-sub);">Stored locally in your browser only.</div>
-    </div>
-
-    <div id="cu-hierarchy" style="display:${savedToken ? 'block' : 'none'};">
-      <input type="hidden" id="cu-workspace">
-      <div class="modal-field">
-        <label>Space</label>
-        <select id="cu-space" class="input-text" onchange="onClickUpSpaceChange()" style="width:100%;"><option value="">— loading spaces… —</option></select>
-      </div>
-      <div class="modal-field">
-        <label>Folder</label>
-        <select id="cu-folder" class="input-text" onchange="onClickUpFolderChange()" style="width:100%;"><option value="">— select a space first —</option></select>
-      </div>
-      <div class="modal-field">
-        <label>List</label>
-        <select id="cu-list" class="input-text" style="width:100%;"><option value="">— select a folder first —</option></select>
-      </div>
-      ${savedListLabel ? `<div style="font-size:11px;color:var(--text-mute);margin-top:4px;">Currently saved: <strong>${esc(savedListLabel)}</strong></div>` : ''}
+      <div id="cu-token-status" style="font-size:11px;margin-top:5px;color:var(--text-sub);">Stored locally in your browser only — never sent to our servers.</div>
     </div>
 
     <div class="modal-actions">
       <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
-      <button class="modal-btn primary" onclick="saveClickUpSettings()">Save</button>
+      <button class="modal-btn primary" onclick="saveClickUpToken()">Save</button>
     </div>
   </div>`;
   document.body.appendChild(ov);
-
-  // If token already exists, auto-load workspaces
-  if (savedToken) {
-    setTimeout(() => loadClickUpWorkspaces(), 100);
-  }
+  setTimeout(() => document.getElementById('cu-token')?.focus(), 50);
 }
 
-async function testClickUpConnection() {
+async function testClickUpToken() {
   const btn = document.getElementById('cu-test-btn');
   const status = document.getElementById('cu-token-status');
   const token = document.getElementById('cu-token')?.value.trim();
   if (!token) { status.textContent = 'Enter a token first.'; status.style.color = '#F87171'; return; }
-
   btn.disabled = true; btn.textContent = 'Testing…';
-  // Temporarily set token for the test
   localStorage.setItem('clickup_api_token', token);
   try {
     const data = await clickupApi.getUser();
     const name = data?.user?.username || data?.user?.email || 'Unknown';
-    status.textContent = 'Connected as ' + name;
+    status.textContent = '✓ Connected as ' + name;
     status.style.color = 'var(--kbx-mint)';
-    document.getElementById('cu-hierarchy').style.display = 'block';
-    loadClickUpWorkspaces();
   } catch (e) {
     status.textContent = e.message;
     status.style.color = '#F87171';
@@ -2204,8 +2186,58 @@ async function testClickUpConnection() {
   }
 }
 
+function saveClickUpToken() {
+  const token = document.getElementById('cu-token')?.value.trim();
+  if (token) { localStorage.setItem('clickup_api_token', token); }
+  else { localStorage.removeItem('clickup_api_token'); }
+  document.querySelector('.overlay')?.remove();
+  showToast('ClickUp token saved', 'success');
+}
+
+// ─── ClickUp list picker modal (per-project — opened from push button) ──
+async function openClickUpListModal(onSave) {
+  if (!clickupApi.token()) {
+    showToast('Add your ClickUp API token in Settings first', 'error');
+    openClickUpSettingsModal();
+    return;
+  }
+
+  const savedListLabel = getClickUpListLabel();
+
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal" style="width:440px;">
+    <div class="modal-head">
+      <div class="modal-title">${CU_ICON_SVG} Choose ClickUp List</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">Select which ClickUp list this project's tasks should be pushed to. This is saved with the project so it only needs setting once.</p>
+    ${savedListLabel ? `<div style="font-size:12px;color:var(--text-mute);margin-bottom:14px;padding:8px 10px;background:var(--bg-input);border-radius:4px;border:1px solid var(--border);">Currently: <strong style="color:var(--text-pri)">${esc(savedListLabel)}</strong></div>` : ''}
+    <input type="hidden" id="cu-workspace">
+    <div class="modal-field">
+      <label>Space</label>
+      <select id="cu-space" class="input-text" onchange="onClickUpSpaceChange()" style="width:100%;"><option value="">Loading spaces…</option></select>
+    </div>
+    <div class="modal-field">
+      <label>Folder</label>
+      <select id="cu-folder" class="input-text" onchange="onClickUpFolderChange()" style="width:100%;"><option value="">— select a space first —</option></select>
+    </div>
+    <div class="modal-field">
+      <label>List</label>
+      <select id="cu-list" class="input-text" style="width:100%;"><option value="">— select a folder first —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveClickUpList(${onSave ? 'true' : 'false'})">Save &amp; Push</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  loadClickUpWorkspaces();
+}
+
 async function loadClickUpWorkspaces() {
-  // Auto-select the single workspace (Kubix Media) silently — no dropdown shown
   const workspaceInput = document.getElementById('cu-workspace');
   const spaceSel = document.getElementById('cu-space');
   if (!workspaceInput || !spaceSel) return;
@@ -2214,9 +2246,7 @@ async function loadClickUpWorkspaces() {
     const data = await clickupApi.getTeams();
     const teams = data?.teams || [];
     if (!teams.length) { spaceSel.innerHTML = '<option value="">No workspaces found</option>'; return; }
-    // Auto-select first (and typically only) workspace
     workspaceInput.value = teams[0].id;
-    // Immediately load spaces for it
     const spaceData = await clickupApi.getSpaces(teams[0].id);
     const spaces = spaceData?.spaces || [];
     spaceSel.innerHTML = '<option value="">— select space —</option>' +
@@ -2248,16 +2278,12 @@ async function onClickUpFolderChange() {
   const spaceId = document.getElementById('cu-space')?.value;
   const listSel = document.getElementById('cu-list');
   if (!spaceId) return;
-  listSel.innerHTML = '<option value="">Loading…</option>';
+  listSel.innerHTML = '<option value="">Loading lists…</option>';
   try {
-    let lists;
-    if (folderId) {
-      const data = await clickupApi.getLists(folderId);
-      lists = data?.lists || [];
-    } else {
-      const data = await clickupApi.getFolderlessLists(spaceId);
-      lists = data?.lists || [];
-    }
+    const data = folderId
+      ? await clickupApi.getLists(folderId)
+      : await clickupApi.getFolderlessLists(spaceId);
+    const lists = data?.lists || [];
     listSel.innerHTML = '<option value="">— select list —</option>' +
       lists.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
   } catch (e) {
@@ -2265,37 +2291,24 @@ async function onClickUpFolderChange() {
   }
 }
 
-function saveClickUpSettings() {
-  const token = document.getElementById('cu-token')?.value.trim();
+function saveClickUpList(andPush) {
   const listId = document.getElementById('cu-list')?.value;
+  if (!listId) { showToast('Please select a list first', 'error'); return; }
 
-  // Token is user-level — stays in localStorage
-  if (token) {
-    localStorage.setItem('clickup_api_token', token);
-  } else {
-    localStorage.removeItem('clickup_api_token');
-  }
-
-  // List selection is project-level — save to Firestore project doc
   const proj = getActiveProject();
-  if (proj) {
-    if (!proj.clickup) proj.clickup = { pages: {} };
-    if (listId) {
-      const parts = ['cu-space', 'cu-folder', 'cu-list']
-        .map(id => { const s = document.getElementById(id); return s?.selectedOptions[0]?.text || ''; })
-        .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
-      proj.clickup.listId = listId;
-      proj.clickup.listLabel = parts.join(' → ');
-    } else {
-      delete proj.clickup.listId;
-      delete proj.clickup.listLabel;
-    }
-    saveProjectToFirestore(proj);
-    applyProjectMeta(); // refresh button label
-  }
+  if (!proj) return;
+  if (!proj.clickup) proj.clickup = { pages: {} };
+
+  const parts = ['cu-space', 'cu-folder', 'cu-list']
+    .map(id => { const s = document.getElementById(id); return s?.selectedOptions[0]?.text || ''; })
+    .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
+  proj.clickup.listId = listId;
+  proj.clickup.listLabel = parts.join(' → ');
+  saveProjectToFirestore(proj);
+  applyProjectMeta();
 
   document.querySelector('.overlay')?.remove();
-  showToast('ClickUp settings saved', 'success');
+  if (andPush) pushToClickUp(document.getElementById('push-clickup-btn'));
 }
 
 // ─── Clipboard helper (works even when document not focused) ───
@@ -2418,8 +2431,8 @@ async function pushToClickUp(btn) {
     return;
   }
   if (!listId) {
-    showToast('Choose a ClickUp list for this project in Settings', 'error');
-    openClickUpSettingsModal();
+    // No list chosen yet — open the project list picker; it will call pushToClickUp again after saving
+    openClickUpListModal(true);
     return;
   }
 
