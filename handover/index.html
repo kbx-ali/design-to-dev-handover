@@ -1834,7 +1834,12 @@ const clickupApi = {
   updateTask(taskId, data)         { return this.request('PUT', `/task/${taskId}`, data); },
   getListFields(listId)                  { return this.request('GET', `/list/${listId}/field`); },
   setCustomField(taskId, fieldId, value) { return this.request('POST', `/task/${taskId}/field/${fieldId}`, { value }); },
-  getMembers(teamId)                     { return this.request('GET', `/team/${teamId}/member`); },
+  // Members are embedded in the /team response — no separate endpoint needed
+  async getMembers() {
+    const data = await this.request('GET', '/team');
+    const members = (data?.teams?.[0]?.members || []);
+    return { members };
+  },
 };
 
 function getClickUpListId()    { return getActiveProject()?.clickup?.listId    || ''; }
@@ -2338,10 +2343,9 @@ async function onClickUpListChange() {
 
 async function loadClickUpExtraFields(listId) {
   if (!listId) return;
-  const phaseSel    = document.getElementById('cu-phase');
+  const phaseSel     = document.getElementById('cu-phase');
   const phaseFieldId = document.getElementById('cu-phase-field-id');
-  const assigneeSel = document.getElementById('cu-assignee');
-  const workspaceId = document.getElementById('cu-workspace')?.value;
+  const assigneeSel  = document.getElementById('cu-assignee');
   if (!phaseSel || !assigneeSel) return;
 
   phaseSel.innerHTML    = '<option value="">Loading…</option>';
@@ -2354,9 +2358,7 @@ async function loadClickUpExtraFields(listId) {
   // Fetch fields + members in parallel
   const [fieldsResult, membersResult] = await Promise.allSettled([
     clickupApi.getListFields(listId),
-    workspaceId
-      ? clickupApi.getMembers(workspaceId)
-      : clickupApi.getTeams().then(d => clickupApi.getMembers((d?.teams||[])[0]?.id)).catch(() => null)
+    clickupApi.getMembers()
   ]);
 
   // ── Project Phase ──
