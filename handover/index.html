@@ -1072,10 +1072,17 @@ function applyProjectMeta() {
   }
   const cuListHint = document.getElementById('push-clickup-list-hint');
   if (cuListHint) {
+    const proj2 = getActiveProject();
     const label = getClickUpListLabel();
-    cuListHint.innerHTML = label
-      ? `<span style="font-size:10px;color:var(--text-mute);margin-left:2px;" title="${esc(label)}">· ${esc(label.split(' → ').pop())} <a href="#" onclick="event.preventDefault();openClickUpListModal(false)" style="color:var(--text-mute);text-decoration:underline;">change</a></span>`
-      : '';
+    if (label) {
+      const extras = [
+        proj2?.clickup?.phaseName   ? proj2.clickup.phaseName   : null,
+        proj2?.clickup?.assigneeName ? proj2.clickup.assigneeName : null
+      ].filter(Boolean).join(', ');
+      cuListHint.innerHTML = `<span style="font-size:10px;color:var(--text-mute);margin-left:2px;" title="${esc(label)}">· ${esc(label.split(' → ').pop())}${extras ? ' · ' + esc(extras) : ''} <a href="#" onclick="event.preventDefault();openClickUpListModal(false)" style="color:var(--text-mute);text-decoration:underline;">change</a></span>`;
+    } else {
+      cuListHint.innerHTML = '';
+    }
   }
 }
 
@@ -1823,8 +1830,11 @@ const clickupApi = {
   getFolders(spaceId)         { return this.request('GET', `/space/${spaceId}/folder?archived=false`); },
   getLists(folderId)          { return this.request('GET', `/folder/${folderId}/list?archived=false`); },
   getFolderlessLists(spaceId) { return this.request('GET', `/space/${spaceId}/list?archived=false`); },
-  createTask(listId, data)    { return this.request('POST', `/list/${listId}/task`, data); },
-  updateTask(taskId, data)    { return this.request('PUT', `/task/${taskId}`, data); },
+  createTask(listId, data)         { return this.request('POST', `/list/${listId}/task`, data); },
+  updateTask(taskId, data)         { return this.request('PUT', `/task/${taskId}`, data); },
+  getListFields(listId)                  { return this.request('GET', `/list/${listId}/field`); },
+  setCustomField(taskId, fieldId, value) { return this.request('POST', `/task/${taskId}/field/${fieldId}`, { value }); },
+  getMembers(teamId)                     { return this.request('GET', `/team/${teamId}/member`); },
 };
 
 function getClickUpListId()    { return getActiveProject()?.clickup?.listId    || ''; }
@@ -2214,7 +2224,11 @@ async function openClickUpListModal(onSave) {
       <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
     </div>
     <p class="modal-desc">Select which ClickUp list this project's tasks should be pushed to. This is saved with the project so it only needs setting once.</p>
-    ${savedListLabel ? `<div style="font-size:12px;color:var(--text-mute);margin-bottom:14px;padding:8px 10px;background:var(--bg-input);border-radius:4px;border:1px solid var(--border);">Currently: <strong style="color:var(--text-pri)">${esc(savedListLabel)}</strong></div>` : ''}
+    ${savedListLabel ? (() => {
+      const p = getActiveProject();
+      const extras = [p?.clickup?.phaseName, p?.clickup?.assigneeName].filter(Boolean).join(' · ');
+      return `<div style="font-size:12px;color:var(--text-mute);margin-bottom:14px;padding:8px 10px;background:var(--bg-input);border-radius:4px;border:1px solid var(--border);">Currently: <strong style="color:var(--text-pri)">${esc(savedListLabel)}</strong>${extras ? `<span style="margin-left:8px;color:var(--text-sub);">${esc(extras)}</span>` : ''}</div>`;
+    })() : ''}
     <input type="hidden" id="cu-workspace">
     <div class="modal-field">
       <label>Space</label>
@@ -2226,7 +2240,18 @@ async function openClickUpListModal(onSave) {
     </div>
     <div class="modal-field">
       <label>List</label>
-      <select id="cu-list" class="input-text" style="width:100%;"><option value="">— select a folder first —</option></select>
+      <select id="cu-list" class="input-text" onchange="onClickUpListChange()" style="width:100%;"><option value="">— select a folder first —</option></select>
+    </div>
+    <div id="cu-extra-fields" style="display:none;">
+      <div class="modal-field">
+        <label>Project Phase <span style="font-size:10px;color:var(--text-mute);font-weight:400;">(optional)</span></label>
+        <select id="cu-phase" class="input-text" style="width:100%;"><option value="">— select phase —</option></select>
+        <input type="hidden" id="cu-phase-field-id">
+      </div>
+      <div class="modal-field">
+        <label>Assign Developer <span style="font-size:10px;color:var(--text-mute);font-weight:400;">(optional)</span></label>
+        <select id="cu-assignee" class="input-text" style="width:100%;"><option value="">— no assignee —</option></select>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
@@ -2277,6 +2302,8 @@ async function onClickUpFolderChange() {
   const folderId = document.getElementById('cu-folder')?.value;
   const spaceId = document.getElementById('cu-space')?.value;
   const listSel = document.getElementById('cu-list');
+  const extraFields = document.getElementById('cu-extra-fields');
+  if (extraFields) extraFields.style.display = 'none';
   if (!spaceId) return;
   listSel.innerHTML = '<option value="">Loading lists…</option>';
   try {
@@ -2288,6 +2315,60 @@ async function onClickUpFolderChange() {
       lists.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
   } catch (e) {
     listSel.innerHTML = '<option value="">Error loading lists</option>';
+  }
+}
+
+async function onClickUpListChange() {
+  const listId = document.getElementById('cu-list')?.value;
+  const extraFields = document.getElementById('cu-extra-fields');
+  const phaseSel = document.getElementById('cu-phase');
+  const phaseFieldId = document.getElementById('cu-phase-field-id');
+  const assigneeSel = document.getElementById('cu-assignee');
+  const workspaceId = document.getElementById('cu-workspace')?.value;
+  if (!listId) { if (extraFields) extraFields.style.display = 'none'; return; }
+
+  if (extraFields) extraFields.style.display = 'block';
+  phaseSel.innerHTML = '<option value="">Loading…</option>';
+  assigneeSel.innerHTML = '<option value="">Loading…</option>';
+
+  // Load custom fields + workspace members in parallel
+  const [fieldsResult, membersResult] = await Promise.allSettled([
+    clickupApi.getListFields(listId),
+    workspaceId ? clickupApi.getMembers(workspaceId) : Promise.resolve(null)
+  ]);
+
+  // ── Project Phase field ──
+  const proj = getActiveProject();
+  const savedPhaseValueId = proj?.clickup?.phaseValueId || '';
+  if (fieldsResult.status === 'fulfilled') {
+    const fields = fieldsResult.value?.fields || [];
+    // Find any dropdown field (Project Phase is typically a dropdown custom field)
+    const phaseField = fields.find(f => f.type === 'drop_down' && /phase/i.test(f.name))
+                    || fields.find(f => f.type === 'drop_down');
+    if (phaseField) {
+      phaseFieldId.value = phaseField.id;
+      const options = phaseField.type_config?.options || [];
+      phaseSel.innerHTML = '<option value="">— select phase —</option>' +
+        options.map(o => `<option value="${o.id}" ${o.id === savedPhaseValueId ? 'selected' : ''}>${esc(o.name)}</option>`).join('');
+    } else {
+      phaseSel.innerHTML = '<option value="">No phase field on this list</option>';
+      phaseFieldId.value = '';
+    }
+  } else {
+    phaseSel.innerHTML = '<option value="">Could not load fields</option>';
+  }
+
+  // ── Assignee (workspace members) ──
+  const savedAssigneeId = proj?.clickup?.assigneeId ? String(proj.clickup.assigneeId) : '';
+  if (membersResult.status === 'fulfilled' && membersResult.value) {
+    const members = membersResult.value?.members || [];
+    assigneeSel.innerHTML = '<option value="">— no assignee —</option>' +
+      members.map(m => {
+        const u = m.user || m;
+        return `<option value="${u.id}" ${String(u.id) === savedAssigneeId ? 'selected' : ''}>${esc(u.username || u.email)}</option>`;
+      }).join('');
+  } else {
+    assigneeSel.innerHTML = '<option value="">Could not load members</option>';
   }
 }
 
@@ -2304,6 +2385,21 @@ function saveClickUpList(andPush) {
     .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
   proj.clickup.listId = listId;
   proj.clickup.listLabel = parts.join(' → ');
+
+  // Project Phase custom field
+  const phaseValueId  = document.getElementById('cu-phase')?.value || '';
+  const phaseFieldId  = document.getElementById('cu-phase-field-id')?.value || '';
+  const phaseName     = document.getElementById('cu-phase')?.selectedOptions[0]?.text || '';
+  proj.clickup.phaseFieldId  = phaseFieldId  || null;
+  proj.clickup.phaseValueId  = phaseValueId  || null;
+  proj.clickup.phaseName     = phaseName && !phaseName.startsWith('—') ? phaseName : null;
+
+  // Assignee
+  const assigneeId   = document.getElementById('cu-assignee')?.value || '';
+  const assigneeName = document.getElementById('cu-assignee')?.selectedOptions[0]?.text || '';
+  proj.clickup.assigneeId   = assigneeId   ? Number(assigneeId)   : null;
+  proj.clickup.assigneeName = assigneeName && !assigneeName.startsWith('—') ? assigneeName : null;
+
   saveProjectToFirestore(proj);
   applyProjectMeta();
 
@@ -2440,6 +2536,12 @@ async function pushToClickUp(btn) {
   const projName = proj.title || 'Untitled Project';
   const pageLabelMap = { homepage: 'HOMEPAGE', collection: 'COLLECTION PAGE', product: 'PRODUCT PAGE' };
 
+  // Project Phase + Assignee stored on project
+  const phaseFieldId  = proj.clickup?.phaseFieldId  || null;
+  const phaseValueId  = proj.clickup?.phaseValueId  || null;
+  const assigneeId    = proj.clickup?.assigneeId    || null;
+  const assignees     = assigneeId ? [assigneeId] : [];
+
   // Ensure clickup metadata object exists on project
   if (!proj.clickup) proj.clickup = { pages: {} };
   if (!proj.clickup.pages) proj.clickup.pages = {};
@@ -2492,9 +2594,14 @@ async function pushToClickUp(btn) {
           const res = await clickupApi.createTask(listId, {
             name: parentName,
             description: parentContent,
-            status: 'to do'
+            status: 'to do',
+            ...(assignees.length ? { assignees } : {})
           });
           proj.clickup.pages[key] = { taskId: res.id };
+          // Set Project Phase custom field on the new parent task
+          if (phaseFieldId && phaseValueId) {
+            clickupApi.setCustomField(res.id, phaseFieldId, phaseValueId).catch(() => {});
+          }
           created++;
         } catch (e) { errors++; console.error('ClickUp create page task error:', e); continue; }
       }
@@ -2511,12 +2618,17 @@ async function pushToClickUp(btn) {
         const tags = statusTag[s.status] ? [statusTag[s.status]] : [];
 
         if (s.clickupTaskId) {
-          // Update existing section task
+          // Update existing section task — refresh description, tags, assignee
           try {
             await clickupApi.updateTask(s.clickupTaskId, {
               name: s.name,
-              description: content
+              description: content,
+              ...(assignees.length ? { assignees } : {})
             });
+            // Re-apply phase field on update too
+            if (phaseFieldId && phaseValueId) {
+              clickupApi.setCustomField(s.clickupTaskId, phaseFieldId, phaseValueId).catch(() => {});
+            }
             updated++;
           } catch (e) {
             if (e.status === 404) {
@@ -2533,9 +2645,13 @@ async function pushToClickUp(btn) {
               description: content,
               parent: pageTaskId,
               tags,
-              status: 'to do'
+              status: 'to do',
+              ...(assignees.length ? { assignees } : {})
             });
             s.clickupTaskId = res.id;
+            if (phaseFieldId && phaseValueId) {
+              clickupApi.setCustomField(res.id, phaseFieldId, phaseValueId).catch(() => {});
+            }
             created++;
           } catch (e) { errors++; console.error('ClickUp create section error:', e); }
         }
@@ -2547,6 +2663,18 @@ async function pushToClickUp(btn) {
     proj.clickup.listLabel = getClickUpListLabel();
     proj.clickup.pushedAt = new Date().toISOString();
     await saveProjectToFirestore(proj);
+
+    // ── Critical: sync clickupTaskIds back into the local `pages` copy ──
+    // `pages` is a deep-copy made at project open time, separate from proj.pages.
+    // Without this, the next autosave would overwrite Firestore with the copy
+    // that has no IDs, wiping them and causing duplicates on the next push.
+    ['homepage', 'collection', 'product'].forEach(key => {
+      if (!pages[key]) return;
+      (pages[key].sections || []).forEach((localSec, i) => {
+        const projSec = (proj.pages[key]?.sections || [])[i];
+        if (projSec?.clickupTaskId) localSec.clickupTaskId = projSec.clickupTaskId;
+      });
+    });
 
     // Success feedback
     const parts = [];
