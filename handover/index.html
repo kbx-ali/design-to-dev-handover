@@ -394,7 +394,20 @@
   .viewer-mode textarea[readonly] { cursor: default; resize: none; }
   /* Viewer badge — hidden by default, shown when viewer-mode is active */
   .viewer-badge { display: none; }
-  .viewer-mode .viewer-badge { display: inline-flex !important; }
+  .viewer-mode .viewer-badge {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mute);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 4px 10px;
+    line-height: 1;
+    white-space: nowrap;
+  }
   /* In viewer mode, also hide the sync indicator — developer doesn't need it */
   .viewer-mode #sync-indicator { display: none !important; }
   /* In share-link viewer mode, hide the back-to-library button and global settings */
