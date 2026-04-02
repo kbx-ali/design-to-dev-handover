@@ -1820,8 +1820,8 @@ const clickupApi = {
   updateTask(taskId, data)    { return this.request('PUT', `/task/${taskId}`, data); },
 };
 
-function getClickUpListId()  { return localStorage.getItem('clickup_list_id') || ''; }
-function getClickUpListLabel() { return localStorage.getItem('clickup_list_label') || ''; }
+function getClickUpListId()    { return getActiveProject()?.clickup?.listId    || ''; }
+function getClickUpListLabel() { return getActiveProject()?.clickup?.listLabel || ''; }
 
 // ─── General / sitewide data ────────────────────────────────────
 let generalData = {
@@ -2127,7 +2127,7 @@ function openClickUpSettingsModal() {
       <div class="modal-title"><svg width="16" height="16" viewBox="0 0 54.8 65.8" style="vertical-align:-2px;margin-right:4px"><defs><linearGradient id="cu-m-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-m-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-m-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-m-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg> ClickUp Integration</div>
       <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
     </div>
-    <p class="modal-desc">Connect to ClickUp to push tasks directly from your handover. You can update tasks later without re-importing.</p>
+    <p class="modal-desc">Connect to ClickUp to push tasks directly from this handover. The list selection is saved per-project, so each handover can push to a different ClickUp list.</p>
 
     <details style="margin-bottom:14px;">
       <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get a ClickUp API token ▾</summary>
@@ -2285,22 +2285,29 @@ function saveClickUpSettings() {
   const token = document.getElementById('cu-token')?.value.trim();
   const listId = document.getElementById('cu-list')?.value;
 
+  // Token is user-level — stays in localStorage
   if (token) {
     localStorage.setItem('clickup_api_token', token);
   } else {
     localStorage.removeItem('clickup_api_token');
   }
 
-  if (listId) {
-    localStorage.setItem('clickup_list_id', listId);
-    // Build label from selected options
-    const parts = ['cu-workspace', 'cu-space', 'cu-folder', 'cu-list']
-      .map(id => { const s = document.getElementById(id); return s?.selectedOptions[0]?.text || ''; })
-      .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
-    localStorage.setItem('clickup_list_label', parts.join(' → '));
-  } else {
-    localStorage.removeItem('clickup_list_id');
-    localStorage.removeItem('clickup_list_label');
+  // List selection is project-level — save to Firestore project doc
+  const proj = getActiveProject();
+  if (proj) {
+    if (!proj.clickup) proj.clickup = { pages: {} };
+    if (listId) {
+      const parts = ['cu-workspace', 'cu-space', 'cu-folder', 'cu-list']
+        .map(id => { const s = document.getElementById(id); return s?.selectedOptions[0]?.text || ''; })
+        .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
+      proj.clickup.listId = listId;
+      proj.clickup.listLabel = parts.join(' → ');
+    } else {
+      delete proj.clickup.listId;
+      delete proj.clickup.listLabel;
+    }
+    saveProjectToFirestore(proj);
+    applyProjectMeta(); // refresh button label
   }
 
   document.querySelector('.overlay')?.remove();
@@ -2421,8 +2428,13 @@ async function pushToClickUp(btn) {
 
   const token = clickupApi.token();
   const listId = getClickUpListId();
-  if (!token || !listId) {
-    showToast('Set up ClickUp in Settings first', 'error');
+  if (!token) {
+    showToast('Add your ClickUp API token in Settings first', 'error');
+    openClickUpSettingsModal();
+    return;
+  }
+  if (!listId) {
+    showToast('Choose a ClickUp list for this project in Settings', 'error');
     openClickUpSettingsModal();
     return;
   }
