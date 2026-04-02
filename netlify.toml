@@ -27,3 +27,13 @@
   from = "/handover-plugin/"
   to   = "/landing.html"
   status = 200
+
+[[redirects]]
+  from = "/kbx-demo"
+  to   = "/kbx-demo/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/kbx-demo/"
+  to   = "/kbx-demo/index.html"
+  status = 200

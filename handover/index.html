@@ -1026,6 +1026,10 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-a" x1="0" y1="15.049" x2="54.845" y2="15.049" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-b" x1="1.195" y1="53.166" x2="53.745" y2="53.166" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
         Export CSV
       </button>
+      <button id="push-clickup-btn" class="hdr-btn hdr-btn-edit-only" onclick="pushToClickUp(this)" title="Push tasks directly to ClickUp via API">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-p-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-p-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-p-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-p-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
+        <span id="push-clickup-label">Push to ClickUp</span>
+      </button>
       <a id="share-link-btn" href="#" class="hdr-btn mint hdr-btn-edit-only" onclick="copyShareLink(event)">
         <iconify-icon icon="pixelarticons:link" style="font-size:13px"></iconify-icon>
         Share Link
@@ -1059,6 +1063,13 @@ function applyProjectMeta() {
   if (titleEl) titleEl.textContent = projectMeta.title || 'Untitled Project';
   if (themeEl) themeEl.textContent = projectMeta.theme || 'Theme (TBC)';
   document.title = `${projectMeta.title || 'Design → Dev'} · Kubix`;
+  // Update ClickUp button label based on whether project has been pushed
+  const cuLabel = document.getElementById('push-clickup-label');
+  if (cuLabel) {
+    const proj = getActiveProject();
+    const hasPushed = proj?.clickup?.pages && Object.values(proj.clickup.pages).some(p => p?.taskId);
+    cuLabel.textContent = hasPushed ? 'Update ClickUp' : 'Push to ClickUp';
+  }
 }
 
 // ─── Project settings modal ────────────────────────────────────
@@ -1585,6 +1596,10 @@ function renderLibrary() {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="2" width="14" height="2"/><rect x="0" y="6" width="14" height="2"/><rect x="0" y="10" width="14" height="2"/><rect x="3" y="1" width="2" height="4"/><rect x="8" y="5" width="2" height="4"/><rect x="5" y="9" width="2" height="4"/></svg>
         Settings
       </button>` : ''}
+      ${IS_EDITOR ? `<button class="hdr-btn" onclick="openClickUpSettingsModal()" title="ClickUp integration settings" style="display:inline-flex;align-items:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 54.8 65.8"><defs><linearGradient id="cu-lib-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-lib-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-lib-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-lib-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
+        ClickUp
+      </button>` : ''}
       ${IS_EDITOR ? `<button class="hdr-btn green" onclick="newProject()">+ New Handover</button>` : ''}
     </div>
   </div>
@@ -1770,6 +1785,43 @@ function saveFigmaToken(t) {
   figmaKeys.token = t;
   localStorage.setItem('figma_token', t);
 }
+
+// ─── ClickUp API helper ─────────────────────────────────────────
+const clickupApi = {
+  base: 'https://api.clickup.com/api/v2',
+  token() { return localStorage.getItem('clickup_api_token') || ''; },
+
+  async request(method, path, body) {
+    const tok = this.token();
+    if (!tok) throw new Error('No ClickUp API token configured.');
+    const res = await fetch(this.base + path, {
+      method,
+      headers: { 'Authorization': tok, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (res.status === 401) throw new Error('Invalid ClickUp API token — check Settings.');
+    if (res.status === 429) throw new Error('ClickUp rate limit — wait a moment and retry.');
+    if (res.status === 404) {
+      const err = new Error('ClickUp resource not found (404).');
+      err.status = 404;
+      throw err;
+    }
+    if (!res.ok) throw new Error('ClickUp API error: ' + res.status);
+    return res.json();
+  },
+
+  getUser()                   { return this.request('GET', '/user'); },
+  getTeams()                  { return this.request('GET', '/team'); },
+  getSpaces(teamId)           { return this.request('GET', `/team/${teamId}/space?archived=false`); },
+  getFolders(spaceId)         { return this.request('GET', `/space/${spaceId}/folder?archived=false`); },
+  getLists(folderId)          { return this.request('GET', `/folder/${folderId}/list?archived=false`); },
+  getFolderlessLists(spaceId) { return this.request('GET', `/space/${spaceId}/list?archived=false`); },
+  createTask(listId, data)    { return this.request('POST', `/list/${listId}/task`, data); },
+  updateTask(taskId, data)    { return this.request('PUT', `/task/${taskId}`, data); },
+};
+
+function getClickUpListId()  { return localStorage.getItem('clickup_list_id') || ''; }
+function getClickUpListLabel() { return localStorage.getItem('clickup_list_label') || ''; }
 
 // ─── General / sitewide data ────────────────────────────────────
 let generalData = {
@@ -2060,6 +2112,200 @@ function openFigmaTokenModal() {
   setTimeout(() => document.getElementById('ft-token')?.focus(), 50);
 }
 
+// ─── ClickUp settings modal ─────────────────────────────────────
+function openClickUpSettingsModal() {
+  const savedToken = localStorage.getItem('clickup_api_token') || '';
+  const savedListId = getClickUpListId();
+  const savedListLabel = getClickUpListLabel();
+
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `
+  <div class="modal" style="width:500px;">
+    <div class="modal-head">
+      <div class="modal-title"><svg width="16" height="16" viewBox="0 0 54.8 65.8" style="vertical-align:-2px;margin-right:4px"><defs><linearGradient id="cu-m-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-m-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-m-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-m-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg> ClickUp Integration</div>
+      <button class="modal-close" onclick="this.closest('.overlay').remove()">✕</button>
+    </div>
+    <p class="modal-desc">Connect to ClickUp to push tasks directly from your handover. You can update tasks later without re-importing.</p>
+
+    <details style="margin-bottom:14px;">
+      <summary style="font-size:12px;font-weight:700;color:var(--text-mute);cursor:pointer;user-select:none;">How to get a ClickUp API token ▾</summary>
+      <ol class="step-list" style="margin-top:10px;">
+        <li>Open ClickUp → click your avatar (bottom-left) → <strong>Settings</strong></li>
+        <li>Scroll to <strong>Apps</strong> in the sidebar</li>
+        <li>Under <strong>API Token</strong>, click <strong>Generate</strong> (or copy existing)</li>
+        <li>Paste the <code>pk_…</code> token below</li>
+      </ol>
+    </details>
+
+    <div class="modal-field">
+      <label>ClickUp Personal API Token</label>
+      <div style="display:flex;gap:8px;">
+        <input type="password" id="cu-token" value="${esc(savedToken)}" placeholder="pk_…" autocomplete="off" style="flex:1;">
+        <button class="hdr-btn" id="cu-test-btn" onclick="testClickUpConnection()" style="white-space:nowrap;">Test</button>
+      </div>
+      <div id="cu-token-status" style="font-size:11px;margin-top:5px;color:var(--text-sub);">Stored locally in your browser only.</div>
+    </div>
+
+    <div id="cu-hierarchy" style="display:${savedToken ? 'block' : 'none'};">
+      <div class="modal-field">
+        <label>Workspace</label>
+        <select id="cu-workspace" class="input-text" onchange="onClickUpWorkspaceChange()" style="width:100%;"><option value="">— select workspace —</option></select>
+      </div>
+      <div class="modal-field">
+        <label>Space</label>
+        <select id="cu-space" class="input-text" onchange="onClickUpSpaceChange()" style="width:100%;"><option value="">— select space —</option></select>
+      </div>
+      <div class="modal-field">
+        <label>Folder (optional)</label>
+        <select id="cu-folder" class="input-text" onchange="onClickUpFolderChange()" style="width:100%;"><option value="">— no folder (folderless lists) —</option></select>
+      </div>
+      <div class="modal-field">
+        <label>List</label>
+        <select id="cu-list" class="input-text" style="width:100%;"><option value="">— select list —</option></select>
+      </div>
+      ${savedListLabel ? `<div style="font-size:11px;color:var(--text-mute);margin-top:4px;">Currently saved: <strong>${esc(savedListLabel)}</strong></div>` : ''}
+    </div>
+
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="this.closest('.overlay').remove()">Cancel</button>
+      <button class="modal-btn primary" onclick="saveClickUpSettings()">Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+
+  // If token already exists, auto-load workspaces
+  if (savedToken) {
+    setTimeout(() => loadClickUpWorkspaces(), 100);
+  }
+}
+
+async function testClickUpConnection() {
+  const btn = document.getElementById('cu-test-btn');
+  const status = document.getElementById('cu-token-status');
+  const token = document.getElementById('cu-token')?.value.trim();
+  if (!token) { status.textContent = 'Enter a token first.'; status.style.color = '#F87171'; return; }
+
+  btn.disabled = true; btn.textContent = 'Testing…';
+  // Temporarily set token for the test
+  localStorage.setItem('clickup_api_token', token);
+  try {
+    const data = await clickupApi.getUser();
+    const name = data?.user?.username || data?.user?.email || 'Unknown';
+    status.textContent = 'Connected as ' + name;
+    status.style.color = 'var(--kbx-mint)';
+    document.getElementById('cu-hierarchy').style.display = 'block';
+    loadClickUpWorkspaces();
+  } catch (e) {
+    status.textContent = e.message;
+    status.style.color = '#F87171';
+    localStorage.removeItem('clickup_api_token');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Test';
+  }
+}
+
+async function loadClickUpWorkspaces() {
+  const sel = document.getElementById('cu-workspace');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const data = await clickupApi.getTeams();
+    const teams = data?.teams || [];
+    sel.innerHTML = '<option value="">— select workspace —</option>' +
+      teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">Error loading workspaces</option>';
+  }
+}
+
+async function onClickUpWorkspaceChange() {
+  const teamId = document.getElementById('cu-workspace')?.value;
+  const spaceSel = document.getElementById('cu-space');
+  const folderSel = document.getElementById('cu-folder');
+  const listSel = document.getElementById('cu-list');
+  folderSel.innerHTML = '<option value="">— no folder (folderless lists) —</option>';
+  listSel.innerHTML = '<option value="">— select list —</option>';
+  if (!teamId) { spaceSel.innerHTML = '<option value="">— select space —</option>'; return; }
+  spaceSel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const data = await clickupApi.getSpaces(teamId);
+    const spaces = data?.spaces || [];
+    spaceSel.innerHTML = '<option value="">— select space —</option>' +
+      spaces.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  } catch (e) {
+    spaceSel.innerHTML = '<option value="">Error loading spaces</option>';
+  }
+}
+
+async function onClickUpSpaceChange() {
+  const spaceId = document.getElementById('cu-space')?.value;
+  const folderSel = document.getElementById('cu-folder');
+  const listSel = document.getElementById('cu-list');
+  listSel.innerHTML = '<option value="">— select list —</option>';
+  if (!spaceId) { folderSel.innerHTML = '<option value="">— no folder (folderless lists) —</option>'; return; }
+  folderSel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const data = await clickupApi.getFolders(spaceId);
+    const folders = data?.folders || [];
+    folderSel.innerHTML = '<option value="">— no folder (folderless lists) —</option>' +
+      folders.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+    // Auto-load folderless lists
+    onClickUpFolderChange();
+  } catch (e) {
+    folderSel.innerHTML = '<option value="">Error loading folders</option>';
+  }
+}
+
+async function onClickUpFolderChange() {
+  const folderId = document.getElementById('cu-folder')?.value;
+  const spaceId = document.getElementById('cu-space')?.value;
+  const listSel = document.getElementById('cu-list');
+  if (!spaceId) return;
+  listSel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    let lists;
+    if (folderId) {
+      const data = await clickupApi.getLists(folderId);
+      lists = data?.lists || [];
+    } else {
+      const data = await clickupApi.getFolderlessLists(spaceId);
+      lists = data?.lists || [];
+    }
+    listSel.innerHTML = '<option value="">— select list —</option>' +
+      lists.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
+  } catch (e) {
+    listSel.innerHTML = '<option value="">Error loading lists</option>';
+  }
+}
+
+function saveClickUpSettings() {
+  const token = document.getElementById('cu-token')?.value.trim();
+  const listId = document.getElementById('cu-list')?.value;
+
+  if (token) {
+    localStorage.setItem('clickup_api_token', token);
+  } else {
+    localStorage.removeItem('clickup_api_token');
+  }
+
+  if (listId) {
+    localStorage.setItem('clickup_list_id', listId);
+    // Build label from selected options
+    const parts = ['cu-workspace', 'cu-space', 'cu-folder', 'cu-list']
+      .map(id => { const s = document.getElementById(id); return s?.selectedOptions[0]?.text || ''; })
+      .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
+    localStorage.setItem('clickup_list_label', parts.join(' → '));
+  } else {
+    localStorage.removeItem('clickup_list_id');
+    localStorage.removeItem('clickup_list_label');
+  }
+
+  document.querySelector('.overlay')?.remove();
+  showToast('ClickUp settings saved', 'success');
+}
+
 // ─── Clipboard helper (works even when document not focused) ───
 function fallbackCopy(text) {
   const ta = document.createElement('textarea');
@@ -2164,6 +2410,153 @@ function exportToClickUp(btn) {
     btn.innerHTML = '<iconify-icon icon="pixelarticons:check" style="font-size:14px"></iconify-icon> Downloaded ✓';
     btn.disabled = true;
     setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2200);
+  }
+}
+
+// ─── Push to ClickUp (API) ──────────────────────────────────────
+async function pushToClickUp(btn) {
+  const proj = getActiveProject();
+  if (!proj) return;
+
+  const token = clickupApi.token();
+  const listId = getClickUpListId();
+  if (!token || !listId) {
+    showToast('Set up ClickUp in Settings first', 'error');
+    openClickUpSettingsModal();
+    return;
+  }
+
+  const statusTag = { existing: 'existing section', modified: 'needs new settings', bespoke: 'custom-dev' };
+  const projName = proj.title || 'Untitled Project';
+  const pageLabelMap = { homepage: 'HOMEPAGE', collection: 'COLLECTION PAGE', product: 'PRODUCT PAGE' };
+
+  // Ensure clickup metadata object exists on project
+  if (!proj.clickup) proj.clickup = { pages: {} };
+  if (!proj.clickup.pages) proj.clickup.pages = {};
+
+  // Button loading state
+  let origHtml;
+  if (btn) {
+    origHtml = btn.innerHTML;
+    btn.innerHTML = '<iconify-icon icon="pixelarticons:loader" style="font-size:14px;animation:spin 1s linear infinite"></iconify-icon> Pushing…';
+    btn.disabled = true;
+  }
+
+  let created = 0, updated = 0, errors = 0;
+
+  try {
+    for (const key of ['homepage', 'collection', 'product']) {
+      const pg = proj.pages[key];
+      if (!pg) continue;
+      const sections = pg.sections || [];
+      if (sections.length === 0) continue;
+
+      // ── Page-level parent task ──
+      const parentName = (pageLabelMap[key] || key.toUpperCase()) + ' - ' + projName;
+      const parentContent = [
+        pg.figmaUrl ? 'Figma: ' + pg.figmaUrl : '',
+        pg.loomUrl  ? 'Loom: '  + pg.loomUrl  : ''
+      ].filter(Boolean).join('\n');
+
+      const existingPageTaskId = proj.clickup.pages[key]?.taskId;
+
+      if (existingPageTaskId) {
+        // Update existing page task
+        try {
+          await clickupApi.updateTask(existingPageTaskId, {
+            name: parentName,
+            description: parentContent
+          });
+          updated++;
+        } catch (e) {
+          if (e.status === 404) {
+            // Task was deleted in ClickUp — create fresh
+            proj.clickup.pages[key] = {};
+          } else { errors++; console.error('ClickUp update page task error:', e); continue; }
+        }
+      }
+
+      // Create if no ID or if it was cleared due to 404
+      if (!proj.clickup.pages[key]?.taskId) {
+        try {
+          const res = await clickupApi.createTask(listId, {
+            name: parentName,
+            description: parentContent,
+            status: 'to do'
+          });
+          proj.clickup.pages[key] = { taskId: res.id };
+          created++;
+        } catch (e) { errors++; console.error('ClickUp create page task error:', e); continue; }
+      }
+
+      const pageTaskId = proj.clickup.pages[key].taskId;
+
+      // ── Section subtasks ──
+      for (const s of sections) {
+        const content = [
+          s.notes || '',
+          s.figmaLink ? 'Figma: ' + s.figmaLink : ''
+        ].filter(Boolean).join('\n\n');
+
+        const tags = statusTag[s.status] ? [statusTag[s.status]] : [];
+
+        if (s.clickupTaskId) {
+          // Update existing section task
+          try {
+            await clickupApi.updateTask(s.clickupTaskId, {
+              name: s.name,
+              description: content
+            });
+            updated++;
+          } catch (e) {
+            if (e.status === 404) {
+              s.clickupTaskId = null; // cleared — will create below
+            } else { errors++; console.error('ClickUp update section error:', e); continue; }
+          }
+        }
+
+        if (!s.clickupTaskId) {
+          // Create new section subtask
+          try {
+            const res = await clickupApi.createTask(listId, {
+              name: s.name,
+              description: content,
+              parent: pageTaskId,
+              tags,
+              status: 'to do'
+            });
+            s.clickupTaskId = res.id;
+            created++;
+          } catch (e) { errors++; console.error('ClickUp create section error:', e); }
+        }
+      }
+    }
+
+    // Save ClickUp IDs back to Firestore
+    proj.clickup.listId = listId;
+    proj.clickup.listLabel = getClickUpListLabel();
+    proj.clickup.pushedAt = new Date().toISOString();
+    await saveProjectToFirestore(proj);
+
+    // Success feedback
+    const parts = [];
+    if (created) parts.push(created + ' created');
+    if (updated) parts.push(updated + ' updated');
+    if (errors)  parts.push(errors + ' failed');
+    showToast('ClickUp: ' + (parts.join(', ') || 'no changes'), errors ? 'error' : 'success');
+
+  } catch (e) {
+    console.error('ClickUp push error:', e);
+    showToast('ClickUp push failed: ' + e.message, 'error');
+  } finally {
+    if (btn) {
+      const hasIds = proj.clickup?.pages && Object.values(proj.clickup.pages).some(p => p?.taskId);
+      btn.innerHTML = hasIds
+        ? '<svg width="13" height="13" viewBox="0 0 54.8 65.8" style="flex-shrink:0"><defs><linearGradient id="cu-a2" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-b2" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-a2)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-b2)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg> Update ClickUp'
+        : origHtml;
+      btn.disabled = false;
+    }
+    render();
   }
 }
 
