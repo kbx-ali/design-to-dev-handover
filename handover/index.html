@@ -2242,15 +2242,15 @@ async function openClickUpListModal(onSave) {
       <label>List</label>
       <select id="cu-list" class="input-text" onchange="onClickUpListChange()" style="width:100%;"><option value="">— select a folder first —</option></select>
     </div>
-    <div id="cu-extra-fields" style="display:none;">
+    <div id="cu-extra-fields">
       <div class="modal-field">
         <label>Project Phase <span style="font-size:10px;color:var(--text-mute);font-weight:400;">(optional)</span></label>
-        <select id="cu-phase" class="input-text" style="width:100%;"><option value="">— select phase —</option></select>
+        <select id="cu-phase" class="input-text" style="width:100%;"><option value="">— select a list first —</option></select>
         <input type="hidden" id="cu-phase-field-id">
       </div>
       <div class="modal-field">
         <label>Assign Developer <span style="font-size:10px;color:var(--text-mute);font-weight:400;">(optional)</span></label>
-        <select id="cu-assignee" class="input-text" style="width:100%;"><option value="">— no assignee —</option></select>
+        <select id="cu-assignee" class="input-text" style="width:100%;"><option value="">— select a list first —</option></select>
       </div>
     </div>
     <div class="modal-actions">
@@ -2259,7 +2259,16 @@ async function openClickUpListModal(onSave) {
     </div>
   </div>`;
   document.body.appendChild(ov);
-  loadClickUpWorkspaces();
+
+  const savedListId = getClickUpListId();
+  if (savedListId) {
+    // List already configured — load phase + assignee immediately using the saved listId
+    // No need to re-cascade through space/folder; we already have the ID we need
+    loadClickUpWorkspaces(); // still populate the cascade dropdowns in the background
+    loadClickUpExtraFields(savedListId);
+  } else {
+    loadClickUpWorkspaces();
+  }
 }
 
 async function loadClickUpWorkspaces() {
@@ -2300,11 +2309,14 @@ async function onClickUpSpaceChange() {
 
 async function onClickUpFolderChange() {
   const folderId = document.getElementById('cu-folder')?.value;
-  const spaceId = document.getElementById('cu-space')?.value;
-  const listSel = document.getElementById('cu-list');
-  const extraFields = document.getElementById('cu-extra-fields');
-  if (extraFields) extraFields.style.display = 'none';
+  const spaceId  = document.getElementById('cu-space')?.value;
+  const listSel  = document.getElementById('cu-list');
   if (!spaceId) return;
+  // Reset phase/assignee while list is loading
+  const phaseSel   = document.getElementById('cu-phase');
+  const assigneeSel = document.getElementById('cu-assignee');
+  if (phaseSel)    phaseSel.innerHTML    = '<option value="">— select a list first —</option>';
+  if (assigneeSel) assigneeSel.innerHTML = '<option value="">— select a list first —</option>';
   listSel.innerHTML = '<option value="">Loading lists…</option>';
   try {
     const data = folderId
@@ -2320,46 +2332,52 @@ async function onClickUpFolderChange() {
 
 async function onClickUpListChange() {
   const listId = document.getElementById('cu-list')?.value;
-  const extraFields = document.getElementById('cu-extra-fields');
-  const phaseSel = document.getElementById('cu-phase');
+  if (!listId) return;
+  loadClickUpExtraFields(listId);
+}
+
+async function loadClickUpExtraFields(listId) {
+  if (!listId) return;
+  const phaseSel    = document.getElementById('cu-phase');
   const phaseFieldId = document.getElementById('cu-phase-field-id');
   const assigneeSel = document.getElementById('cu-assignee');
   const workspaceId = document.getElementById('cu-workspace')?.value;
-  if (!listId) { if (extraFields) extraFields.style.display = 'none'; return; }
+  if (!phaseSel || !assigneeSel) return;
 
-  if (extraFields) extraFields.style.display = 'block';
-  phaseSel.innerHTML = '<option value="">Loading…</option>';
+  phaseSel.innerHTML    = '<option value="">Loading…</option>';
   assigneeSel.innerHTML = '<option value="">Loading…</option>';
 
-  // Load custom fields + workspace members in parallel
-  const [fieldsResult, membersResult] = await Promise.allSettled([
-    clickupApi.getListFields(listId),
-    workspaceId ? clickupApi.getMembers(workspaceId) : Promise.resolve(null)
-  ]);
-
-  // ── Project Phase field ──
   const proj = getActiveProject();
   const savedPhaseValueId = proj?.clickup?.phaseValueId || '';
+  const savedAssigneeId   = proj?.clickup?.assigneeId ? String(proj.clickup.assigneeId) : '';
+
+  // Fetch fields + members in parallel
+  const [fieldsResult, membersResult] = await Promise.allSettled([
+    clickupApi.getListFields(listId),
+    workspaceId
+      ? clickupApi.getMembers(workspaceId)
+      : clickupApi.getTeams().then(d => clickupApi.getMembers((d?.teams||[])[0]?.id)).catch(() => null)
+  ]);
+
+  // ── Project Phase ──
   if (fieldsResult.status === 'fulfilled') {
     const fields = fieldsResult.value?.fields || [];
-    // Find any dropdown field (Project Phase is typically a dropdown custom field)
     const phaseField = fields.find(f => f.type === 'drop_down' && /phase/i.test(f.name))
                     || fields.find(f => f.type === 'drop_down');
     if (phaseField) {
-      phaseFieldId.value = phaseField.id;
+      if (phaseFieldId) phaseFieldId.value = phaseField.id;
       const options = phaseField.type_config?.options || [];
       phaseSel.innerHTML = '<option value="">— select phase —</option>' +
         options.map(o => `<option value="${o.id}" ${o.id === savedPhaseValueId ? 'selected' : ''}>${esc(o.name)}</option>`).join('');
     } else {
       phaseSel.innerHTML = '<option value="">No phase field on this list</option>';
-      phaseFieldId.value = '';
+      if (phaseFieldId) phaseFieldId.value = '';
     }
   } else {
     phaseSel.innerHTML = '<option value="">Could not load fields</option>';
   }
 
-  // ── Assignee (workspace members) ──
-  const savedAssigneeId = proj?.clickup?.assigneeId ? String(proj.clickup.assigneeId) : '';
+  // ── Assignee ──
   if (membersResult.status === 'fulfilled' && membersResult.value) {
     const members = membersResult.value?.members || [];
     assigneeSel.innerHTML = '<option value="">— no assignee —</option>' +
