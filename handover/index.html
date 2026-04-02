@@ -2150,21 +2150,18 @@ function openClickUpSettingsModal() {
     </div>
 
     <div id="cu-hierarchy" style="display:${savedToken ? 'block' : 'none'};">
-      <div class="modal-field">
-        <label>Workspace</label>
-        <select id="cu-workspace" class="input-text" onchange="onClickUpWorkspaceChange()" style="width:100%;"><option value="">— select workspace —</option></select>
-      </div>
+      <input type="hidden" id="cu-workspace">
       <div class="modal-field">
         <label>Space</label>
-        <select id="cu-space" class="input-text" onchange="onClickUpSpaceChange()" style="width:100%;"><option value="">— select space —</option></select>
+        <select id="cu-space" class="input-text" onchange="onClickUpSpaceChange()" style="width:100%;"><option value="">— loading spaces… —</option></select>
       </div>
       <div class="modal-field">
-        <label>Folder (optional)</label>
-        <select id="cu-folder" class="input-text" onchange="onClickUpFolderChange()" style="width:100%;"><option value="">— no folder (folderless lists) —</option></select>
+        <label>Folder</label>
+        <select id="cu-folder" class="input-text" onchange="onClickUpFolderChange()" style="width:100%;"><option value="">— select a space first —</option></select>
       </div>
       <div class="modal-field">
         <label>List</label>
-        <select id="cu-list" class="input-text" style="width:100%;"><option value="">— select list —</option></select>
+        <select id="cu-list" class="input-text" style="width:100%;"><option value="">— select a folder first —</option></select>
       </div>
       ${savedListLabel ? `<div style="font-size:11px;color:var(--text-mute);margin-top:4px;">Currently saved: <strong>${esc(savedListLabel)}</strong></div>` : ''}
     </div>
@@ -2208,31 +2205,20 @@ async function testClickUpConnection() {
 }
 
 async function loadClickUpWorkspaces() {
-  const sel = document.getElementById('cu-workspace');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Loading…</option>';
+  // Auto-select the single workspace (Kubix Media) silently — no dropdown shown
+  const workspaceInput = document.getElementById('cu-workspace');
+  const spaceSel = document.getElementById('cu-space');
+  if (!workspaceInput || !spaceSel) return;
+  spaceSel.innerHTML = '<option value="">Loading spaces…</option>';
   try {
     const data = await clickupApi.getTeams();
     const teams = data?.teams || [];
-    sel.innerHTML = '<option value="">— select workspace —</option>' +
-      teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
-  } catch (e) {
-    sel.innerHTML = '<option value="">Error loading workspaces</option>';
-  }
-}
-
-async function onClickUpWorkspaceChange() {
-  const teamId = document.getElementById('cu-workspace')?.value;
-  const spaceSel = document.getElementById('cu-space');
-  const folderSel = document.getElementById('cu-folder');
-  const listSel = document.getElementById('cu-list');
-  folderSel.innerHTML = '<option value="">— no folder (folderless lists) —</option>';
-  listSel.innerHTML = '<option value="">— select list —</option>';
-  if (!teamId) { spaceSel.innerHTML = '<option value="">— select space —</option>'; return; }
-  spaceSel.innerHTML = '<option value="">Loading…</option>';
-  try {
-    const data = await clickupApi.getSpaces(teamId);
-    const spaces = data?.spaces || [];
+    if (!teams.length) { spaceSel.innerHTML = '<option value="">No workspaces found</option>'; return; }
+    // Auto-select first (and typically only) workspace
+    workspaceInput.value = teams[0].id;
+    // Immediately load spaces for it
+    const spaceData = await clickupApi.getSpaces(teams[0].id);
+    const spaces = spaceData?.spaces || [];
     spaceSel.innerHTML = '<option value="">— select space —</option>' +
       spaces.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
   } catch (e) {
@@ -2244,16 +2230,14 @@ async function onClickUpSpaceChange() {
   const spaceId = document.getElementById('cu-space')?.value;
   const folderSel = document.getElementById('cu-folder');
   const listSel = document.getElementById('cu-list');
-  listSel.innerHTML = '<option value="">— select list —</option>';
-  if (!spaceId) { folderSel.innerHTML = '<option value="">— no folder (folderless lists) —</option>'; return; }
-  folderSel.innerHTML = '<option value="">Loading…</option>';
+  listSel.innerHTML = '<option value="">— select a folder first —</option>';
+  if (!spaceId) { folderSel.innerHTML = '<option value="">— select a space first —</option>'; return; }
+  folderSel.innerHTML = '<option value="">Loading folders…</option>';
   try {
     const data = await clickupApi.getFolders(spaceId);
     const folders = data?.folders || [];
-    folderSel.innerHTML = '<option value="">— no folder (folderless lists) —</option>' +
+    folderSel.innerHTML = '<option value="">— select folder —</option>' +
       folders.map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
-    // Auto-load folderless lists
-    onClickUpFolderChange();
   } catch (e) {
     folderSel.innerHTML = '<option value="">Error loading folders</option>';
   }
@@ -2297,7 +2281,7 @@ function saveClickUpSettings() {
   if (proj) {
     if (!proj.clickup) proj.clickup = { pages: {} };
     if (listId) {
-      const parts = ['cu-workspace', 'cu-space', 'cu-folder', 'cu-list']
+      const parts = ['cu-space', 'cu-folder', 'cu-list']
         .map(id => { const s = document.getElementById(id); return s?.selectedOptions[0]?.text || ''; })
         .filter(t => t && !t.startsWith('—') && !t.startsWith('Loading') && !t.startsWith('Error'));
       proj.clickup.listId = listId;
