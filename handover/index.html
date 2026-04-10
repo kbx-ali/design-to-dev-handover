@@ -137,11 +137,30 @@
     letter-spacing: 0.08em; text-transform: uppercase;
   }
 .header-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-  .header-meta-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; }
+  .header-meta-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-shrink: 0; flex-wrap: wrap; }
   .header-meta .hdr-btn { background: var(--bg-card); border-color: var(--border); color: var(--text-pri); }
   .header-meta .hdr-btn:hover { background: var(--bg-input); color: var(--text-pri); }
   .header-meta .hdr-btn.mint { background: #94F7A1; border-color: transparent; color: #28282B; }
   .header-meta .hdr-btn.mint:hover { background: #72e880; }
+
+  /* ─── ClickUp list hint chip ──────────────────────────────── */
+  .cu-list-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 6px 4px 10px;
+    font-size: 11px; color: var(--text-sec); font-family: var(--font-body);
+  }
+  .cu-list-chip-path { color: var(--text-mute); font-size: 11px; line-height: 1.3; }
+  .cu-list-chip-path strong { color: var(--text-sec); font-weight: 600; }
+  .cu-list-chip-extras { color: var(--text-mute); font-size: 10px; }
+  .cu-list-chip-change {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg-card); border: 1px solid var(--border-lt);
+    color: var(--text-sub); border-radius: 4px; padding: 2px 7px;
+    font-size: 10px; font-weight: 600; font-family: var(--font-body);
+    cursor: pointer; transition: all 0.12s; flex-shrink: 0; white-space: nowrap;
+  }
+  .cu-list-chip-change:hover { background: var(--bg-input); color: var(--text-sec); border-color: var(--text-mute); }
 
   /* ─── Actions dropdown ──────────────────────────────────── */
   .actions-wrap { position: relative; }
@@ -1069,7 +1088,7 @@
     <div class="header-meta-actions">
       <button id="push-clickup-btn" class="hdr-btn hdr-btn-edit-only" onclick="pushToClickUp(this)" title="Push tasks directly to ClickUp via API">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-p-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-p-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-p-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-p-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
-        <span id="push-clickup-label">Push to ClickUp</span>
+        <span id="push-clickup-label">Create ClickUp Tasks</span>
       </button><span id="push-clickup-list-hint"></span>
       <div class="actions-wrap hdr-btn-edit-only">
         <button class="hdr-btn" onclick="toggleActionsMenu(event)" title="More actions">
@@ -1149,21 +1168,30 @@ function applyProjectMeta() {
   document.title = `${projectMeta.title || 'Design → Dev'} · Kubix`;
   // Update ClickUp button label + list indicator
   const cuLabel = document.getElementById('push-clickup-label');
-  if (cuLabel) {
-    const proj = getActiveProject();
-    const hasPushed = proj?.clickup?.pages && Object.values(proj.clickup.pages).some(p => p?.taskId);
-    cuLabel.textContent = hasPushed ? 'Update ClickUp' : 'Push to ClickUp';
-  }
   const cuListHint = document.getElementById('push-clickup-list-hint');
+  const proj = getActiveProject();
+  const hasPushed = proj?.clickup?.pages && Object.values(proj.clickup.pages).some(p => p?.taskId);
+  if (cuLabel) {
+    cuLabel.textContent = hasPushed ? 'Update ClickUp Tasks' : 'Create ClickUp Tasks';
+  }
   if (cuListHint) {
-    const proj2 = getActiveProject();
     const label = getClickUpListLabel();
     if (label) {
+      const parts = label.split(' → ');
+      const listName = parts.pop();
+      const pathPrefix = parts.join(' → ');
       const extras = [
-        proj2?.clickup?.phaseName   ? proj2.clickup.phaseName   : null,
-        proj2?.clickup?.assigneeName ? proj2.clickup.assigneeName : null
-      ].filter(Boolean).join(', ');
-      cuListHint.innerHTML = `<span style="font-size:10px;color:var(--text-mute);margin-left:2px;" title="${esc(label)}">· ${esc(label.split(' → ').pop())}${extras ? ' · ' + esc(extras) : ''} <a href="#" onclick="event.preventDefault();openClickUpListModal(false)" style="color:var(--text-mute);text-decoration:underline;">change</a></span>`;
+        proj?.clickup?.phaseName    ? proj.clickup.phaseName    : null,
+        proj?.clickup?.assigneeName ? proj.clickup.assigneeName : null
+      ].filter(Boolean).join(' · ');
+      cuListHint.innerHTML = `
+        <div class="cu-list-chip">
+          <span class="cu-list-chip-path">${pathPrefix ? esc(pathPrefix) + ' → ' : ''}<strong>${esc(listName)}</strong>${extras ? `<span class="cu-list-chip-extras"> · ${esc(extras)}</span>` : ''}</span>
+          <button class="cu-list-chip-change" onclick="openClickUpListModal(false)" title="Change ClickUp list settings">
+            <iconify-icon icon="pixelarticons:settings" style="font-size:10px"></iconify-icon>
+            Change
+          </button>
+        </div>`;
     } else {
       cuListHint.innerHTML = '';
     }
