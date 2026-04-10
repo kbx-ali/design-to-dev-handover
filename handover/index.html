@@ -117,7 +117,7 @@
   [data-theme="dark"] .header { background: #1A1A1D; border-bottom-color: rgba(255,255,255,0.05); }
 
   .header-inner {
-    max-width: 1060px; margin: 0 auto;
+    max-width: 1440px; margin: 0 auto;
     padding: 0 24px; height: 60px;
     display: flex; align-items: center; gap: 16px;
   }
@@ -161,6 +161,24 @@
     cursor: pointer; transition: all 0.12s; flex-shrink: 0; white-space: nowrap;
   }
   .cu-list-chip-change:hover { background: var(--bg-input); color: var(--text-sec); border-color: var(--text-mute); }
+
+  /* ─── ClickUp sync bar (below page tabs) ─────────────────── */
+  .cu-sync-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-card); padding: 10px 16px; margin-bottom: 16px;
+    box-shadow: var(--shadow-card); transition: background 0.2s, border-color 0.2s;
+  }
+  .cu-sync-bar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .cu-sync-icon { width: 15px; height: 15px; flex-shrink: 0; }
+  .cu-sync-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .cu-sync-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-mute); }
+  .cu-sync-path { font-size: 12px; color: var(--text-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cu-sync-path strong { color: var(--text-sec); font-weight: 600; }
+  .cu-sync-extras { font-size: 11px; color: var(--text-mute); }
+  .cu-sync-none { font-size: 12px; color: var(--text-mute); font-style: italic; }
+  .cu-sync-bar .cu-list-chip-change { font-size: 10px; }
+  .cu-sync-bar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
   /* ─── Actions dropdown ──────────────────────────────────── */
   .actions-wrap { position: relative; }
@@ -1086,10 +1104,9 @@
       <span class="header-pill-edit"><iconify-icon icon="pixelarticons:edit" style="font-size:11px"></iconify-icon></span>
     </div>
     <div class="header-meta-actions">
-      <button id="push-clickup-btn" class="hdr-btn hdr-btn-edit-only" onclick="pushToClickUp(this)" title="Push tasks directly to ClickUp via API">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-p-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-p-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-p-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-p-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
-        <span id="push-clickup-label">Create ClickUp Tasks</span>
-      </button><span id="push-clickup-list-hint"></span>
+      <!-- push-clickup-btn kept hidden here for applyProjectMeta() DOM compatibility -->
+      <span id="push-clickup-label" style="display:none;"></span>
+      <span id="push-clickup-list-hint" style="display:none;"></span>
       <div class="actions-wrap hdr-btn-edit-only">
         <button class="hdr-btn" onclick="toggleActionsMenu(event)" title="More actions">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.5"/><circle cx="7" cy="7" r="1.5"/><circle cx="7" cy="11.5" r="1.5"/></svg>
@@ -1166,36 +1183,7 @@ function applyProjectMeta() {
   if (titleEl) titleEl.textContent = projectMeta.title || 'Untitled Project';
   if (themeEl) themeEl.textContent = projectMeta.theme || 'Theme (TBC)';
   document.title = `${projectMeta.title || 'Design → Dev'} · Kubix`;
-  // Update ClickUp button label + list indicator
-  const cuLabel = document.getElementById('push-clickup-label');
-  const cuListHint = document.getElementById('push-clickup-list-hint');
-  const proj = getActiveProject();
-  const hasPushed = proj?.clickup?.pages && Object.values(proj.clickup.pages).some(p => p?.taskId);
-  if (cuLabel) {
-    cuLabel.textContent = hasPushed ? 'Update ClickUp Tasks' : 'Create ClickUp Tasks';
-  }
-  if (cuListHint) {
-    const label = getClickUpListLabel();
-    if (label) {
-      const parts = label.split(' → ');
-      const listName = parts.pop();
-      const pathPrefix = parts.join(' → ');
-      const extras = [
-        proj?.clickup?.phaseName    ? proj.clickup.phaseName    : null,
-        proj?.clickup?.assigneeName ? proj.clickup.assigneeName : null
-      ].filter(Boolean).join(' · ');
-      cuListHint.innerHTML = `
-        <div class="cu-list-chip">
-          <span class="cu-list-chip-path">${pathPrefix ? esc(pathPrefix) + ' → ' : ''}<strong>${esc(listName)}</strong>${extras ? `<span class="cu-list-chip-extras"> · ${esc(extras)}</span>` : ''}</span>
-          <button class="cu-list-chip-change" onclick="openClickUpListModal(false)" title="Change ClickUp list settings">
-            <iconify-icon icon="pixelarticons:settings" style="font-size:10px"></iconify-icon>
-            Change
-          </button>
-        </div>`;
-    } else {
-      cuListHint.innerHTML = '';
-    }
-  }
+  // ClickUp sync bar is rendered fresh by render() — no DOM update needed here
 }
 
 // ─── Project settings modal ────────────────────────────────────
@@ -2536,7 +2524,7 @@ function saveClickUpList(andPush) {
   applyProjectMeta();
 
   document.querySelector('.overlay')?.remove();
-  if (andPush) pushToClickUp(document.getElementById('push-clickup-btn'));
+  if (andPush) pushToClickUp(document.getElementById('cu-sync-push-btn'));
 }
 
 // ─── Clipboard helper (works even when document not focused) ───
@@ -2918,6 +2906,47 @@ function render() {
     <span class="page-tab-count">${generalData.fonts.length || ''}</span>
   </button>`;
   html += `</div>`;
+
+  /* ── ClickUp sync bar ── */
+  if (!isReadOnly()) {
+    const cuProj      = getActiveProject();
+    const cuLabel     = getClickUpListLabel();
+    const cuHasPushed = cuProj?.clickup?.pages && Object.values(cuProj.clickup.pages).some(p => p?.taskId);
+    const cuBtnLabel  = cuHasPushed ? 'Update ClickUp Tasks' : 'Create ClickUp Tasks';
+    const CU_SVG      = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-sb-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-sb-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-sb-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-sb-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>`;
+
+    let cuInfoHtml;
+    if (cuLabel) {
+      const cuParts   = cuLabel.split(' → ');
+      const cuList    = cuParts.pop();
+      const cuPath    = cuParts.join(' → ');
+      const cuExtras  = [cuProj?.clickup?.phaseName, cuProj?.clickup?.assigneeName].filter(Boolean).join(' · ');
+      cuInfoHtml = `
+        <div class="cu-sync-info">
+          <span class="cu-sync-label">ClickUp list</span>
+          <span class="cu-sync-path">${cuPath ? esc(cuPath) + ' → ' : ''}<strong>${esc(cuList)}</strong>${cuExtras ? `<span class="cu-sync-extras"> · ${esc(cuExtras)}</span>` : ''}</span>
+        </div>`;
+    } else {
+      cuInfoHtml = `<span class="cu-sync-none">No ClickUp list selected</span>`;
+    }
+
+    html += `<div class="cu-sync-bar">
+      <div class="cu-sync-bar-left">
+        ${CU_SVG}
+        ${cuInfoHtml}
+        <button class="cu-list-chip-change" onclick="openClickUpListModal(false)" title="Change ClickUp list settings">
+          <iconify-icon icon="pixelarticons:settings" style="font-size:10px"></iconify-icon>
+          Change
+        </button>
+      </div>
+      <div class="cu-sync-bar-right">
+        <button id="cu-sync-push-btn" class="hdr-btn" onclick="pushToClickUp(this)" title="Push tasks to ClickUp" style="background:var(--bg-input);border-color:var(--border);">
+          ${CU_SVG}
+          ${esc(cuBtnLabel)}
+        </button>
+      </div>
+    </div>`;
+  }
 
   /* ── General tab — early return ── */
   if (activePage === 'general') {
