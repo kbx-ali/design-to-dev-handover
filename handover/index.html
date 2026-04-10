@@ -66,6 +66,17 @@
     --c-bespoke-bd: #C860C8;
     --c-bespoke-dot:#9E1FA0;
 
+    /* Dev status — ClickUp workflow stages */
+    --cu-inprogress:     #fff;  --cu-inprogress-bg:  #7B68EE;  --cu-inprogress-bd: #6050D0;  --cu-inprogress-dot: #7B68EE;
+    --cu-blocked:        #fff;  --cu-blocked-bg:     #E8384F;  --cu-blocked-bd:    #CC2E42;  --cu-blocked-dot:    #E8384F;
+    --cu-changes-req:    #fff;  --cu-changes-req-bg: #EC4899;  --cu-changes-req-bd:#D03C84;  --cu-changes-req-dot:#EC4899;
+    --cu-push-live:      #28282B; --cu-push-live-bg:  #6BC950;  --cu-push-live-bd:  #58B040;  --cu-push-live-dot:  #6BC950;
+    --cu-code-review:    #28282B; --cu-code-review-bg:#F5A623;  --cu-code-review-bd:#D99020;  --cu-code-review-dot:#F5A623;
+    --cu-review:         #fff;  --cu-review-bg:      #E8384F;  --cu-review-bd:     #CC2E42;  --cu-review-dot:     #E8384F;
+    --cu-with-client:    #fff;  --cu-with-client-bg: #E8384F;  --cu-with-client-bd:#CC2E42;  --cu-with-client-dot:#E8384F;
+    --cu-complete:       #28282B; --cu-complete-bg:   #6BC950;  --cu-complete-bd:   #4DA038;  --cu-complete-dot:   #6BC950;
+    --cu-todo:           var(--text-mute); --cu-todo-bg: var(--bg-input); --cu-todo-bd: var(--border); --cu-todo-dot: var(--text-sub);
+
     --radius-card: 2px;
     --radius-sm:   6px;
     --grid-line:   rgba(0,0,0,0.06);
@@ -91,6 +102,17 @@
     --c-mod:        #28282B; --c-mod-bg:   #FFFF00; --c-mod-bd:   #CCCC00;
     --c-bespoke:    #28282B; --c-bespoke-bg:#E591E5; --c-bespoke-bd:#C860C8;
     --accent-text: var(--kbx-yellow);
+
+    /* Dev status — keep bold colours in dark mode */
+    --cu-inprogress: #fff; --cu-inprogress-bg: #7B68EE; --cu-inprogress-bd: #6050D0;
+    --cu-blocked: #fff; --cu-blocked-bg: #E8384F; --cu-blocked-bd: #CC2E42;
+    --cu-changes-req: #fff; --cu-changes-req-bg: #EC4899; --cu-changes-req-bd: #D03C84;
+    --cu-push-live: #28282B; --cu-push-live-bg: #6BC950; --cu-push-live-bd: #58B040;
+    --cu-code-review: #28282B; --cu-code-review-bg: #F5A623; --cu-code-review-bd: #D99020;
+    --cu-review: #fff; --cu-review-bg: #E8384F; --cu-review-bd: #CC2E42;
+    --cu-with-client: #fff; --cu-with-client-bg: #E8384F; --cu-with-client-bd: #CC2E42;
+    --cu-complete: #28282B; --cu-complete-bg: #6BC950; --cu-complete-bd: #4DA038;
+    --cu-todo: var(--text-mute); --cu-todo-bg: var(--bg-input); --cu-todo-bd: var(--border);
   }
 
   html { font-size: 15px; }
@@ -394,6 +416,25 @@
   .badge.existing { background: var(--c-exist-bg); color: var(--c-exist); border-color: var(--c-exist-bd); }
   .badge.modified { background: var(--c-mod-bg);   color: var(--c-mod);   border-color: var(--c-mod-bd); }
   .badge.bespoke  { background: var(--c-bespoke-bg); color: var(--c-bespoke); border-color: var(--c-bespoke-bd); }
+
+  /* Dev status badges (ClickUp workflow) */
+  .badge.cu-status { font-size: 10px; padding: 2px 8px; font-weight: 600; letter-spacing: 0.02em; }
+  .badge.cu-inprogress    { background: var(--cu-inprogress-bg);  color: var(--cu-inprogress);  border-color: var(--cu-inprogress-bd); }
+  .badge.cu-blocked       { background: var(--cu-blocked-bg);     color: var(--cu-blocked);     border-color: var(--cu-blocked-bd); }
+  .badge.cu-changes-req   { background: var(--cu-changes-req-bg); color: var(--cu-changes-req); border-color: var(--cu-changes-req-bd); }
+  .badge.cu-push-live     { background: var(--cu-push-live-bg);   color: var(--cu-push-live);   border-color: var(--cu-push-live-bd); }
+  .badge.cu-code-review   { background: var(--cu-code-review-bg); color: var(--cu-code-review); border-color: var(--cu-code-review-bd); }
+  .badge.cu-review        { background: var(--cu-review-bg);      color: var(--cu-review);      border-color: var(--cu-review-bd); }
+  .badge.cu-with-client   { background: var(--cu-with-client-bg); color: var(--cu-with-client); border-color: var(--cu-with-client-bd); }
+  .badge.cu-complete      { background: var(--cu-complete-bg);    color: var(--cu-complete);    border-color: var(--cu-complete-bd); }
+  .badge.cu-todo          { background: var(--cu-todo-bg);        color: var(--cu-todo);        border-color: var(--cu-todo-bd); }
+  .badge.cu-unknown       { background: var(--bg-input);          color: var(--text-mute);      border-color: var(--border); }
+
+  /* Dev status dot for page tabs */
+  .page-tab-cu-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+
   /* ─── Card body ──────────────────────────────────────────── */
   .card-body { border-top: 1px solid var(--border); padding: 18px 18px 20px; }
   .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -1147,6 +1188,33 @@ const STATUS_CONFIG = {
   modified: { label:"Needs New Settings", desc:"Existing section + new customiser settings",  cls:"modified", dotCls:"dot-modified" },
   bespoke:  { label:"Bespoke Section",    desc:"Custom build required",                      cls:"bespoke",  dotCls:"dot-bespoke"  }
 };
+
+// ─── ClickUp dev-status mapping ────────────────────────────────
+const CLICKUP_STATUS_MAP = {
+  'to do':             { label: 'To Do',              cls: 'cu-todo',        dotVar: '--cu-todo-dot' },
+  'in progress':       { label: 'In Progress',        cls: 'cu-inprogress',  dotVar: '--cu-inprogress-dot' },
+  'blocked':           { label: 'Blocked',             cls: 'cu-blocked',     dotVar: '--cu-blocked-dot' },
+  'changes requested': { label: 'Changes Requested',   cls: 'cu-changes-req', dotVar: '--cu-changes-req-dot' },
+  'push live':         { label: 'Push Live',           cls: 'cu-push-live',   dotVar: '--cu-push-live-dot' },
+  'code review':       { label: 'Code Review',         cls: 'cu-code-review', dotVar: '--cu-code-review-dot' },
+  'review':            { label: 'Review',              cls: 'cu-review',      dotVar: '--cu-review-dot' },
+  'with client':       { label: 'With Client',         cls: 'cu-with-client', dotVar: '--cu-with-client-dot' },
+  'complete':          { label: 'Complete',             cls: 'cu-complete',    dotVar: '--cu-complete-dot' },
+  'closed':            { label: 'Complete',             cls: 'cu-complete',    dotVar: '--cu-complete-dot' },
+};
+function clickupStatusBadge(statusName) {
+  if (!statusName) return '';
+  const key = statusName.toLowerCase().trim();
+  const cfg = CLICKUP_STATUS_MAP[key] || { label: statusName, cls: 'cu-unknown' };
+  return `<span class="badge cu-status ${cfg.cls}">${cfg.label}</span>`;
+}
+function clickupStatusDotVar(statusName) {
+  if (!statusName) return null;
+  const key = statusName.toLowerCase().trim();
+  const cfg = CLICKUP_STATUS_MAP[key];
+  return cfg ? cfg.dotVar : null;
+}
+
 // ─── Actions dropdown ──────────────────────────────────────────
 function toggleActionsMenu(e) {
   e.stopPropagation();
@@ -1934,6 +2002,7 @@ const clickupApi = {
   updateTask(taskId, data)         { return this.request('PUT', `/task/${taskId}`, data); },
   getListFields(listId)                  { return this.request('GET', `/list/${listId}/field`); },
   setCustomField(taskId, fieldId, value) { return this.request('POST', `/task/${taskId}/field/${fieldId}`, { value }); },
+  getTask(taskId)                        { return this.request('GET', `/task/${taskId}`); },
   // Members are embedded in the /team response — no separate endpoint needed
   async getMembers() {
     const data = await this.request('GET', '/team');
@@ -2868,6 +2937,75 @@ function onDragEnd() {
   dragId = null;
 }
 
+// ─── Pull ClickUp statuses back ────────────────────────────────
+async function pullClickUpStatuses(btn) {
+  const proj = getActiveProject();
+  if (!proj) return;
+
+  const token = clickupApi.token();
+  if (!token) { showToast('Add your ClickUp API token in Settings first', 'error'); return; }
+
+  // Collect all stored task IDs
+  const tasks = [];
+  for (const key of ['homepage', 'collection', 'product']) {
+    const pageTaskId = proj.clickup?.pages?.[key]?.taskId;
+    if (pageTaskId) tasks.push({ type: 'page', pageKey: key, taskId: pageTaskId });
+    const sections = proj.pages?.[key]?.sections || [];
+    for (const s of sections) {
+      if (s.clickupTaskId) tasks.push({ type: 'section', pageKey: key, sectionId: s.id, taskId: s.clickupTaskId });
+    }
+  }
+
+  if (tasks.length === 0) { showToast('No ClickUp tasks found — push to ClickUp first', 'error'); return; }
+
+  // Button loading state
+  let origHtml;
+  if (btn) { origHtml = btn.innerHTML; btn.innerHTML = '<iconify-icon icon="pixelarticons:loader" style="font-size:14px;animation:spin 1s linear infinite"></iconify-icon> Pulling\u2026'; btn.disabled = true; }
+
+  let fetched = 0, errors = 0;
+  const BATCH = 5;
+  for (let i = 0; i < tasks.length; i += BATCH) {
+    const batch = tasks.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      batch.map(t => clickupApi.getTask(t.taskId).then(data => ({ ...t, data })))
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        const { type, pageKey, sectionId, data } = r.value;
+        const statusName = data.status?.status || '';
+        if (type === 'page') {
+          if (!proj.clickup.pages[pageKey]) proj.clickup.pages[pageKey] = {};
+          proj.clickup.pages[pageKey].devStatus = statusName;
+          if (pages[pageKey]) pages[pageKey].devStatus = statusName;
+        } else {
+          const localSec = (pages[pageKey]?.sections || []).find(s => s.id === sectionId || s.id === Number(sectionId));
+          if (localSec) localSec.devStatus = statusName;
+          const projSec = (proj.pages[pageKey]?.sections || []).find(s => s.id === sectionId || s.id === Number(sectionId));
+          if (projSec) projSec.devStatus = statusName;
+        }
+        fetched++;
+      } else {
+        errors++;
+        console.warn('ClickUp status pull error:', r.reason);
+      }
+    }
+  }
+
+  proj.clickup.pulledAt = new Date().toISOString();
+  await saveProjectToFirestore(proj);
+  if (proj.shareToken) { try { await publishViewerDoc(proj); } catch(e) { console.warn('Viewer publish error:', e); } }
+
+  render();
+
+  if (btn) { btn.innerHTML = origHtml; btn.disabled = false; }
+
+  if (errors === 0) {
+    showToast(`Synced ${fetched} task status${fetched !== 1 ? 'es' : ''} from ClickUp`, 'success');
+  } else {
+    showToast(`Synced ${fetched} statuses, ${errors} failed`, 'error');
+  }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────
 function esc(s) { const d = document.createElement('div'); d.textContent = String(s ?? ''); return d.innerHTML; }
 function counts() { const c={existing:0,modified:0,bespoke:0}; curSections().forEach(s=>c[s.status]++); return c; }
@@ -2892,11 +3030,15 @@ function render() {
     const isActive = k === activePage;
     const count    = pages[k]?.sections?.length ?? 0;
     const hasLoom  = !!pages[k]?.loomUrl;
+    const pgDevStatus = pages[k]?.devStatus || '';
+    const pgDotVar    = clickupStatusDotVar(pgDevStatus);
+    const pgDevLabel  = pgDevStatus ? (CLICKUP_STATUS_MAP[pgDevStatus.toLowerCase().trim()]?.label || pgDevStatus) : '';
     html += `<button class="page-tab${isActive?' active':''}" onclick="switchPage('${k}')">
       <iconify-icon icon="${d.icon}" class="page-tab-icon" style="font-size:14px"></iconify-icon>
       ${esc(d.label)}
       ${hasLoom ? '<span class="page-tab-loom-dot" title="Has Loom video"></span>' : ''}
       <span class="page-tab-count">${count}</span>
+      ${pgDotVar ? `<span class="page-tab-cu-dot" style="background:var(${pgDotVar})" title="${pgDevLabel}"></span>` : ''}
     </button>`;
   });
   // General tab — sitewide settings
@@ -2940,6 +3082,10 @@ function render() {
         </button>
       </div>
       <div class="cu-sync-bar-right">
+        ${cuHasPushed ? `<button id="cu-sync-pull-btn" class="hdr-btn" onclick="pullClickUpStatuses(this)" title="Pull task statuses from ClickUp" style="background:var(--bg-input);border-color:var(--border);">
+          <iconify-icon icon="pixelarticons:arrow-down" style="font-size:12px"></iconify-icon>
+          Pull Status
+        </button>` : ''}
         <button id="cu-sync-push-btn" class="hdr-btn" onclick="pushToClickUp(this)" title="Push tasks to ClickUp" style="background:var(--bg-input);border-color:var(--border);">
           ${CU_SVG}
           ${esc(cuBtnLabel)}
@@ -3045,6 +3191,7 @@ function render() {
         <span class="card-name"  onclick="toggleSection('${s.id}')">${esc(s.name)}</span>
         <div class="card-badges" onclick="toggleSection('${s.id}')">
           <span class="badge ${SC.cls}">${SC.label}</span>
+          ${s.devStatus ? clickupStatusBadge(s.devStatus) : ''}
         </div>
       </div>
       ${open ? `
