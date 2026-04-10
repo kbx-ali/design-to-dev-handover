@@ -143,6 +143,34 @@
   .header-meta .hdr-btn.mint { background: #94F7A1; border-color: transparent; color: #28282B; }
   .header-meta .hdr-btn.mint:hover { background: #72e880; }
 
+  /* ─── Actions dropdown ──────────────────────────────────── */
+  .actions-wrap { position: relative; }
+  .actions-dropdown {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0; z-index: 90;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25); min-width: 210px; padding: 4px 0;
+  }
+  .actions-dropdown.open { display: block; }
+  .actions-dropdown-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 8px 14px; border: none; background: none; color: var(--text-sec);
+    font-size: 12px; font-weight: 600; font-family: var(--font-body);
+    cursor: pointer; text-decoration: none; white-space: nowrap; transition: background 0.1s;
+  }
+  .actions-dropdown-item:hover { background: var(--bg-input); color: var(--text-pri); }
+  .actions-dropdown-item svg, .actions-dropdown-item iconify-icon { width: 14px; height: 14px; flex-shrink: 0; }
+  .actions-dropdown-sep { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* ─── Header share link ─────────────────────────────────── */
+  .header-right .hdr-btn-share {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #94F7A1; border: none; color: #28282B;
+    font-size: 11px; font-weight: 700; font-family: var(--font-body);
+    padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    text-decoration: none; transition: background 0.12s;
+  }
+  .header-right .hdr-btn-share:hover { background: #72e880; }
+
   /* Project/theme pills — now sit above page tabs in main */
   .header-pill {
     display: flex; align-items: center; gap: 6px;
@@ -222,7 +250,7 @@
   .hdr-btn svg, .hdr-btn iconify-icon { width: 13px; height: 13px; }
 
   /* ─── Main ───────────────────────────────────────────────── */
-  .main { max-width: 1060px; margin: 0 auto; padding: 28px 24px 60px; }
+  .main { max-width: 1440px; margin: 0 auto; padding: 28px 24px 60px; }
 
   /* ─── Stats bar ──────────────────────────────────────────── */
   .stats-bar {
@@ -270,16 +298,17 @@
   .filter-group { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
   .filter-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-sub); margin-right: 2px; }
   .filter-btn {
-    border: 1px solid var(--border); background: var(--bg-card); color: var(--text-mute);
+    border: none; background: none; color: var(--text-mute);
     font-size: 12px; font-weight: 600; font-family: var(--font-body);
-    padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.12s;
+    padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: all 0.12s;
     display: inline-flex; align-items: center; gap: 5px;
   }
-  .filter-btn:hover { background: var(--bg-input); color: var(--text-sec); }
-  .filter-btn.active { background: var(--text-pri); color: var(--bg-card); border-color: var(--text-pri); }
-  .filter-btn.active-existing { background: var(--c-exist-bg); color: var(--c-exist); border-color: var(--c-exist-bd); }
-  .filter-btn.active-modified { background: var(--c-mod-bg);   color: var(--c-mod);   border-color: var(--c-mod-bd); }
-  .filter-btn.active-bespoke  { background: var(--c-bespoke-bg); color: var(--c-bespoke); border-color: var(--c-bespoke-bd); }
+  .filter-btn:hover { color: var(--text-sec); }
+  .filter-btn.active { color: var(--text-pri); font-weight: 700; }
+  .filter-btn.active-existing { color: var(--c-exist); font-weight: 700; }
+  .filter-btn.active-modified { color: var(--c-mod); font-weight: 700; }
+  .filter-btn.active-bespoke  { color: var(--c-bespoke); font-weight: 700; }
+  .filter-count { font-size: 10px; color: var(--text-mute); margin-left: 1px; font-weight: 400; }
   .filter-fdot { width: 6px; height: 6px; border-radius: 50%; }
 
   /* ─── Cards ──────────────────────────────────────────────── */
@@ -987,6 +1016,10 @@
       </div>
     </div>
     <div class="header-right">
+      <a id="share-link-btn" href="#" class="hdr-btn-share hdr-btn-edit-only" onclick="copyShareLink(event)">
+        <iconify-icon icon="pixelarticons:link" style="font-size:13px"></iconify-icon>
+        Share Link
+      </a>
       <div id="sync-indicator" class="sync-indicator"><span class="sync-dot offline"></span>Offline</div>
       <!-- View-only badge — visible only in VIEWER_MODE via CSS -->
       <div class="viewer-badge" title="You have view-only access — editing is disabled">
@@ -1022,18 +1055,35 @@
       <span class="header-pill-edit"><iconify-icon icon="pixelarticons:edit" style="font-size:11px"></iconify-icon></span>
     </div>
     <div class="header-meta-actions">
-      <button id="export-csv-btn" class="hdr-btn hdr-btn-edit-only" onclick="exportToClickUp(this)" title="Export checklist as ClickUp-importable CSV">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-a" x1="0" y1="15.049" x2="54.845" y2="15.049" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-b" x1="1.195" y1="53.166" x2="53.745" y2="53.166" gradientTransform="matrix(1 0 0 -1 0 69.36)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
-        Export CSV
-      </button>
       <button id="push-clickup-btn" class="hdr-btn hdr-btn-edit-only" onclick="pushToClickUp(this)" title="Push tasks directly to ClickUp via API">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:13px;height:13px;flex-shrink:0"><defs><linearGradient id="cu-p-a" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-p-b" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-p-a)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-p-b)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
         <span id="push-clickup-label">Push to ClickUp</span>
       </button><span id="push-clickup-list-hint"></span>
-      <a id="share-link-btn" href="#" class="hdr-btn mint hdr-btn-edit-only" onclick="copyShareLink(event)">
-        <iconify-icon icon="pixelarticons:link" style="font-size:13px"></iconify-icon>
-        Share Link
-      </a>
+      <div class="actions-wrap hdr-btn-edit-only">
+        <button class="hdr-btn" onclick="toggleActionsMenu(event)" title="More actions">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><circle cx="7" cy="2.5" r="1.5"/><circle cx="7" cy="7" r="1.5"/><circle cx="7" cy="11.5" r="1.5"/></svg>
+          Actions
+        </button>
+        <div id="actions-dropdown" class="actions-dropdown">
+          <button class="actions-dropdown-item" onclick="exportToClickUp(this);closeActionsMenu()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 54.8 65.8" style="width:14px;height:14px;flex-shrink:0"><defs><linearGradient id="cu-a2" x1="0" y1="15" x2="54.8" y2="15" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8930fd"/><stop offset="1" stop-color="#49ccf9"/></linearGradient><linearGradient id="cu-b2" x1="1.2" y1="53.2" x2="53.7" y2="53.2" gradientTransform="matrix(1 0 0 -1 0 69.4)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff02f0"/><stop offset="1" stop-color="#ffc800"/></linearGradient></defs><path fill="url(#cu-a2)" d="M0,50.6l10.1-7.8c5.4,7,11.1,10.3,17.4,10.3c6.3,0,11.9-3.2,17-10.2l10.3,7.6c-7.4,10-16.6,15.3-27.3,15.3C16.9,65.8,7.6,60.5,0,50.6z"/><path fill="url(#cu-b2)" d="M27.5,16.9l-18,15.5l-8.3-9.7L27.6,0l26.2,22.7l-8.4,9.6L27.5,16.9z"/></svg>
+            Export CSV
+          </button>
+          <div class="actions-dropdown-sep"></div>
+          <a id="actions-view-figma" class="actions-dropdown-item" href="#" target="_blank" rel="noopener" onclick="closeActionsMenu()">
+            <iconify-icon icon="pixelarticons:external-link" style="font-size:14px"></iconify-icon>
+            View Figma
+          </a>
+          <button class="actions-dropdown-item" onclick="editAllPageLinks();closeActionsMenu()">
+            <iconify-icon icon="pixelarticons:edit" style="font-size:14px"></iconify-icon>
+            Edit Links
+          </button>
+          <button id="actions-populate-figma" class="actions-dropdown-item" onclick="confirmFigmaPopulate(activePage);closeActionsMenu()">
+            <svg width="14" height="14" viewBox="0 0 358 358" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:3px;"><path d="M0 81.68C0 36.57 36.57 0 81.68 0H275.76C320.872 0 357.442 36.57 357.442 81.68V275.76C357.442 320.872 320.872 357.442 275.76 357.442H81.68C36.57 357.442 0 320.872 0 275.76V81.68Z" fill="black"/><path d="M94.9458 262.496C94.9458 239.362 113.7 220.608 136.834 220.608H178.72V262.496C178.72 285.63 159.968 304.384 136.834 304.384C113.7 304.384 94.9458 285.63 94.9458 262.496Z" fill="#24CB71"/><path d="M178.72 53.058V136.832H220.608C243.742 136.832 262.496 118.08 262.496 94.946C262.496 71.812 243.742 53.058 220.608 53.058H178.72Z" fill="#FF7237"/><path d="M220.26 220.608C243.394 220.608 262.148 201.854 262.148 178.72C262.148 155.586 243.394 136.832 220.26 136.832C197.126 136.832 178.373 155.586 178.373 178.72C178.373 201.854 197.126 220.608 220.26 220.608Z" fill="#00B6FF"/><path d="M94.9458 94.946C94.9458 118.08 113.7 136.834 136.834 136.834H178.72V53.058H136.834C113.7 53.058 94.9458 71.812 94.9458 94.946Z" fill="#FF3737"/><path d="M94.9458 178.72C94.9458 201.854 113.7 220.608 136.834 220.608H178.72V136.834H136.834C113.7 136.834 94.9458 155.586 94.9458 178.72Z" fill="#874FFF"/></svg>
+            Populate from Figma
+          </button>
+        </div>
+      </div>
     </div>
   </div>
   <div id="app"></div>
@@ -1049,6 +1099,28 @@ const STATUS_CONFIG = {
   modified: { label:"Needs New Settings", desc:"Existing section + new customiser settings",  cls:"modified", dotCls:"dot-modified" },
   bespoke:  { label:"Bespoke Section",    desc:"Custom build required",                      cls:"bespoke",  dotCls:"dot-bespoke"  }
 };
+// ─── Actions dropdown ──────────────────────────────────────────
+function toggleActionsMenu(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('actions-dropdown');
+  dd.classList.toggle('open');
+  // Update View Figma link for current page
+  const pg = (pagesData[activePage] || {});
+  const link = document.getElementById('actions-view-figma');
+  if (link) {
+    if (pg.figmaUrl) { link.href = pg.figmaUrl; link.style.display = ''; }
+    else { link.style.display = 'none'; }
+  }
+}
+function closeActionsMenu() {
+  const dd = document.getElementById('actions-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+document.addEventListener('click', function(e) {
+  const wrap = document.querySelector('.actions-wrap');
+  if (wrap && !wrap.contains(e.target)) closeActionsMenu();
+});
+
 // ─── Project metadata ──────────────────────────────────────────
 let projectMeta = {
   title: 'Enter Project Name',
@@ -2816,48 +2888,19 @@ function render() {
 
   /* ── Stats bar ── */
   html += `<div class="stats-bar">
-    <div class="stat-block" style="flex:2.5;">
+    <div class="stat-block" style="flex:1;">
       <div class="progress-label"><span>Section breakdown — ${esc(def.label)}</span><span>${total} total</span></div>
       <div class="progress-track">
-        <div class="dot-existing" style="width:${pct('existing')}%"></div>
-        <div class="dot-modified" style="width:${pct('modified')}%"></div>
-        <div class="dot-bespoke"  style="width:${pct('bespoke')}%"></div>
+        <div class="dot-existing" style="width:${pct('existing')}%" title="${c.existing} Existing Section${c.existing!==1?'s':''}"></div>
+        <div class="dot-modified" style="width:${pct('modified')}%" title="${c.modified} Needs New Settings"></div>
+        <div class="dot-bespoke"  style="width:${pct('bespoke')}%"  title="${c.bespoke} Bespoke Section${c.bespoke!==1?'s':''}"></div>
       </div>
       <div class="page-links-row">
         ${pg.loomUrl
           ? `<a href="${esc(pg.loomUrl)}" target="_blank" rel="noopener" class="page-link-btn loom-link"><span class="loom-dot"></span>Watch Loom</a>`
           : isReadOnly() ? '' : `<span class="page-link-none">No Loom video yet</span>`}
-        ${pg.figmaUrl
-          ? `<a href="${esc(pg.figmaUrl)}" target="_blank" rel="noopener" class="page-link-btn figma-link"><iconify-icon icon="pixelarticons:external-link" style="font-size:11px"></iconify-icon>View Figma</a>`
-          : ''}
-        <button class="page-link-edit" onclick="editAllPageLinks()">
-          <iconify-icon icon="pixelarticons:edit" style="font-size:11px"></iconify-icon>
-          Edit links
-        </button>
-        ${!isReadOnly() ? `<button class="figma-gen-btn hdr-btn-edit-only" onclick="confirmFigmaPopulate('${activePage}')" style="display:inline-flex;align-items:center;gap:5px;">${FIGMA_ICON_SVG} Populate from Figma</button>` : ''}
       </div>
     </div>
-    ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
-    <div class="stat-block">
-      <div class="stat-num">${c[k]}</div>
-      <div class="stat-label"><span class="stat-dot ${v.dotCls}"></span>${v.label}</div>
-    </div>`).join('')}
-  </div>`;
-
-  /* ── Toolbar ── */
-  html += `<div class="toolbar">
-    <div class="filter-group">
-      <span class="filter-label">Filter</span>
-      <button class="filter-btn ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">All sections</button>
-      ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
-      <button class="filter-btn ${activeFilter===k?'active-'+k:''}" onclick="setFilter('${k}')">
-        <span class="filter-fdot ${v.dotCls}"></span>${v.label}
-      </button>`).join('')}
-    </div>
-    <button class="legend-trigger-btn" onclick="openLegend()" title="View section status legend">
-      <iconify-icon icon="pixelarticons:info-box" style="font-size:12px"></iconify-icon>
-      Legend
-    </button>
   </div>`;
 
   /* ── Drive assets folder banner ── */
@@ -2876,6 +2919,22 @@ function render() {
       <svg class="drive-banner-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </a>`;
   }
+
+  /* ── Toolbar ── */
+  html += `<div class="toolbar">
+    <div class="filter-group">
+      <span class="filter-label">Filter</span>
+      <button class="filter-btn ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">All sections <span class="filter-count">${total}</span></button>
+      ${Object.entries(STATUS_CONFIG).map(([k,v]) => `
+      <button class="filter-btn ${activeFilter===k?'active-'+k:''}" onclick="setFilter('${k}')">
+        <span class="filter-fdot ${v.dotCls}"></span>${v.label} <span class="filter-count">${c[k]}</span>
+      </button>`).join('')}
+    </div>
+    <button class="legend-trigger-btn" onclick="openLegend()" title="View section status legend">
+      <iconify-icon icon="pixelarticons:info-box" style="font-size:12px"></iconify-icon>
+      Legend
+    </button>
+  </div>`;
 
   /* ── Empty state ── */
   if (secs.length === 0) {
@@ -2955,7 +3014,7 @@ function render() {
           <div style="display:flex;flex-direction:column;">
             <div class="field" style="flex:1;display:flex;flex-direction:column;">
               <div class="field-label">Notes for Developer</div>
-              <textarea class="input-text notes-textarea" style="min-height:200px;"${isReadOnly() ? ' readonly' : ` onchange="setField('${s.id}','notes',this.value)"`}>${esc(s.notes||'')}</textarea>
+              <textarea class="input-text notes-textarea" style="min-height:200px;"${isReadOnly() ? ' readonly' : ` onchange="saveNotesField('${s.id}',this.value)"`}>${esc(s.notes||'')}${s.useThemeSpacing !== false ? '\n\nUse Existing Theme Structure & Spacing' : ''}</textarea>
             </div>
           </div>
         </div>
@@ -3040,6 +3099,11 @@ function setField(id, key, val) {
   if (s) s[key] = val;
   if (key !== 'notes') render();
   savePagesData(); scheduleSave();
+}
+function saveNotesField(id, val) {
+  // Strip the auto-appended theme spacing text before saving
+  val = val.replace(/\n\nUse Existing Theme Structure & Spacing$/, '').replace(/^Use Existing Theme Structure & Spacing$/, '');
+  setField(id, 'notes', val);
 }
 function setFilter(f) { activeFilter = f; render(); }
 
