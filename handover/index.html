@@ -273,9 +273,21 @@
   .dot-existing { background: #94F7A1; }
   .dot-modified { background: #FFFF00; }
   .dot-bespoke  { background: #E591E5; }
-  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-sub); margin-bottom: 5px; }
-  .progress-track { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; display: flex; }
-  .progress-track div { transition: width 0.4s ease; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-sub); margin-bottom: 7px; }
+  .progress-track { height: 8px; background: var(--border); border-radius: 99px; display: flex; position: relative; overflow: visible; }
+  .progress-segment { position: relative; transition: width 0.4s ease; cursor: default; }
+  .progress-segment:first-child { border-radius: 99px 0 0 99px; }
+  .progress-segment:last-child  { border-radius: 0 99px 99px 0; }
+  .progress-segment:only-child  { border-radius: 99px; }
+  .progress-segment::after {
+    content: attr(data-tooltip); position: absolute; bottom: calc(100% + 7px);
+    left: 50%; transform: translateX(-50%);
+    background: var(--bg-input); color: var(--text-pri); border: 1px solid var(--border-lt);
+    border-radius: 5px; padding: 4px 9px; font-size: 11px; font-weight: 600;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s;
+    font-family: var(--font-body); z-index: 10;
+  }
+  .progress-segment:hover::after { opacity: 1; }
 
   /* ─── Legend ─────────────────────────────────────────────── */
   .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
@@ -304,11 +316,11 @@
     display: inline-flex; align-items: center; gap: 5px;
   }
   .filter-btn:hover { color: var(--text-sec); }
-  .filter-btn.active { color: var(--text-pri); font-weight: 700; }
-  .filter-btn.active-existing { color: var(--c-exist); font-weight: 700; }
-  .filter-btn.active-modified { color: var(--c-mod); font-weight: 700; }
-  .filter-btn.active-bespoke  { color: var(--c-bespoke); font-weight: 700; }
-  .filter-count { font-size: 10px; color: var(--text-mute); margin-left: 1px; font-weight: 400; }
+  .filter-btn.active { color: var(--text-pri); font-weight: 700; background: var(--bg-input); }
+  .filter-btn.active-existing { color: var(--c-exist); font-weight: 700; background: var(--c-exist-bg); }
+  .filter-btn.active-modified { color: var(--c-mod);   font-weight: 700; background: var(--c-mod-bg); }
+  .filter-btn.active-bespoke  { color: var(--c-bespoke); font-weight: 700; background: var(--c-bespoke-bg); }
+  .filter-count { font-size: 10px; color: inherit; opacity: 0.6; margin-left: 1px; font-weight: 400; }
   .filter-fdot { width: 6px; height: 6px; border-radius: 50%; }
 
   /* ─── Cards ──────────────────────────────────────────────── */
@@ -2575,7 +2587,7 @@ function exportToClickUp(btn) {
     // Section tasks — flat, manual subtask conversion in ClickUp
     sections.forEach(s => {
       const content = [
-        s.notes     || '',
+        sectionNotes(s),
         s.figmaLink ? 'Figma: ' + s.figmaLink : ''
       ].filter(Boolean).join('\n\n');
 
@@ -2711,7 +2723,7 @@ async function pushToClickUp(btn) {
       // ── Section subtasks ──
       for (const s of sections) {
         const content = [
-          s.notes || '',
+          sectionNotes(s),
           s.figmaLink ? 'Figma: ' + s.figmaLink : ''
         ].filter(Boolean).join('\n\n');
 
@@ -2891,9 +2903,9 @@ function render() {
     <div class="stat-block" style="flex:1;">
       <div class="progress-label"><span>Section breakdown — ${esc(def.label)}</span><span>${total} total</span></div>
       <div class="progress-track">
-        <div class="dot-existing" style="width:${pct('existing')}%" title="${c.existing} Existing Section${c.existing!==1?'s':''}"></div>
-        <div class="dot-modified" style="width:${pct('modified')}%" title="${c.modified} Needs New Settings"></div>
-        <div class="dot-bespoke"  style="width:${pct('bespoke')}%"  title="${c.bespoke} Bespoke Section${c.bespoke!==1?'s':''}"></div>
+        <div class="progress-segment dot-existing" style="width:${pct('existing')}%" data-tooltip="${c.existing} Existing Section${c.existing!==1?'s':''}"></div>
+        <div class="progress-segment dot-modified" style="width:${pct('modified')}%" data-tooltip="${c.modified} Needs New Settings"></div>
+        <div class="progress-segment dot-bespoke"  style="width:${pct('bespoke')}%"  data-tooltip="${c.bespoke} Bespoke Section${c.bespoke!==1?'s':''}"></div>
       </div>
       <div class="page-links-row">
         ${pg.loomUrl
@@ -3099,6 +3111,13 @@ function setField(id, key, val) {
   if (s) s[key] = val;
   if (key !== 'notes') render();
   savePagesData(); scheduleSave();
+}
+function sectionNotes(s) {
+  const base = s.notes || '';
+  if (s.useThemeSpacing !== false) {
+    return base ? base + '\n\nUse Existing Theme Structure & Spacing' : 'Use Existing Theme Structure & Spacing';
+  }
+  return base;
 }
 function saveNotesField(id, val) {
   // Strip the auto-appended theme spacing text before saving
